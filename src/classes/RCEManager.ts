@@ -2,9 +2,9 @@ import {
   AuthOptions,
   Auth,
   RustServer,
-  ServerOptions,
   WebsocketRequest,
   WebsocketMessage,
+  ServerOptions,
 } from "../types";
 import { GPORTALRoutes, GPORTALWebsocketTypes, RCEEvent } from "../constants";
 import { EventEmitter } from "events";
@@ -183,6 +183,18 @@ export default class RCEManager extends EventEmitter {
       const log = logMessage.trim();
       if (!log || log.startsWith("Executing console system commands")) {
         return;
+      }
+
+      // Population
+      if (log.startsWith("<slot:")) {
+        const players = log
+          .match(/"(.*?)"/g)
+          .map((ign) => ign.replace(/"/g, ""));
+        players.shift();
+        return this.servers.set(server.identifier, {
+          ...server,
+          players,
+        });
       }
 
       this.emit(RCEEvent.MESSAGE, { server, message: log });
@@ -377,6 +389,8 @@ export default class RCEManager extends EventEmitter {
       identifier: opts.identifier,
       serverId: sid,
       region: opts.region,
+      refreshPlayers: opts.refreshPlayers || 0,
+      players: [],
     });
 
     const payload = {
@@ -403,6 +417,16 @@ export default class RCEManager extends EventEmitter {
     });
 
     this.socket.send(JSON.stringify(payload));
+
+    if (opts.refreshPlayers) {
+      this.sendCommand(opts.identifier, "Users");
+
+      setInterval(() => {
+        if (this.servers.has(opts.identifier)) {
+          this.sendCommand(opts.identifier, "Users");
+        }
+      }, opts.refreshPlayers * 60_000);
+    }
 
     this.logger.info(`Server "${opts.identifier}" added successfully`);
   }

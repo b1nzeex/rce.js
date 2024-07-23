@@ -15,13 +15,15 @@ export interface RustServer {
   identifier: string;
   serverId: number;
   region: "US" | "EU";
-  connected?: boolean;
+  refreshPlayers?: number;
+  players: string[];
 }
 
 export interface ServerOptions {
   identifier: string;
   serverId: number;
   region: "US" | "EU";
+  refreshPlayers?: number;
 }
 
 export interface WebsocketRequest {
