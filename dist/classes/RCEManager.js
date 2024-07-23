@@ -43,6 +43,7 @@ class RCEManager extends types_1.RCEEvents {
         this.logger.debug("Attempting to authenticate");
         const browser = await puppeteer_extra_1.default.launch({
             defaultViewport: null,
+            args: ["--no-sandbox", "--disable-setuid-sandbox"],
         });
         const page = (await browser.pages())[0];
         await page.goto(constants_1.GPORTALRoutes.HOME);
