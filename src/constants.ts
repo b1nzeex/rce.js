@@ -1,8 +1,9 @@
 export enum GPORTALRoutes {
-  COMMAND = "https://www.g-portal.com/ngpapi",
+  COMMAND = "https://www.g-portal.com/ngpapi/",
   REFRESH = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/token",
   WEBSOCKET = "wss://www.g-portal.com/ngpapi/",
   ORIGIN = "https://www.g-portal.com",
+  HOME = "https://www.g-portal.com/en",
 }
 
 export enum GPORTALWebsocketTypes {
@@ -27,4 +28,5 @@ export enum RCEEvent {
   QUICK_CHAT = "quick_chat",
   NOTE_EDIT = "note_edit",
   EVENT_START = "event_start",
+  PLAYERLIST_UPDATE = "playerlist_update",
 }

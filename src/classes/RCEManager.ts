@@ -9,7 +9,11 @@ import {
 import { GPORTALRoutes, GPORTALWebsocketTypes, RCEEvent } from "../constants";
 import { EventEmitter } from "events";
 import { WebSocket } from "ws";
+import puppeteer from "puppeteer-extra";
+import stealth from "puppeteer-extra-plugin-stealth";
 import Logger from "./Logger";
+
+puppeteer.use(stealth());
 
 export default class RCEManager extends EventEmitter {
   private logger: Logger;
@@ -19,6 +23,7 @@ export default class RCEManager extends EventEmitter {
   private servers: Map<string, RustServer> = new Map();
   private socket?: WebSocket;
   private requests: Map<string, WebsocketRequest> = new Map();
+  private queue: (() => void)[] = [];
 
   public constructor(auth: AuthOptions) {
     super();
@@ -34,6 +39,42 @@ export default class RCEManager extends EventEmitter {
 
   private async authenticate(timeout: number) {
     this.logger.debug("Attempting to authenticate");
+
+    const browser = await puppeteer.launch({
+      defaultViewport: null,
+    });
+
+    const page = (await browser.pages())[0];
+    await page.goto(GPORTALRoutes.HOME);
+    await page
+      .locator(
+        "#navigation__sidebar-wrapper > div.sidebar__quickmenu.row.g-0.mx-0.py-4 > div:nth-child(1) > button"
+      )
+      .click();
+    await page.locator("#kc-login").waitHandle();
+    await page.locator("#username").fill(this.email);
+    await page.locator("#password").fill(this.password);
+    await page.locator("#kc-login").click();
+
+    const selector = await page
+      .locator(
+        "#navigation__sidebar-wrapper > div.row.g-0.sidebar__quickmenu.mx-0.py-4 > div.quickmenu__profile.col.col-3.text-center > p"
+      )
+      .waitHandle()
+      .catch((err) => err);
+    if (!selector || selector instanceof Error) {
+      this.logger.error("Failed to authenticate: Invalid credentials");
+      return;
+    }
+
+    const session = await page.evaluate(() =>
+      localStorage.getItem("gp-session")
+    );
+    this.auth = JSON.parse(session);
+
+    await browser.close();
+
+    this.logger.info("Authenticated successfully");
 
     await this.refreshToken();
     await this.connectWebsocket(timeout);
@@ -86,6 +127,7 @@ export default class RCEManager extends EventEmitter {
     this.socket.on("open", () => {
       this.logger.debug("Websocket connection established");
       this.authenticateWebsocket();
+      this.processQueue();
     });
 
     this.socket.on("error", (err) => {
@@ -179,9 +221,11 @@ export default class RCEManager extends EventEmitter {
         /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}:LOG:DEFAULT: /gm
       );
 
+    if (logMessages.length > 2) return;
+
     logMessages.forEach((logMessage) => {
       const log = logMessage.trim();
-      if (!log || log.startsWith("Executing console system commands")) {
+      if (!log || log.startsWith("Executing console system command")) {
         return;
       }
 
@@ -191,6 +235,9 @@ export default class RCEManager extends EventEmitter {
           .match(/"(.*?)"/g)
           .map((ign) => ign.replace(/"/g, ""));
         players.shift();
+
+        this.emit(RCEEvent.PLAYERLIST_UPDATE, { server, players });
+
         return this.servers.set(server.identifier, {
           ...server,
           players,
@@ -322,7 +369,7 @@ export default class RCEManager extends EventEmitter {
       return false;
     }
 
-    if (!this.socket) {
+    if (!this.socket || !this.socket.OPEN) {
       this.logger.error("Failed to send command: No websocket connection");
       return false;
     }
@@ -373,8 +420,11 @@ export default class RCEManager extends EventEmitter {
   }
 
   public async addServer(opts: ServerOptions) {
-    if (!this.socket) {
-      return this.logger.error("Failed to add server: No websocket connection");
+    if (!this.socket || !this.socket.OPEN) {
+      this.queue.push(() => this.addServer(opts));
+      return this.logger.warn(
+        "Failed to add server due to no websocket connection; added to queue"
+      );
     }
 
     this.logger.debug(`Adding server "${opts.identifier}"`);
@@ -452,5 +502,12 @@ export default class RCEManager extends EventEmitter {
 
   public getServer(identifier: string) {
     return this.servers.get(identifier);
+  }
+
+  private processQueue() {
+    while (this.queue.length) {
+      const callback = this.queue.shift();
+      if (callback) callback();
+    }
   }
 }
