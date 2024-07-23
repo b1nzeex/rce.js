@@ -26,14 +26,17 @@ export default class RCEManager extends EventEmitter {
     this.logger = new Logger(auth.logLevel);
     this.email = auth.email;
     this.password = auth.password;
+  }
 
-    this.authenticate(auth.wsTimeout || 60_000);
+  public async init(timeout: number = 60_000) {
+    await this.authenticate(timeout);
   }
 
   private async authenticate(timeout: number) {
     this.logger.debug("Attempting to authenticate");
 
-    this.connectWebsocket(timeout);
+    await this.refreshToken();
+    await this.connectWebsocket(timeout);
   }
 
   private async refreshToken() {
@@ -61,6 +64,7 @@ export default class RCEManager extends EventEmitter {
       }
 
       this.auth = await response.json();
+      setTimeout(() => this.refreshToken(), this.auth.expires_in * 1000);
 
       this.logger.debug("Token refreshed successfully");
     } catch (err) {
@@ -81,6 +85,7 @@ export default class RCEManager extends EventEmitter {
 
     this.socket.on("open", () => {
       this.logger.debug("Websocket connection established");
+      this.authenticateWebsocket();
     });
 
     this.socket.on("error", (err) => {
@@ -137,8 +142,6 @@ export default class RCEManager extends EventEmitter {
         this.logger.error(`Failed to handle message: ${err}`);
       }
     });
-
-    this.authenticateWebsocket();
   }
 
   private async authenticateWebsocket() {
@@ -154,13 +157,16 @@ export default class RCEManager extends EventEmitter {
       JSON.stringify({
         type: GPORTALWebsocketTypes.INIT,
         payload: {
-          Authorization: `Bearer ${this.auth.access_token}`,
+          authorization: this.auth.access_token,
         },
       })
     );
 
     setInterval(() => {
-      this.socket?.send(JSON.stringify({ type: "ka" }));
+      if (this.socket && this.socket.OPEN) {
+        this.logger.debug("Sending keep-alive message");
+        this.socket.send(JSON.stringify({ type: "ka" }));
+      }
     }, 30_000);
   }
 
@@ -356,5 +362,7 @@ export default class RCEManager extends EventEmitter {
     });
 
     this.socket.send(JSON.stringify(payload));
+
+    this.logger.info(`Server "${opts.identifier}" added successfully`);
   }
 }

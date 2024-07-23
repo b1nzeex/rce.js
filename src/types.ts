@@ -2,7 +2,6 @@ export interface AuthOptions {
   email: string;
   password: string;
   logLevel?: number;
-  wsTimeout?: number;
 }
 
 export interface Auth {
