@@ -449,4 +449,8 @@ export default class RCEManager extends EventEmitter {
 
     this.logger.info(`Server "${identifier}" removed successfully`);
   }
+
+  public getServer(identifier: string) {
+    return this.servers.get(identifier);
+  }
 }
