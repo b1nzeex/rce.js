@@ -87,11 +87,13 @@ export default class RCEManager extends EventEmitter {
       this.logger.error(`Websocket error: ${err.message}`);
       this.socket?.close();
       this.socket = undefined;
+      this.connectWebsocket(timeout);
     });
 
     this.socket.on("close", (code: number, reason: string) => {
       this.logger.error(`Websocket closed: ${code} ${reason}`);
       this.socket = undefined;
+      this.connectWebsocket(timeout);
     });
 
     this.socket.on("message", (data) => {
