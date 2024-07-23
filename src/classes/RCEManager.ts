@@ -33,6 +33,17 @@ export default class RCEManager extends EventEmitter {
     this.password = auth.password;
   }
 
+  /*
+    * Login to GPORTAL and establish a websocket connection
+
+    * @param {number} [timeout=60_000] - The timeout for the websocket connection
+    * @returns {Promise<void>}
+    * @memberof RCEManager
+    * @example
+    * await rce.init();
+    * @example
+    * await rce.init(30_000);
+  */
   public async init(timeout: number = 60_000) {
     await this.authenticate(timeout);
   }
@@ -360,6 +371,18 @@ export default class RCEManager extends EventEmitter {
     }
   }
 
+  /*
+    * Send a command to a Rust server
+
+    * @param {string} identifier - The server identifier
+    * @param {string} command - The command to send
+    * @returns {Promise<boolean>}
+    * @memberof RCEManager
+    * @example
+    * await rce.sendCommand("server1", "RemoveOwner username");
+    * @example
+    * await rce.sendCommand("server1", "BanID username");
+  */
   public async sendCommand(
     identifier: string,
     command: string
@@ -419,6 +442,17 @@ export default class RCEManager extends EventEmitter {
     }
   }
 
+  /*
+    * Add a Rust server to the manager
+
+    * @param {ServerOptions} opts - The server options
+    * @returns {Promise<void>}
+    * @memberof RCEManager
+    * @example
+    * await rce.addServer({ identifier: "server1", region: "US", serverId: 12345 });
+    * @example
+    * await rce.addServer({ identifier: "server2", region: "EU", serverId: 54321, refreshPlayers: 5 });
+  */
   public async addServer(opts: ServerOptions) {
     if (!this.socket || !this.socket.OPEN) {
       this.queue.push(() => this.addServer(opts));
@@ -481,6 +515,16 @@ export default class RCEManager extends EventEmitter {
     this.logger.info(`Server "${opts.identifier}" added successfully`);
   }
 
+  /*
+    * Remove a Rust server from the manager
+
+    * @param {string} identifier - The server identifier
+    * @returns {void}
+    * @memberof RCEManager
+    * @example
+    * rce.removeServer("server1");
+    * @example
+  */
   public removeServer(identifier: string) {
     if (!this.socket) {
       return this.logger.error(
@@ -500,6 +544,15 @@ export default class RCEManager extends EventEmitter {
     this.logger.info(`Server "${identifier}" removed successfully`);
   }
 
+  /*
+    * Get a Rust server from the manager
+
+    * @param {string}
+    * @returns {RustServer}
+    * @memberof RCEManager
+    * @example
+    * const server = rce.getServer("server1");
+  */
   public getServer(identifier: string) {
     return this.servers.get(identifier);
   }

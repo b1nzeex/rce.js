@@ -32,5 +32,6 @@ var RCEEvent;
     RCEEvent["QUICK_CHAT"] = "quick_chat";
     RCEEvent["NOTE_EDIT"] = "note_edit";
     RCEEvent["EVENT_START"] = "event_start";
+    RCEEvent["PLAYERLIST_UPDATE"] = "playerlist_update";
 })(RCEEvent || (exports.RCEEvent = RCEEvent = {}));
 //# sourceMappingURL=constants.js.map

@@ -25,6 +25,17 @@ class RCEManager extends events_1.EventEmitter {
         this.email = auth.email;
         this.password = auth.password;
     }
+    /*
+      * Login to GPORTAL and establish a websocket connection
+  
+      * @param {number} [timeout=60_000] - The timeout for the websocket connection
+      * @returns {Promise<void>}
+      * @memberof RCEManager
+      * @example
+      * await rce.init();
+      * @example
+      * await rce.init(30_000);
+    */
     async init(timeout = 60_000) {
         await this.authenticate(timeout);
     }
@@ -172,6 +183,7 @@ class RCEManager extends events_1.EventEmitter {
                     .match(/"(.*?)"/g)
                     .map((ign) => ign.replace(/"/g, ""));
                 players.shift();
+                this.emit(constants_1.RCEEvent.PLAYERLIST_UPDATE, { server, players });
                 return this.servers.set(server.identifier, {
                     ...server,
                     players,
@@ -267,6 +279,18 @@ class RCEManager extends events_1.EventEmitter {
             return undefined;
         }
     }
+    /*
+      * Send a command to a Rust server
+  
+      * @param {string} identifier - The server identifier
+      * @param {string} command - The command to send
+      * @returns {Promise<boolean>}
+      * @memberof RCEManager
+      * @example
+      * await rce.sendCommand("server1", "RemoveOwner username");
+      * @example
+      * await rce.sendCommand("server1", "BanID username");
+    */
     async sendCommand(identifier, command) {
         if (!this.auth?.access_token) {
             this.logger.error("Failed to send command: No access token");
@@ -311,6 +335,17 @@ class RCEManager extends events_1.EventEmitter {
             return false;
         }
     }
+    /*
+      * Add a Rust server to the manager
+  
+      * @param {ServerOptions} opts - The server options
+      * @returns {Promise<void>}
+      * @memberof RCEManager
+      * @example
+      * await rce.addServer({ identifier: "server1", region: "US", serverId: 12345 });
+      * @example
+      * await rce.addServer({ identifier: "server2", region: "EU", serverId: 54321, refreshPlayers: 5 });
+    */
     async addServer(opts) {
         if (!this.socket || !this.socket.OPEN) {
             this.queue.push(() => this.addServer(opts));
@@ -360,6 +395,16 @@ class RCEManager extends events_1.EventEmitter {
         }
         this.logger.info(`Server "${opts.identifier}" added successfully`);
     }
+    /*
+      * Remove a Rust server from the manager
+  
+      * @param {string} identifier - The server identifier
+      * @returns {void}
+      * @memberof RCEManager
+      * @example
+      * rce.removeServer("server1");
+      * @example
+    */
     removeServer(identifier) {
         if (!this.socket) {
             return this.logger.error("Failed to remove server: No websocket connection");
@@ -372,6 +417,15 @@ class RCEManager extends events_1.EventEmitter {
         this.requests.delete(identifier);
         this.logger.info(`Server "${identifier}" removed successfully`);
     }
+    /*
+      * Get a Rust server from the manager
+  
+      * @param {string}
+      * @returns {RustServer}
+      * @memberof RCEManager
+      * @example
+      * const server = rce.getServer("server1");
+    */
     getServer(identifier) {
         return this.servers.get(identifier);
     }
