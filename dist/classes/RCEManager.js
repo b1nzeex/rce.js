@@ -46,6 +46,7 @@ class RCEManager extends types_1.RCEEvents {
             args: ["--no-sandbox", "--disable-setuid-sandbox"],
         });
         const page = (await browser.pages())[0];
+        await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36");
         await page.goto(constants_1.GPORTALRoutes.HOME);
         await page
             .locator("#navigation__sidebar-wrapper > div.sidebar__quickmenu.row.g-0.mx-0.py-4 > div:nth-child(1) > button")

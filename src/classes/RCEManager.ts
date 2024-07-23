@@ -10,6 +10,7 @@ import { GPORTALRoutes, GPORTALWebsocketTypes, RCEEvent } from "../constants";
 import { WebSocket } from "ws";
 import puppeteer from "puppeteer-extra";
 import stealth from "puppeteer-extra-plugin-stealth";
+import randomUA from "random-useragent";
 import Logger from "./Logger";
 import { RCEEvents } from "../types";
 
@@ -58,7 +59,7 @@ export default class RCEManager extends RCEEvents {
 
     const page = (await browser.pages())[0];
     await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0"
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36"
     );
     await page.goto(GPORTALRoutes.HOME);
     await page
