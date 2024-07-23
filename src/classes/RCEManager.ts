@@ -262,6 +262,45 @@ export default class RCEManager extends EventEmitter {
     });
   }
 
+  private async resolveServerId(
+    region: "US" | "EU",
+    serverId: number
+  ): Promise<number | undefined> {
+    if (!this.auth?.access_token) {
+      this.logger.error("Failed to resolve server ID: No access token");
+      return undefined;
+    }
+
+    try {
+      const response = await fetch(GPORTALRoutes.COMMAND, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `${this.auth.token_type} ${this.auth.access_token}`,
+        },
+        body: JSON.stringify({
+          operationName: "sid",
+          variables: {
+            gameserverId: serverId,
+            region,
+          },
+          query:
+            "query sid($gameserverId: Int!, $region: REGION!) {\n  sid(gameserverId: $gameserverId, region: $region)\n}",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to resolve server ID: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data?.data?.sid as number;
+    } catch (err) {
+      this.logger.error(`Failed to resolve server ID: ${err}`);
+      return undefined;
+    }
+  }
+
   public async sendCommand(
     identifier: string,
     command: string
@@ -332,16 +371,18 @@ export default class RCEManager extends EventEmitter {
       return this.logger.error(`Server "${opts.identifier}" already exists`);
     }
 
+    const sid = await this.resolveServerId(opts.region, opts.serverId);
+
     this.servers.set(opts.identifier, {
       identifier: opts.identifier,
-      serverId: opts.serverId,
+      serverId: sid,
       region: opts.region,
     });
 
     const payload = {
       type: GPORTALWebsocketTypes.START,
       payload: {
-        variables: { sid: opts.serverId, region: opts.region },
+        variables: { sid, region: opts.region },
         extensions: {},
         operationName: "consoleMessages",
         query: `subscription consoleMessages($sid: Int!, $region: REGION!) {
@@ -356,7 +397,7 @@ export default class RCEManager extends EventEmitter {
     };
 
     this.requests.set(opts.identifier, {
-      sid: opts.serverId,
+      sid,
       region: opts.region,
       identifier: opts.identifier,
     });
@@ -364,5 +405,24 @@ export default class RCEManager extends EventEmitter {
     this.socket.send(JSON.stringify(payload));
 
     this.logger.info(`Server "${opts.identifier}" added successfully`);
+  }
+
+  public removeServer(identifier: string) {
+    if (!this.socket) {
+      return this.logger.error(
+        "Failed to remove server: No websocket connection"
+      );
+    }
+
+    this.logger.debug(`Removing server "${identifier}"`);
+
+    if (!this.servers.has(identifier)) {
+      return this.logger.error(`Server "${identifier}" does not exist`);
+    }
+
+    this.servers.delete(identifier);
+    this.requests.delete(identifier);
+
+    this.logger.info(`Server "${identifier}" removed successfully`);
   }
 }
