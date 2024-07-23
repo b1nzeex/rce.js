@@ -232,7 +232,9 @@ export default class RCEManager extends EventEmitter {
         /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}:LOG:DEFAULT: /gm
       );
 
-    if (logMessages.length > 2) return;
+    if (logMessages.length > 2) {
+      return this.emit(RCEEvent.CONNECTED, { server });
+    }
 
     logMessages.forEach((logMessage) => {
       const log = logMessage.trim();
