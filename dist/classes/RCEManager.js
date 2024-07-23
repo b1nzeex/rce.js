@@ -4,13 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("../constants");
-const events_1 = require("events");
 const ws_1 = require("ws");
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
 const Logger_1 = __importDefault(require("./Logger"));
+const types_1 = require("../types");
 puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
-class RCEManager extends events_1.EventEmitter {
+class RCEManager extends types_1.RCEEvents {
     logger;
     email;
     password;
@@ -205,7 +205,7 @@ class RCEManager extends events_1.EventEmitter {
                 const ign = log.includes("[CHAT LOCAL]")
                     ? log.split("[CHAT LOCAL]")[1].split(" : ")[0]
                     : log.split("[CHAT SERVER]")[1].split(" : ")[0];
-                this.emit(constants_1.RCEEvent.QUICK_CHAT, { server, type, ign, msg });
+                this.emit(constants_1.RCEEvent.QUICK_CHAT, { server, type, ign, message: msg });
             }
             // PLAYER_JOINED event
             if (log.includes("joined [xboxone]") || log.includes("joined [ps4]")) {

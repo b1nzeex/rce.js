@@ -1,6 +1,6 @@
 import { AuthOptions, RustServer, ServerOptions } from "../types";
-import { EventEmitter } from "events";
-export default class RCEManager extends EventEmitter {
+import { RCEEvents } from "../types";
+export default class RCEManager extends RCEEvents {
     private logger;
     private email;
     private password;
