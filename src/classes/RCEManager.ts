@@ -7,15 +7,15 @@ import {
   ServerOptions,
 } from "../types";
 import { GPORTALRoutes, GPORTALWebsocketTypes, RCEEvent } from "../constants";
-import { EventEmitter } from "events";
 import { WebSocket } from "ws";
 import puppeteer from "puppeteer-extra";
 import stealth from "puppeteer-extra-plugin-stealth";
 import Logger from "./Logger";
+import { RCEEvents } from "../types";
 
 puppeteer.use(stealth());
 
-export default class RCEManager extends EventEmitter {
+export default class RCEManager extends RCEEvents {
   private logger: Logger;
   private email: string;
   private password: string;
@@ -232,9 +232,7 @@ export default class RCEManager extends EventEmitter {
         /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}:LOG:DEFAULT: /gm
       );
 
-    if (logMessages.length > 2) {
-      return this.emit(RCEEvent.CONNECTED, { server });
-    }
+    if (logMessages.length > 2) return;
 
     logMessages.forEach((logMessage) => {
       const log = logMessage.trim();
@@ -277,7 +275,7 @@ export default class RCEManager extends EventEmitter {
           ? log.split("[CHAT LOCAL]")[1].split(" : ")[0]
           : log.split("[CHAT SERVER]")[1].split(" : ")[0];
 
-        this.emit(RCEEvent.QUICK_CHAT, { server, type, ign, msg });
+        this.emit(RCEEvent.QUICK_CHAT, { server, type, ign, message: msg });
       }
 
       // PLAYER_JOINED event
