@@ -53,6 +53,7 @@ export default class RCEManager extends RCEEvents {
 
     const browser = await puppeteer.launch({
       defaultViewport: null,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     const page = (await browser.pages())[0];
