@@ -2,9 +2,9 @@ import { RCEEvent } from "./constants";
 import { EventEmitter } from "events";
 
 export interface AuthOptions {
-  email: string;
-  password: string;
+  refreshToken: string;
   logLevel?: number;
+  saveAuth?: boolean;
 }
 
 export interface Auth {

@@ -8,30 +8,43 @@ import {
 } from "../types";
 import { GPORTALRoutes, GPORTALWebsocketTypes, RCEEvent } from "../constants";
 import { WebSocket } from "ws";
-import puppeteer from "puppeteer-extra";
-import stealth from "puppeteer-extra-plugin-stealth";
-import randomUA from "random-useragent";
+import { writeFileSync, readFileSync } from "fs";
 import Logger from "./Logger";
 import { RCEEvents } from "../types";
 
-puppeteer.use(stealth());
-
 export default class RCEManager extends RCEEvents {
   private logger: Logger;
-  private email: string;
-  private password: string;
   private auth?: Auth;
+  private saveAuth: boolean = false;
   private servers: Map<string, RustServer> = new Map();
   private socket?: WebSocket;
   private requests: Map<string, WebsocketRequest> = new Map();
   private queue: (() => void)[] = [];
+  private providedToken: string = "";
+  private failedAuth: boolean = false;
 
+  /*
+    * Create a new RCEManager instance
+
+    * @param {AuthOptions} auth - The authentication options
+    * @memberof RCEManager
+    * @example
+    * const rce = new RCEManager({ refreshToken: "your_refresh_token" });
+    * @example
+    * const rce = new RCEManager({ refreshToken: "your_refresh_token", logLevel: LogLevel.INFO, saveAuth: true });
+  */
   public constructor(auth: AuthOptions) {
     super();
 
     this.logger = new Logger(auth.logLevel);
-    this.email = auth.email;
-    this.password = auth.password;
+    this.auth = {
+      refresh_token: auth.refreshToken,
+      access_token: "",
+      token_type: "Bearer",
+      expires_in: 0,
+    };
+    this.saveAuth = auth.saveAuth;
+    this.providedToken = auth.refreshToken;
   }
 
   /*
@@ -52,59 +65,40 @@ export default class RCEManager extends RCEEvents {
   private async authenticate(timeout: number) {
     this.logger.debug("Attempting to authenticate");
 
-    const browser = await puppeteer.launch({
-      defaultViewport: null,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      headless: true,
-    });
-
-    const page = (await browser.pages())[0];
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36"
-    );
-    await page.setExtraHTTPHeaders({
-      "Accept-Language": "en",
-    });
-    await page.goto(GPORTALRoutes.HOME);
-    await page
-      .locator(
-        "#navigation__sidebar-wrapper > div.sidebar__quickmenu.row.g-0.mx-0.py-4 > div:nth-child(1) > button"
-      )
-      .click();
-    await page.locator("#kc-login").waitHandle();
-    await page.locator("#username").fill(this.email);
-    await page.locator("#password").fill(this.password);
-    await page.locator("#kc-login").click();
-
-    const selector = await page
-      .locator(
-        "#navigation__sidebar-wrapper > div.row.g-0.sidebar__quickmenu.mx-0.py-4 > div.quickmenu__profile.col.col-3.text-center > p"
-      )
-      .waitHandle()
-      .catch((err) => err);
-    if (!selector || selector instanceof Error) {
-      this.logger.error("Failed to authenticate: Invalid credentials");
-      return;
+    const s = await this.refreshToken();
+    if (s) {
+      this.logger.info("Authenticated successfully");
+      await this.connectWebsocket(timeout);
+    } else {
+      this.logger.error("Failed to authenticate");
+      setTimeout(() => this.authenticate(timeout), 60_000);
     }
-
-    const session = await page.evaluate(() =>
-      localStorage.getItem("gp-session")
-    );
-    this.auth = JSON.parse(session);
-
-    await browser.close();
-
-    this.logger.info("Authenticated successfully");
-
-    await this.refreshToken();
-    await this.connectWebsocket(timeout);
   }
 
   private async refreshToken() {
     this.logger.debug("Attempting to refresh token");
 
+    if (this.saveAuth) {
+      let data = null;
+
+      this.logger.debug("Checking for saved auth data");
+
+      try {
+        data = readFileSync("auth.json", "utf-8");
+      } catch (err) {
+        // This is intentionally empty
+      }
+
+      if (data) this.auth = JSON.parse(data);
+
+      if (this.auth?.refresh_token !== this.providedToken && this.failedAuth) {
+        this.auth.refresh_token = this.providedToken;
+      }
+    }
+
     if (!this.auth?.refresh_token) {
-      return this.logger.error("Failed to refresh token: No refresh token");
+      this.logger.error("Failed to refresh token: No refresh token");
+      return false;
     }
 
     try {
@@ -121,15 +115,31 @@ export default class RCEManager extends RCEEvents {
       });
 
       if (!response.ok) {
+        if (!this.failedAuth) {
+          this.failedAuth = true;
+          return this.refreshToken();
+        }
+
         throw new Error(`Failed to refresh token: ${response.statusText}`);
       }
 
       this.auth = await response.json();
       setTimeout(() => this.refreshToken(), this.auth.expires_in * 1000);
 
+      if (this.saveAuth) {
+        this.logger.debug("Saving auth data");
+        try {
+          writeFileSync("auth.json", JSON.stringify(this.auth));
+        } catch (err) {
+          this.logger.warn(`Failed to save auth data: ${err}`);
+        }
+      }
+
       this.logger.debug("Token refreshed successfully");
+      return true;
     } catch (err) {
       this.logger.error(`Failed to refresh token: ${err}`);
+      return false;
     }
   }
 

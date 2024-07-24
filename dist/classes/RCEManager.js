@@ -5,25 +5,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("../constants");
 const ws_1 = require("ws");
-const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
-const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
+const fs_1 = require("fs");
 const Logger_1 = __importDefault(require("./Logger"));
 const types_1 = require("../types");
-puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
 class RCEManager extends types_1.RCEEvents {
     logger;
-    email;
-    password;
     auth;
+    saveAuth = false;
     servers = new Map();
     socket;
     requests = new Map();
     queue = [];
+    providedToken = "";
+    failedAuth = false;
     constructor(auth) {
         super();
         this.logger = new Logger_1.default(auth.logLevel);
-        this.email = auth.email;
-        this.password = auth.password;
+        this.auth = {
+            refresh_token: auth.refreshToken,
+            access_token: "",
+            token_type: "Bearer",
+            expires_in: 0,
+        };
+        this.saveAuth = auth.saveAuth;
+        this.providedToken = auth.refreshToken;
     }
     /*
       * Login to GPORTAL and establish a websocket connection
@@ -41,40 +46,36 @@ class RCEManager extends types_1.RCEEvents {
     }
     async authenticate(timeout) {
         this.logger.debug("Attempting to authenticate");
-        const browser = await puppeteer_extra_1.default.launch({
-            defaultViewport: null,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
-            headless: false,
-        });
-        const page = (await browser.pages())[0];
-        await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36");
-        await page.goto(constants_1.GPORTALRoutes.HOME);
-        await page
-            .locator("#navigation__sidebar-wrapper > div.sidebar__quickmenu.row.g-0.mx-0.py-4 > div:nth-child(1) > button")
-            .click();
-        await page.locator("#kc-login").waitHandle();
-        await page.locator("#username").fill(this.email);
-        await page.locator("#password").fill(this.password);
-        await page.locator("#kc-login").click();
-        const selector = await page
-            .locator("#navigation__sidebar-wrapper > div.row.g-0.sidebar__quickmenu.mx-0.py-4 > div.quickmenu__profile.col.col-3.text-center > p")
-            .waitHandle()
-            .catch((err) => err);
-        if (!selector || selector instanceof Error) {
-            this.logger.error("Failed to authenticate: Invalid credentials");
-            return;
+        const s = await this.refreshToken();
+        if (s) {
+            this.logger.info("Authenticated successfully");
+            await this.connectWebsocket(timeout);
         }
-        const session = await page.evaluate(() => localStorage.getItem("gp-session"));
-        this.auth = JSON.parse(session);
-        await browser.close();
-        this.logger.info("Authenticated successfully");
-        await this.refreshToken();
-        await this.connectWebsocket(timeout);
+        else {
+            this.logger.error("Failed to authenticate");
+            setTimeout(() => this.authenticate(timeout), 60_000);
+        }
     }
     async refreshToken() {
         this.logger.debug("Attempting to refresh token");
+        if (this.saveAuth) {
+            let data = null;
+            this.logger.debug("Checking for saved auth data");
+            try {
+                data = (0, fs_1.readFileSync)("auth.json", "utf-8");
+            }
+            catch (err) {
+                // This is intentionally empty
+            }
+            if (data)
+                this.auth = JSON.parse(data);
+            if (this.auth?.refresh_token !== this.providedToken && this.failedAuth) {
+                this.auth.refresh_token = this.providedToken;
+            }
+        }
         if (!this.auth?.refresh_token) {
-            return this.logger.error("Failed to refresh token: No refresh token");
+            this.logger.error("Failed to refresh token: No refresh token");
+            return false;
         }
         try {
             const response = await fetch(constants_1.GPORTALRoutes.REFRESH, {
@@ -89,14 +90,29 @@ class RCEManager extends types_1.RCEEvents {
                 }),
             });
             if (!response.ok) {
+                if (!this.failedAuth) {
+                    this.failedAuth = true;
+                    return this.refreshToken();
+                }
                 throw new Error(`Failed to refresh token: ${response.statusText}`);
             }
             this.auth = await response.json();
             setTimeout(() => this.refreshToken(), this.auth.expires_in * 1000);
+            if (this.saveAuth) {
+                this.logger.debug("Saving auth data");
+                try {
+                    (0, fs_1.writeFileSync)("auth.json", JSON.stringify(this.auth));
+                }
+                catch (err) {
+                    this.logger.warn(`Failed to save auth data: ${err}`);
+                }
+            }
             this.logger.debug("Token refreshed successfully");
+            return true;
         }
         catch (err) {
             this.logger.error(`Failed to refresh token: ${err}`);
+            return false;
         }
     }
     async connectWebsocket(timeout) {

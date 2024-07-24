@@ -14,8 +14,8 @@ npm i b1nzeex/rce.js
 import { RCEManager, LogLevel, RCEEvent } from "rce.js";
 
 const rce = new RCEManager({
-  email: "your-gportal-email", // Don't worry, we don't store this!
-  password: "your-gportal-password", // Don't worry, we don't store this!
+  refreshToken: "", // Obtained from g-portal.com Local Storage (Inspect Element)
+  saveAuth: true, // Setting to "true" will save your G-PORTAL auth information to a JSON file so you don't have to enter credentials everytime you restart your application
   logLevel: LogLevel.INFO, // Uses "INFO" by default if left blank
 });
 
@@ -59,8 +59,8 @@ rce.on(RCEEvent.PLAYER_KILL, (data) => {
 const { RCEManager, LogLevel, RCEEvent } = require("rce.js");
 
 const rce = new RCEManager({
-  email: "your-gportal-email", // Don't worry, we don't store this!
-  password: "your-gportal-password", // Don't worry, we don't store this!
+  refreshToken: "", // Obtained from g-portal.com Local Storage (Inspect Element)
+  saveAuth: true, // Setting to "true" will save your G-PORTAL auth information to a JSON file so you don't have to enter credentials everytime you restart your application
   logLevel: LogLevel.INFO, // Uses "INFO" by default if left blank
 });
 
@@ -97,3 +97,16 @@ rce.on(RCEEvent.PLAYER_KILL, (data) => {
   );
 });
 ```
+
+## How To Obtain G-PORTAL Refresh Token
+
+![GIF demonstrating how to obtain G-PORTAL refresh token](https://i.imgur.com/6jL2UgO.gif)
+
+- **Step 1.** Navigate to [G-PORTAL Website](https://g-portal.com/en)
+- **Step 2.** Login to G-PORTAL
+- **Step 3.** In your browser, press `CTRL + SHIFT + I` all together to open the Developer Tools (inspect)
+- **Step 4.** Navigate to the `Application` tab
+- **Step 5.** Navigate to `Local Storage`
+- **Step 6.** Select `gp-session`
+- **Step 7.** Right click on the `refresh_token` and select `Copy Value`
+- **Step 8.** You're done! Now paste the refresh token into your code
