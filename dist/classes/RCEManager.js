@@ -18,6 +18,16 @@ class RCEManager extends types_1.RCEEvents {
     queue = [];
     providedToken = "";
     failedAuth = false;
+    /*
+      * Create a new RCEManager instance
+  
+      * @param {AuthOptions} auth - The authentication options
+      * @memberof RCEManager
+      * @example
+      * const rce = new RCEManager({ refreshToken: "your_refresh_token" });
+      * @example
+      * const rce = new RCEManager({ refreshToken: "your_refresh_token", logLevel: LogLevel.INFO, saveAuth: true });
+    */
     constructor(auth) {
         super();
         this.logger = new Logger_1.default(auth.logLevel);
@@ -29,6 +39,17 @@ class RCEManager extends types_1.RCEEvents {
         };
         this.saveAuth = auth.saveAuth;
         this.providedToken = auth.refreshToken;
+        const servers = auth.servers || [];
+        servers.forEach((server) => {
+            this.servers.set(server.identifier, {
+                identifier: server.identifier,
+                serverId: server.serverId,
+                region: server.region,
+                refreshPlayers: server.refreshPlayers || 0,
+                players: [],
+                added: false,
+            });
+        });
     }
     /*
       * Login to GPORTAL and establish a websocket connection
@@ -124,10 +145,14 @@ class RCEManager extends types_1.RCEEvents {
             },
             timeout,
         });
-        this.socket.on("open", () => {
+        this.socket.on("open", async () => {
             this.logger.debug("Websocket connection established");
-            this.authenticateWebsocket();
-            this.processQueue();
+            await this.authenticateWebsocket();
+            await this.processQueue();
+            this.servers.forEach(async (server) => {
+                if (!server.added)
+                    await this.addServer(server);
+            });
         });
         this.socket.on("error", (err) => {
             this.logger.error(`Websocket error: ${err.message}`);
@@ -371,9 +396,6 @@ class RCEManager extends types_1.RCEEvents {
             return this.logger.warn("Failed to add server due to no websocket connection; added to queue");
         }
         this.logger.debug(`Adding server "${opts.identifier}"`);
-        if (this.servers.has(opts.identifier)) {
-            return this.logger.error(`Server "${opts.identifier}" already exists`);
-        }
         const sid = await this.resolveServerId(opts.region, opts.serverId);
         this.servers.set(opts.identifier, {
             identifier: opts.identifier,
@@ -381,6 +403,7 @@ class RCEManager extends types_1.RCEEvents {
             region: opts.region,
             refreshPlayers: opts.refreshPlayers || 0,
             players: [],
+            added: true,
         });
         const payload = {
             type: constants_1.GPORTALWebsocketTypes.START,
@@ -413,28 +436,6 @@ class RCEManager extends types_1.RCEEvents {
             }, opts.refreshPlayers * 60_000);
         }
         this.logger.info(`Server "${opts.identifier}" added successfully`);
-    }
-    /*
-      * Remove a Rust server from the manager
-  
-      * @param {string} identifier - The server identifier
-      * @returns {void}
-      * @memberof RCEManager
-      * @example
-      * rce.removeServer("server1");
-      * @example
-    */
-    removeServer(identifier) {
-        if (!this.socket) {
-            return this.logger.error("Failed to remove server: No websocket connection");
-        }
-        this.logger.debug(`Removing server "${identifier}"`);
-        if (!this.servers.has(identifier)) {
-            return this.logger.error(`Server "${identifier}" does not exist`);
-        }
-        this.servers.delete(identifier);
-        this.requests.delete(identifier);
-        this.logger.info(`Server "${identifier}" removed successfully`);
     }
     /*
       * Get a Rust server from the manager

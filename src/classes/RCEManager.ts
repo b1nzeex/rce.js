@@ -45,6 +45,18 @@ export default class RCEManager extends RCEEvents {
     };
     this.saveAuth = auth.saveAuth;
     this.providedToken = auth.refreshToken;
+
+    const servers = auth.servers || [];
+    servers.forEach((server) => {
+      this.servers.set(server.identifier, {
+        identifier: server.identifier,
+        serverId: server.serverId,
+        region: server.region,
+        refreshPlayers: server.refreshPlayers || 0,
+        players: [],
+        added: false,
+      });
+    });
   }
 
   /*
@@ -154,10 +166,14 @@ export default class RCEManager extends RCEEvents {
       timeout,
     });
 
-    this.socket.on("open", () => {
+    this.socket.on("open", async () => {
       this.logger.debug("Websocket connection established");
-      this.authenticateWebsocket();
-      this.processQueue();
+      await this.authenticateWebsocket();
+      await this.processQueue();
+
+      this.servers.forEach(async (server) => {
+        if (!server.added) await this.addServer(server);
+      });
     });
 
     this.socket.on("error", (err) => {
@@ -472,7 +488,7 @@ export default class RCEManager extends RCEEvents {
     * @example
     * await rce.addServer({ identifier: "server2", region: "EU", serverId: 54321, refreshPlayers: 5 });
   */
-  public async addServer(opts: ServerOptions) {
+  private async addServer(opts: ServerOptions) {
     if (!this.socket || !this.socket.OPEN) {
       this.queue.push(() => this.addServer(opts));
       return this.logger.warn(
@@ -482,10 +498,6 @@ export default class RCEManager extends RCEEvents {
 
     this.logger.debug(`Adding server "${opts.identifier}"`);
 
-    if (this.servers.has(opts.identifier)) {
-      return this.logger.error(`Server "${opts.identifier}" already exists`);
-    }
-
     const sid = await this.resolveServerId(opts.region, opts.serverId);
 
     this.servers.set(opts.identifier, {
@@ -494,6 +506,7 @@ export default class RCEManager extends RCEEvents {
       region: opts.region,
       refreshPlayers: opts.refreshPlayers || 0,
       players: [],
+      added: true,
     });
 
     const payload = {
@@ -532,35 +545,6 @@ export default class RCEManager extends RCEEvents {
     }
 
     this.logger.info(`Server "${opts.identifier}" added successfully`);
-  }
-
-  /*
-    * Remove a Rust server from the manager
-
-    * @param {string} identifier - The server identifier
-    * @returns {void}
-    * @memberof RCEManager
-    * @example
-    * rce.removeServer("server1");
-    * @example
-  */
-  public removeServer(identifier: string) {
-    if (!this.socket) {
-      return this.logger.error(
-        "Failed to remove server: No websocket connection"
-      );
-    }
-
-    this.logger.debug(`Removing server "${identifier}"`);
-
-    if (!this.servers.has(identifier)) {
-      return this.logger.error(`Server "${identifier}" does not exist`);
-    }
-
-    this.servers.delete(identifier);
-    this.requests.delete(identifier);
-
-    this.logger.info(`Server "${identifier}" removed successfully`);
   }
 
   /*

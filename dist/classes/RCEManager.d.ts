@@ -1,4 +1,4 @@
-import { AuthOptions, RustServer, ServerOptions } from "../types";
+import { AuthOptions, RustServer } from "../types";
 import { RCEEvents } from "../types";
 export default class RCEManager extends RCEEvents {
     private logger;
@@ -19,8 +19,7 @@ export default class RCEManager extends RCEEvents {
     private handleWebsocketMessage;
     private resolveServerId;
     sendCommand(identifier: string, command: string): Promise<boolean>;
-    addServer(opts: ServerOptions): Promise<void>;
-    removeServer(identifier: string): void;
+    private addServer;
     getServer(identifier: string): RustServer;
     private processQueue;
 }

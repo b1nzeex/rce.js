@@ -17,28 +17,22 @@ const rce = new RCEManager({
   refreshToken: "", // Obtained from g-portal.com Local Storage (Inspect Element)
   saveAuth: true, // Setting to "true" will save your G-PORTAL auth information to a JSON file so you don't have to enter credentials everytime you restart your application
   logLevel: LogLevel.INFO, // Uses "INFO" by default if left blank
+  servers: [
+    {
+      identifier: "server1", // A unique name for your server to be recognised by
+      region: "US", // It's either EU or US
+      serverId: 1487554, // You can find this in the URL on your server page
+      refreshPlayers: 2, // This will fetch the playerlist every 2 minutes, good for displaying player count
+    },
+    {
+      identifier: "server2",
+      region: "EU",
+      serverId: 1487367,
+    }, // As we didn't specify a "refreshPlayers" value, the playerlist won't be fetched
+  ], // An array of servers to listen to
 });
 
 await rce.init(); // This attempts to login to GPORTAL - this is required for everything else to function
-
-const servers = [
-  {
-    identifier: "server1", // A unique name for your server to be recognised by
-    region: "US", // It's either EU or US
-    serverId: 1487554, // You can find this in the URL on your server page
-    refreshPlayers: 2, // This will fetch the playerlist every 2 minutes, good for displaying player count
-  },
-  {
-    identifier: "server2",
-    region: "EU",
-    serverId: 1487367,
-  }, // As we didn't specify a "refreshPlayers" value, the playerlist won't be fetched
-];
-
-servers.forEach(async (server) => {
-  // This will connect to all provided servers and start listening for events
-  await rce.addServer(server);
-});
 
 rce.on(RCEEvent.PLAYER_KILL, (data) => {
   console.log(
@@ -62,28 +56,22 @@ const rce = new RCEManager({
   refreshToken: "", // Obtained from g-portal.com Local Storage (Inspect Element)
   saveAuth: true, // Setting to "true" will save your G-PORTAL auth information to a JSON file so you don't have to enter credentials everytime you restart your application
   logLevel: LogLevel.INFO, // Uses "INFO" by default if left blank
+  servers: [
+    {
+      identifier: "server1", // A unique name for your server to be recognised by
+      region: "US", // It's either EU or US
+      serverId: 1487554, // You can find this in the URL on your server page
+      refreshPlayers: 2, // This will fetch the playerlist every 2 minutes, good for displaying player count
+    },
+    {
+      identifier: "server2",
+      region: "EU",
+      serverId: 1487367,
+    }, // As we didn't specify a "refreshPlayers" value, the playerlist won't be fetched
+  ], // An array of servers to listen to
 });
 
 await rce.init(); // This attempts to login to GPORTAL - this is required for everything else to function
-
-const servers = [
-  {
-    identifier: "server1", // A unique name for your server to be recognised by
-    region: "US", // It's either EU or US
-    serverId: 1487554, // You can find this in the URL on your server page
-    refreshPlayers: 2, // This will fetch the playerlist every 2 minutes, good for displaying player count
-  },
-  {
-    identifier: "server2",
-    region: "EU",
-    serverId: 1487367,
-  }, // As we didn't specify a "refreshPlayers" value, the playerlist won't be fetched
-];
-
-servers.forEach(async (server) => {
-  // This will connect to all provided servers and start listening for events
-  await rce.addServer(server);
-});
 
 rce.on(RCEEvent.PLAYER_KILL, (data) => {
   console.log(

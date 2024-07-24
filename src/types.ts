@@ -3,6 +3,7 @@ import { EventEmitter } from "events";
 
 export interface AuthOptions {
   refreshToken: string;
+  servers: ServerOptions[];
   logLevel?: number;
   saveAuth?: boolean;
 }
@@ -20,6 +21,7 @@ export interface RustServer {
   region: "US" | "EU";
   refreshPlayers?: number;
   players: string[];
+  added: boolean;
 }
 
 export interface ServerOptions {
