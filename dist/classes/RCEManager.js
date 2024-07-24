@@ -10,35 +10,54 @@ const Logger_1 = __importDefault(require("./Logger"));
 const types_1 = require("../types");
 class RCEManager extends types_1.RCEEvents {
     logger;
-    auth;
-    saveAuth = false;
+    auth = {
+        refresh_token: "",
+        access_token: "",
+        token_type: "Bearer",
+        expires_in: 0,
+    };
     servers = new Map();
     socket;
     requests = new Map();
     queue = [];
-    providedToken = "";
-    failedAuth = false;
+    authMethod = {
+        method: "manual",
+        refreshToken: "",
+        file: "",
+    };
     /*
       * Create a new RCEManager instance
   
       * @param {AuthOptions} auth - The authentication options
       * @memberof RCEManager
       * @example
-      * const rce = new RCEManager({ refreshToken: "your_refresh_token" });
+      * const rce = new RCEManager({ refreshToken: "", servers: [{ identifier: "server1", region: "US", serverId: 12345 }], logLevel: LogLevel.INFO, authMethod: "manual" });
       * @example
-      * const rce = new RCEManager({ refreshToken: "your_refresh_token", logLevel: LogLevel.INFO, saveAuth: true });
+      * const rce = new RCEManager({ servers: [{ identifier: "server1", region: "US", serverId: 12345 }], logLevel: LogLevel.INFO, authMethod: "file", file: "auth.txt" });
     */
     constructor(auth) {
         super();
         this.logger = new Logger_1.default(auth.logLevel);
-        this.auth = {
-            refresh_token: auth.refreshToken,
-            access_token: "",
-            token_type: "Bearer",
-            expires_in: 0,
-        };
-        this.saveAuth = auth.saveAuth;
-        this.providedToken = auth.refreshToken;
+        this.authMethod.refreshToken = auth.refreshToken;
+        this.authMethod.file = auth.file || "auth.txt";
+        this.authMethod.method = auth.authMethod || "manual";
+        if (this.authMethod.method === "manual") {
+            if (!auth.refreshToken) {
+                throw new Error("No refreshToken argument provided; required for manual auth");
+            }
+            this.auth.refresh_token = auth.refreshToken;
+        }
+        if (this.authMethod.method === "file") {
+            try {
+                const data = (0, fs_1.readFileSync)(this.authMethod.file, "utf-8");
+                this.auth.refresh_token = data;
+            }
+            catch (err) {
+                this.logger.warn("File not found; creating new auth file");
+                (0, fs_1.writeFileSync)(this.authMethod.file, "REPLACE_WITH_REFRESH_TOKEN");
+                throw new Error("No refresh token provided in file; please add it");
+            }
+        }
         const servers = auth.servers || [];
         servers.forEach((server) => {
             this.servers.set(server.identifier, {
@@ -79,21 +98,6 @@ class RCEManager extends types_1.RCEEvents {
     }
     async refreshToken() {
         this.logger.debug("Attempting to refresh token");
-        if (this.saveAuth) {
-            let data = null;
-            this.logger.debug("Checking for saved auth data");
-            try {
-                data = (0, fs_1.readFileSync)("auth.json", "utf-8");
-            }
-            catch (err) {
-                // This is intentionally empty
-            }
-            if (data)
-                this.auth = JSON.parse(data);
-            if (this.auth?.refresh_token !== this.providedToken && this.failedAuth) {
-                this.auth.refresh_token = this.providedToken;
-            }
-        }
         if (!this.auth?.refresh_token) {
             this.logger.error("Failed to refresh token: No refresh token");
             return false;
@@ -111,22 +115,13 @@ class RCEManager extends types_1.RCEEvents {
                 }),
             });
             if (!response.ok) {
-                if (!this.failedAuth) {
-                    this.failedAuth = true;
-                    return this.refreshToken();
-                }
                 throw new Error(`Failed to refresh token: ${response.statusText}`);
             }
             this.auth = await response.json();
             setTimeout(() => this.refreshToken(), this.auth.expires_in * 1000);
-            if (this.saveAuth) {
-                this.logger.debug("Saving auth data");
-                try {
-                    (0, fs_1.writeFileSync)("auth.json", JSON.stringify(this.auth));
-                }
-                catch (err) {
-                    this.logger.warn(`Failed to save auth data: ${err}`);
-                }
+            if (this.authMethod.method === "file" && this.authMethod.file) {
+                this.logger.debug("Writing auth data to file");
+                (0, fs_1.writeFileSync)(this.authMethod.file, this.auth.refresh_token);
             }
             this.logger.debug("Token refreshed successfully");
             return true;

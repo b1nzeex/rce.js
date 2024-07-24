@@ -3,13 +3,11 @@ import { RCEEvents } from "../types";
 export default class RCEManager extends RCEEvents {
     private logger;
     private auth?;
-    private saveAuth;
     private servers;
     private socket?;
     private requests;
     private queue;
-    private providedToken;
-    private failedAuth;
+    private authMethod;
     constructor(auth: AuthOptions);
     init(timeout?: number): Promise<void>;
     private authenticate;

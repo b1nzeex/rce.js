@@ -2,10 +2,11 @@ import { RCEEvent } from "./constants";
 import { EventEmitter } from "events";
 
 export interface AuthOptions {
-  refreshToken: string;
   servers: ServerOptions[];
   logLevel?: number;
-  saveAuth?: boolean;
+  refreshToken?: string;
+  file?: string;
+  authMethod?: "file" | "manual";
 }
 
 export interface Auth {

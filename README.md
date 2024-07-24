@@ -14,8 +14,8 @@ npm i b1nzeex/rce.js
 import { RCEManager, LogLevel, RCEEvent } from "rce.js";
 
 const rce = new RCEManager({
-  refreshToken: "", // Obtained from g-portal.com Local Storage (Inspect Element)
-  saveAuth: true, // Setting to "true" will save your G-PORTAL auth information to a JSON file so you don't have to enter credentials everytime you restart your application
+  authMethod: "manual", // Can set to "manual" or "file" - manual requires a "refreshToken" in the AuthOptions and must be updated everytime you restart your application, file handles auth through a txt file which stores your refresh token
+  refreshToken: "", // Obtained via the G-PORTAL website, scroll to the bottom of this documentation for a guide on obtaining this
   logLevel: LogLevel.INFO, // Uses "INFO" by default if left blank
   servers: [
     {
@@ -53,8 +53,8 @@ rce.on(RCEEvent.PLAYER_KILL, (data) => {
 const { RCEManager, LogLevel, RCEEvent } = require("rce.js");
 
 const rce = new RCEManager({
-  refreshToken: "", // Obtained from g-portal.com Local Storage (Inspect Element)
-  saveAuth: true, // Setting to "true" will save your G-PORTAL auth information to a JSON file so you don't have to enter credentials everytime you restart your application
+  authMethod: "file", // Can set to "manual" or "file" - manual requires a "refreshToken" in the AuthOptions and must be updated everytime you restart your application, file handles auth through a txt file which stores your refresh token
+  file: "", // By default, it will create an "auth.txt" file if not specified, otherwise you can provide your own file path
   logLevel: LogLevel.INFO, // Uses "INFO" by default if left blank
   servers: [
     {

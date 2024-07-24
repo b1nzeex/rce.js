@@ -21,10 +21,6 @@
     "@types/ws": "^8.5.11"
   },
   "dependencies": {
-    "puppeteer": "^22.13.1",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "random-useragent": "^0.5.0",
     "ws": "^8.18.0"
   }
 }
