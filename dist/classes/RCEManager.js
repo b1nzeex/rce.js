@@ -488,6 +488,37 @@ class RCEManager extends types_1.RCEEvents {
     getServer(identifier) {
         return this.servers.get(identifier);
     }
+    /*
+      * Remove a Rust server from the manager
+  
+      * @param {string}
+      * @memberof RCEManager
+      * @example
+      * rce.removeServer("server1");
+      * @example
+      * rce.removeServer("my-solo-duo-trio-3x");
+    */
+    removeServer(identifier) {
+        this.servers.delete(identifier);
+        const request = this.requests.get(identifier);
+        if (request)
+            this.requests.delete(request.identifier);
+        this.logger.info(`Server "${identifier}" removed successfully`);
+    }
+    /*
+      * Get all Rust servers from the manager
+  
+      * @returns {Map<string, RustServer>}
+      * @memberof RCEManager
+      * @example
+      * const servers = rce.getServers();
+      * for (const [identifier, server] of servers) {
+      *  console.log(identifier, server);
+      * }
+    */
+    getServers() {
+        return this.servers;
+    }
     processQueue() {
         while (this.queue.length) {
             const callback = this.queue.shift();

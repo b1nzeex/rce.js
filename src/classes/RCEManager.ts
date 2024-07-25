@@ -549,7 +549,7 @@ export default class RCEManager extends RCEEvents {
     * @example
     * await rce.addServer({ identifier: "server2", region: "EU", serverId: 54321, refreshPlayers: 5 });
   */
-  private async addServer(opts: ServerOptions) {
+  public async addServer(opts: ServerOptions) {
     if (!this.socket || !this.socket.OPEN) {
       this.queue.push(() => this.addServer(opts));
       return this.logger.warn(
@@ -619,6 +619,40 @@ export default class RCEManager extends RCEEvents {
   */
   public getServer(identifier: string) {
     return this.servers.get(identifier);
+  }
+
+  /*
+    * Remove a Rust server from the manager
+
+    * @param {string}
+    * @memberof RCEManager
+    * @example
+    * rce.removeServer("server1");
+    * @example
+    * rce.removeServer("my-solo-duo-trio-3x");
+  */
+  public removeServer(identifier: string) {
+    this.servers.delete(identifier);
+
+    const request = this.requests.get(identifier);
+    if (request) this.requests.delete(request.identifier);
+
+    this.logger.info(`Server "${identifier}" removed successfully`);
+  }
+
+  /*
+    * Get all Rust servers from the manager
+
+    * @returns {Map<string, RustServer>}
+    * @memberof RCEManager
+    * @example
+    * const servers = rce.getServers();
+    * for (const [identifier, server] of servers) {
+    *  console.log(identifier, server);
+    * }
+  */
+  public getServers() {
+    return this.servers;
   }
 
   private processQueue() {
