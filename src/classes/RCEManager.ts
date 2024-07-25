@@ -6,11 +6,17 @@ import {
   WebsocketMessage,
   ServerOptions,
 } from "../types";
-import { GPORTALRoutes, GPORTALWebsocketTypes, RCEEvent } from "../constants";
+import {
+  GPORTALRoutes,
+  GPORTALWebsocketTypes,
+  RCEEvent,
+  QuickChat,
+} from "../constants";
 import { WebSocket } from "ws";
 import { writeFileSync, readFileSync } from "fs";
 import Logger from "./Logger";
 import { RCEEvents } from "../types";
+import Helper from "./Helper";
 
 export default class RCEManager extends RCEEvents {
   private logger: Logger;
@@ -300,7 +306,31 @@ export default class RCEManager extends RCEEvents {
           .split(" was killed by ")
           .map((str) => str.trim());
 
-        this.emit(RCEEvent.PLAYER_KILL, { server, victim, killer });
+        const victimData = Helper.getKillInformation(victim);
+        const killerData = Helper.getKillInformation(killer);
+
+        this.emit(RCEEvent.PLAYER_KILL, {
+          server,
+          victim: victimData,
+          killer: killerData,
+        });
+      }
+
+      // VENDING_MACHINE_NAME event
+      const vendingMachineMatch = log.match(
+        /\[VENDING MACHINE\] Player \[ ([^\]]+) \] changed name from \[ ([^\]]+) \] to \[ ([^\]]+) \]/
+      );
+      if (vendingMachineMatch) {
+        const ign = vendingMachineMatch[1];
+        const oldName = vendingMachineMatch[2];
+        const newName = vendingMachineMatch[3];
+
+        this.emit(RCEEvent.VENDING_MACHINE_NAME, {
+          server,
+          ign,
+          oldName,
+          newName,
+        });
       }
 
       // QUICK_CHAT event
@@ -308,10 +338,30 @@ export default class RCEManager extends RCEEvents {
         const type = log.includes("[CHAT LOCAL]") ? "local" : "server";
         const msg = log.split(" : ")[1];
         const ign = log.includes("[CHAT LOCAL]")
-          ? log.split("[CHAT LOCAL]")[1].split(" : ")[0]
-          : log.split("[CHAT SERVER]")[1].split(" : ")[0];
+          ? log.split("[CHAT LOCAL] ")[1].split(" : ")[0]
+          : log.split("[CHAT SERVER] ")[1].split(" : ")[0];
 
-        this.emit(RCEEvent.QUICK_CHAT, { server, type, ign, message: msg });
+        this.emit(RCEEvent.QUICK_CHAT, {
+          server,
+          type,
+          ign,
+          message: msg as QuickChat,
+        });
+      }
+
+      // PLAYER_SUICIDE event
+      if (log.includes("was suicide by Suicide")) {
+        const ign = log.split(" was suicide by Suicide")[0];
+
+        this.emit(RCEEvent.PLAYER_SUICIDE, { server, ign });
+      }
+
+      // PLAYER_RESPAWNED event
+      if (log.includes("has entered the game")) {
+        const ign = log.split(" [")[0];
+        const platform = log.includes("[xboxone]") ? "XBL" : "PS";
+
+        this.emit(RCEEvent.PLAYER_RESPAWNED, { server, ign, platform });
       }
 
       // PLAYER_JOINED event
@@ -329,6 +379,16 @@ export default class RCEManager extends RCEEvents {
         const role = roleMatch[2];
 
         this.emit(RCEEvent.PLAYER_ROLE_ADD, { server, ign, role });
+      }
+
+      // ITEM_SPAWN event
+      const itemSpawnMatch = log.match(/\bgiving (\w+) (\d+) x ([\w\s]+)\b/);
+      if (itemSpawnMatch) {
+        const ign = itemSpawnMatch[1];
+        const quantity = Number(itemSpawnMatch[2]);
+        const item = itemSpawnMatch[3];
+
+        this.emit(RCEEvent.ITEM_SPAWN, { server, ign, item, quantity });
       }
 
       // NOTE_EDIT event

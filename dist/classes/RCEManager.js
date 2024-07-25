@@ -8,6 +8,7 @@ const ws_1 = require("ws");
 const fs_1 = require("fs");
 const Logger_1 = __importDefault(require("./Logger"));
 const types_1 = require("../types");
+const Helper_1 = __importDefault(require("./Helper"));
 class RCEManager extends types_1.RCEEvents {
     logger;
     auth = {
@@ -235,16 +236,51 @@ class RCEManager extends types_1.RCEEvents {
                 const [victim, killer] = log
                     .split(" was killed by ")
                     .map((str) => str.trim());
-                this.emit(constants_1.RCEEvent.PLAYER_KILL, { server, victim, killer });
+                const victimData = Helper_1.default.getKillInformation(victim);
+                const killerData = Helper_1.default.getKillInformation(killer);
+                this.emit(constants_1.RCEEvent.PLAYER_KILL, {
+                    server,
+                    victim: victimData,
+                    killer: killerData,
+                });
+            }
+            // VENDING_MACHINE_NAME event
+            const vendingMachineMatch = log.match(/\[VENDING MACHINE\] Player \[ ([^\]]+) \] changed name from \[ ([^\]]+) \] to \[ ([^\]]+) \]/);
+            if (vendingMachineMatch) {
+                const ign = vendingMachineMatch[1];
+                const oldName = vendingMachineMatch[2];
+                const newName = vendingMachineMatch[3];
+                this.emit(constants_1.RCEEvent.VENDING_MACHINE_NAME, {
+                    server,
+                    ign,
+                    oldName,
+                    newName,
+                });
             }
             // QUICK_CHAT event
             if (log.includes("[CHAT LOCAL]") || log.includes("[CHAT SERVER]")) {
                 const type = log.includes("[CHAT LOCAL]") ? "local" : "server";
                 const msg = log.split(" : ")[1];
                 const ign = log.includes("[CHAT LOCAL]")
-                    ? log.split("[CHAT LOCAL]")[1].split(" : ")[0]
-                    : log.split("[CHAT SERVER]")[1].split(" : ")[0];
-                this.emit(constants_1.RCEEvent.QUICK_CHAT, { server, type, ign, message: msg });
+                    ? log.split("[CHAT LOCAL] ")[1].split(" : ")[0]
+                    : log.split("[CHAT SERVER] ")[1].split(" : ")[0];
+                this.emit(constants_1.RCEEvent.QUICK_CHAT, {
+                    server,
+                    type,
+                    ign,
+                    message: msg,
+                });
+            }
+            // PLAYER_SUICIDE event
+            if (log.includes("was suicide by Suicide")) {
+                const ign = log.split(" was suicide by Suicide")[0];
+                this.emit(constants_1.RCEEvent.PLAYER_SUICIDE, { server, ign });
+            }
+            // PLAYER_RESPAWNED event
+            if (log.includes("has entered the game")) {
+                const ign = log.split(" [")[0];
+                const platform = log.includes("[xboxone]") ? "XBL" : "PS";
+                this.emit(constants_1.RCEEvent.PLAYER_RESPAWNED, { server, ign, platform });
             }
             // PLAYER_JOINED event
             if (log.includes("joined [xboxone]") || log.includes("joined [ps4]")) {
@@ -258,6 +294,14 @@ class RCEManager extends types_1.RCEEvents {
                 const ign = roleMatch[1];
                 const role = roleMatch[2];
                 this.emit(constants_1.RCEEvent.PLAYER_ROLE_ADD, { server, ign, role });
+            }
+            // ITEM_SPAWN event
+            const itemSpawnMatch = log.match(/\bgiving (\w+) (\d+) x ([\w\s]+)\b/);
+            if (itemSpawnMatch) {
+                const ign = itemSpawnMatch[1];
+                const quantity = Number(itemSpawnMatch[2]);
+                const item = itemSpawnMatch[3];
+                this.emit(constants_1.RCEEvent.ITEM_SPAWN, { server, ign, item, quantity });
             }
             // NOTE_EDIT event
             const noteMatch = log.match(/\[NOTE PANEL\] Player \[ ([^\]]+) \] changed name from \[\s*([\s\S]*?)\s*\] to \[\s*([\s\S]*?)\s*\]/);

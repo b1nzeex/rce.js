@@ -1,4 +1,4 @@
-import { RCEEvent } from "./constants";
+import { RCEEvent, QuickChat } from "./constants";
 import { EventEmitter } from "events";
 export interface AuthOptions {
     servers: ServerOptions[];
@@ -37,6 +37,11 @@ export interface WebsocketMessage {
     payload: any;
     id: string;
 }
+export interface KillPlayer {
+    id: string;
+    type: "player" | "npc" | "entity" | "natural";
+    name: string;
+}
 export interface RCEEventTypes {
     [RCEEvent.MESSAGE]: {
         server: RustServer;
@@ -50,9 +55,18 @@ export interface RCEEventTypes {
         server: RustServer;
         type: "local" | "server";
         ign: string;
-        message: string;
+        message: QuickChat;
     };
     [RCEEvent.PLAYER_JOINED]: {
+        server: RustServer;
+        ign: string;
+        platform: "XBL" | "PS";
+    };
+    [RCEEvent.PLAYER_SUICIDE]: {
+        server: RustServer;
+        ign: string;
+    };
+    [RCEEvent.PLAYER_RESPAWNED]: {
         server: RustServer;
         ign: string;
         platform: "XBL" | "PS";
@@ -74,8 +88,20 @@ export interface RCEEventTypes {
     };
     [RCEEvent.PLAYER_KILL]: {
         server: RustServer;
-        victim: string;
-        killer: string;
+        victim: KillPlayer;
+        killer: KillPlayer;
+    };
+    [RCEEvent.ITEM_SPAWN]: {
+        server: RustServer;
+        ign: string;
+        item: string;
+        quantity: number;
+    };
+    [RCEEvent.VENDING_MACHINE_NAME]: {
+        server: RustServer;
+        ign: string;
+        oldName: string;
+        newName: string;
     };
 }
 export declare class RCEEvents extends EventEmitter {

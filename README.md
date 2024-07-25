@@ -40,13 +40,13 @@ await rce.init(); // This attempts to login to GPORTAL - this is required for ev
 
 rce.on(RCEEvent.PLAYER_KILL, (data) => {
   console.log(
-    `[${data.server.identifier}] ${data.killer} killed ${data.victim}`
+    `[${data.server.identifier}] ${data.killer.name} killed ${data.victim.name}`
   );
 
   // Send an in-game command to the Rust server by the unique identifier (kill-feed!)
   await rce.sendCommand(
     data.server.identifier,
-    `say <color=red>${data.killer}</color> killed <color=red>${data.victim}</color>`
+    `say <color=red>${data.killer.name}</color> killed <color=red>${data.victim.name}</color>`
   );
 });
 ```
@@ -79,13 +79,13 @@ await rce.init(); // This attempts to login to GPORTAL - this is required for ev
 
 rce.on(RCEEvent.PLAYER_KILL, (data) => {
   console.log(
-    `[${data.server.identifier}] ${data.killer} killed ${data.victim}`
+    `[${data.server.identifier}] ${data.killer.name} killed ${data.victim.name}`
   );
 
   // Send an in-game command to the Rust server by the unique identifier (kill-feed!)
   await rce.sendCommand(
     data.server.identifier,
-    `say <color=red>${data.killer}</color> killed <color=red>${data.victim}</color>`
+    `say <color=red>${data.killer.name}</color> killed <color=red>${data.victim.name}</color>`
   );
 });
 ```
