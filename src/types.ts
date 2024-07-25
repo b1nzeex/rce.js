@@ -2,7 +2,7 @@ import { RCEEvent, QuickChat } from "./constants";
 import { EventEmitter } from "events";
 
 export interface AuthOptions {
-  servers: ServerOptions[];
+  servers?: ServerOptions[];
   logLevel?: number;
   refreshToken?: string;
   file?: string;
