@@ -1,7 +1,7 @@
 import { RCEEvent, QuickChat } from "./constants";
 import { EventEmitter } from "events";
 export interface AuthOptions {
-    servers: ServerOptions[];
+    servers?: ServerOptions[];
     logLevel?: number;
     refreshToken?: string;
     file?: string;
@@ -42,67 +42,70 @@ export interface KillPlayer {
     type: "player" | "npc" | "entity" | "natural";
     name: string;
 }
+export interface EventPayload {
+    server: RustServer;
+}
+export interface MessageEventPayload extends EventPayload {
+    message: string;
+}
+export interface PlayerListUpdateEventPayload extends EventPayload {
+    players: string[];
+}
+export interface QuickChatEventPayload extends EventPayload {
+    type: "local" | "server";
+    ign: string;
+    message: QuickChat;
+}
+export interface PlayerJoinedEventPayload extends EventPayload {
+    ign: string;
+    platform: "XBL" | "PS";
+}
+export interface PlayerSuicideEventPayload extends EventPayload {
+    ign: string;
+}
+export interface PlayerRespawnedEventPayload extends EventPayload {
+    ign: string;
+    platform: "XBL" | "PS";
+}
+export interface PlayerRoleAddEventPayload extends EventPayload {
+    ign: string;
+    role: string;
+}
+export interface NoteEditEventPayload extends EventPayload {
+    ign: string;
+    oldContent: string;
+    newContent: string;
+}
+export interface EventStartEventPayload extends EventPayload {
+    event: string;
+}
+export interface PlayerKillEventPayload extends EventPayload {
+    victim: KillPlayer;
+    killer: KillPlayer;
+}
+export interface ItemSpawnEventPayload extends EventPayload {
+    ign: string;
+    item: string;
+    quantity: number;
+}
+export interface VendingMachineNameEventPayload extends EventPayload {
+    ign: string;
+    oldName: string;
+    newName: string;
+}
 export interface RCEEventTypes {
-    [RCEEvent.MESSAGE]: {
-        server: RustServer;
-        message: string;
-    };
-    [RCEEvent.PLAYERLIST_UPDATE]: {
-        server: RustServer;
-        players: string[];
-    };
-    [RCEEvent.QUICK_CHAT]: {
-        server: RustServer;
-        type: "local" | "server";
-        ign: string;
-        message: QuickChat;
-    };
-    [RCEEvent.PLAYER_JOINED]: {
-        server: RustServer;
-        ign: string;
-        platform: "XBL" | "PS";
-    };
-    [RCEEvent.PLAYER_SUICIDE]: {
-        server: RustServer;
-        ign: string;
-    };
-    [RCEEvent.PLAYER_RESPAWNED]: {
-        server: RustServer;
-        ign: string;
-        platform: "XBL" | "PS";
-    };
-    [RCEEvent.PLAYER_ROLE_ADD]: {
-        server: RustServer;
-        ign: string;
-        role: string;
-    };
-    [RCEEvent.NOTE_EDIT]: {
-        server: RustServer;
-        ign: string;
-        oldContent: string;
-        newContent: string;
-    };
-    [RCEEvent.EVENT_START]: {
-        server: RustServer;
-        event: string;
-    };
-    [RCEEvent.PLAYER_KILL]: {
-        server: RustServer;
-        victim: KillPlayer;
-        killer: KillPlayer;
-    };
-    [RCEEvent.ITEM_SPAWN]: {
-        server: RustServer;
-        ign: string;
-        item: string;
-        quantity: number;
-    };
-    [RCEEvent.VENDING_MACHINE_NAME]: {
-        server: RustServer;
-        ign: string;
-        oldName: string;
-        newName: string;
-    };
+    [RCEEvent.MESSAGE]: MessageEventPayload;
+    [RCEEvent.PLAYERLIST_UPDATE]: PlayerListUpdateEventPayload;
+    [RCEEvent.QUICK_CHAT]: QuickChatEventPayload;
+    [RCEEvent.PLAYER_JOINED]: PlayerJoinedEventPayload;
+    [RCEEvent.PLAYER_SUICIDE]: PlayerSuicideEventPayload;
+    [RCEEvent.PLAYER_RESPAWNED]: PlayerRespawnedEventPayload;
+    [RCEEvent.PLAYER_ROLE_ADD]: PlayerRoleAddEventPayload;
+    [RCEEvent.NOTE_EDIT]: NoteEditEventPayload;
+    [RCEEvent.EVENT_START]: EventStartEventPayload;
+    [RCEEvent.PLAYER_KILL]: PlayerKillEventPayload;
+    [RCEEvent.ITEM_SPAWN]: ItemSpawnEventPayload;
+    [RCEEvent.VENDING_MACHINE_NAME]: VendingMachineNameEventPayload;
 }
 export declare class RCEEvents extends EventEmitter {
     emit<K extends keyof RCEEventTypes>(event: K, ...args: RCEEventTypes[K] extends undefined ? [] : [RCEEventTypes[K]]): boolean;
