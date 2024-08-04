@@ -17,7 +17,7 @@
   "license": "ISC",
   "description": "A wrapper for Rust Console Edition (RCE) that allows you to use the websocket and API from G-Portal.",
   "devDependencies": {
-    "@types/node": "^20.14.11",
+    "@types/node": "^20.14.14",
     "@types/ws": "^8.5.11"
   },
   "dependencies": {
