@@ -29,7 +29,14 @@ export declare enum RCEEvent {
     EVENT_START = "event_start",
     PLAYERLIST_UPDATE = "playerlist_update",
     ITEM_SPAWN = "item_spawn",
-    VENDING_MACHINE_NAME = "vending_machine_name"
+    VENDING_MACHINE_NAME = "vending_machine_name",
+    KIT_SPAWN = "kit_spawn",
+    KIT_GIVE = "kit_give",
+    TEAM_CREATE = "team_create",
+    TEAM_JOIN = "team_join",
+    TEAM_LEAVE = "team_leave",
+    SPECIAL_EVENT_START = "special_event_start",
+    SPECIAL_EVENT_END = "special_event_end"
 }
 export declare enum QuickChat {
     COMBAT_WereUnderAttack = "d11_quick_chat_combat_slot_0",

@@ -13,6 +13,11 @@ import {
   PlayerRespawnedEventPayload,
   PlayerListUpdateEventPayload,
   VendingMachineNameEventPayload,
+  TeamCreateEventPayload,
+  TeamJoinEventPayload,
+  TeamLeaveEventPayload,
+  KitGiveEventPayload,
+  KitSpawnEventPayload,
 } from "./types";
 
 export {
@@ -32,4 +37,9 @@ export {
   PlayerListUpdateEventPayload,
   VendingMachineNameEventPayload,
   QuickChat,
+  TeamCreateEventPayload,
+  TeamJoinEventPayload,
+  TeamLeaveEventPayload,
+  KitGiveEventPayload,
+  KitSpawnEventPayload,
 };

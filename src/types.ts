@@ -95,6 +95,7 @@ export interface NoteEditEventPayload extends EventPayload {
 
 export interface EventStartEventPayload extends EventPayload {
   event: string;
+  special: boolean;
 }
 
 export interface PlayerKillEventPayload extends EventPayload {
@@ -114,6 +115,40 @@ export interface VendingMachineNameEventPayload extends EventPayload {
   newName: string;
 }
 
+export interface TeamCreateEventPayload extends EventPayload {
+  owner: string;
+  id: number;
+}
+
+export interface TeamJoinEventPayload extends EventPayload {
+  ign: string;
+  owner: string;
+  id: number;
+}
+
+export interface TeamLeaveEventPayload extends EventPayload {
+  ign: string;
+  owner: string;
+  id: number;
+}
+
+export interface KitSpawnEventPayload extends EventPayload {
+  ign: string;
+  kit: string;
+}
+
+export interface KitGiveEventPayload extends EventPayload {
+  admin: string;
+  ign: string;
+  kit: string;
+}
+
+export interface SpecialEventStartEventPayload extends EventPayload {
+  event: "Easter" | "Halloween" | "Xmas" | "HalloweenPortal" | "XmasPortal";
+}
+
+export interface SpecialEventEndEventPayload extends EventPayload {}
+
 export interface RCEEventTypes {
   [RCEEvent.MESSAGE]: MessageEventPayload;
   [RCEEvent.PLAYERLIST_UPDATE]: PlayerListUpdateEventPayload;
@@ -127,6 +162,13 @@ export interface RCEEventTypes {
   [RCEEvent.PLAYER_KILL]: PlayerKillEventPayload;
   [RCEEvent.ITEM_SPAWN]: ItemSpawnEventPayload;
   [RCEEvent.VENDING_MACHINE_NAME]: VendingMachineNameEventPayload;
+  [RCEEvent.KIT_SPAWN]: KitSpawnEventPayload;
+  [RCEEvent.KIT_GIVE]: KitGiveEventPayload;
+  [RCEEvent.TEAM_CREATE]: TeamCreateEventPayload;
+  [RCEEvent.TEAM_JOIN]: TeamJoinEventPayload;
+  [RCEEvent.TEAM_LEAVE]: TeamLeaveEventPayload;
+  [RCEEvent.SPECIAL_EVENT_START]: SpecialEventStartEventPayload;
+  [RCEEvent.SPECIAL_EVENT_END]: SpecialEventEndEventPayload;
 }
 
 export class RCEEvents extends EventEmitter {

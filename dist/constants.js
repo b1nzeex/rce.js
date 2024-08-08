@@ -37,6 +37,13 @@ var RCEEvent;
     RCEEvent["PLAYERLIST_UPDATE"] = "playerlist_update";
     RCEEvent["ITEM_SPAWN"] = "item_spawn";
     RCEEvent["VENDING_MACHINE_NAME"] = "vending_machine_name";
+    RCEEvent["KIT_SPAWN"] = "kit_spawn";
+    RCEEvent["KIT_GIVE"] = "kit_give";
+    RCEEvent["TEAM_CREATE"] = "team_create";
+    RCEEvent["TEAM_JOIN"] = "team_join";
+    RCEEvent["TEAM_LEAVE"] = "team_leave";
+    RCEEvent["SPECIAL_EVENT_START"] = "special_event_start";
+    RCEEvent["SPECIAL_EVENT_END"] = "special_event_end";
 })(RCEEvent || (exports.RCEEvent = RCEEvent = {}));
 var QuickChat;
 (function (QuickChat) {

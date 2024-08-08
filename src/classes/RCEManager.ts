@@ -403,9 +403,85 @@ export default class RCEManager extends RCEEvents {
         this.emit(RCEEvent.NOTE_EDIT, { server, ign, oldContent, newContent });
       }
 
+      // TEAM_CREATE event
+      const teamCreateMatch = log.match(
+        /\[([^\]]+)\] created a new team, ID: (\d+)/
+      );
+      if (teamCreateMatch) {
+        const owner = teamCreateMatch[1];
+        const id = Number(teamCreateMatch[2]);
+
+        this.emit(RCEEvent.TEAM_CREATE, { server, owner, id });
+      }
+
+      // TEAM_JOIN event
+      const teamJoinMatch = log.match(
+        /\[([^\]]+)\] has joined \[([^\]]+)]s team, ID: \[(\d+)\]/
+      );
+      if (teamJoinMatch) {
+        const ign = teamJoinMatch[1];
+        const owner = teamJoinMatch[2];
+        const id = Number(teamJoinMatch[3]);
+
+        this.emit(RCEEvent.TEAM_JOIN, { server, ign, owner, id });
+      }
+
+      // TEAM_LEAVE event
+      const teamLeaveMatch = log.match(
+        /\[([^\]]+)\] has left \[([^\]]+)]s team, ID: \[(\d+)\]/
+      );
+
+      if (teamLeaveMatch) {
+        const ign = teamLeaveMatch[1];
+        const owner = teamLeaveMatch[2];
+        const id = Number(teamLeaveMatch[3]);
+
+        this.emit(RCEEvent.TEAM_LEAVE, { server, ign, owner, id });
+      }
+
+      // KIT_SPAWN event
+      const kitSpawnMatch = log.match(/SERVER giving (.+?) kit (\w+)/);
+      if (kitSpawnMatch) {
+        const ign = kitSpawnMatch[1];
+        const kit = kitSpawnMatch[2];
+
+        this.emit(RCEEvent.KIT_SPAWN, { server, ign, kit });
+      }
+
+      // KIT_GIVE event
+      const kitGiveMatch = log.match(
+        /\[ServerVar\] (\w+) giving (\w+) kit (\w+)/
+      );
+      if (kitGiveMatch) {
+        const admin = kitGiveMatch[1];
+        const ign = kitGiveMatch[2];
+        const kit = kitGiveMatch[3];
+
+        this.emit(RCEEvent.KIT_GIVE, { server, admin, ign, kit });
+      }
+
+      // SPECIAL_EVENT_START event
+      const specialEventStartMatch = log.match(/Setting event as :(\w+)/);
+      if (specialEventStartMatch) {
+        const event = specialEventStartMatch[1] as
+          | "Easter"
+          | "Halloween"
+          | "Xmas"
+          | "HalloweenPortal"
+          | "XmasPortal";
+
+        this.emit(RCEEvent.SPECIAL_EVENT_START, { server, event });
+      }
+
+      // SPECIAL_EVENT_END event
+      if (log.startsWith("Event set as: none")) {
+        this.emit(RCEEvent.SPECIAL_EVENT_END, { server });
+      }
+
       // EVENT_START event
       if (log.includes("[event]")) {
         let event;
+        let special = false;
 
         if (log.includes("event_airdrop")) {
           event = "Airdrop";
@@ -423,7 +499,22 @@ export default class RCEManager extends RCEEvents {
           event = "Patrol Helicopter";
         }
 
-        this.emit(RCEEvent.EVENT_START, { server, event });
+        if (log.includes("event_halloween")) {
+          event = "Halloween";
+          special = true;
+        }
+
+        if (log.includes("event_xmas")) {
+          event = "Christmas";
+          special = true;
+        }
+
+        if (log.includes("event_easter")) {
+          event = "Easter";
+          special = true;
+        }
+
+        this.emit(RCEEvent.EVENT_START, { server, event, special });
       }
     });
   }
