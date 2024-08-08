@@ -40,6 +40,7 @@ export enum RCEEvent {
   TEAM_LEAVE = "team_leave",
   SPECIAL_EVENT_START = "special_event_start",
   SPECIAL_EVENT_END = "special_event_end",
+  EXECUTING_COMMAND = "executing_command",
 }
 
 export enum QuickChat {

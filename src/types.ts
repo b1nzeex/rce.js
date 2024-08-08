@@ -149,6 +149,10 @@ export interface SpecialEventStartEventPayload extends EventPayload {
 
 export interface SpecialEventEndEventPayload extends EventPayload {}
 
+export interface ExecutingCommandEventPayload extends EventPayload {
+  command: string;
+}
+
 export interface RCEEventTypes {
   [RCEEvent.MESSAGE]: MessageEventPayload;
   [RCEEvent.PLAYERLIST_UPDATE]: PlayerListUpdateEventPayload;
@@ -169,6 +173,7 @@ export interface RCEEventTypes {
   [RCEEvent.TEAM_LEAVE]: TeamLeaveEventPayload;
   [RCEEvent.SPECIAL_EVENT_START]: SpecialEventStartEventPayload;
   [RCEEvent.SPECIAL_EVENT_END]: SpecialEventEndEventPayload;
+  [RCEEvent.EXECUTING_COMMAND]: ExecutingCommandEventPayload;
 }
 
 export class RCEEvents extends EventEmitter {

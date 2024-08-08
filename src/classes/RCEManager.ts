@@ -17,6 +17,16 @@ import { writeFileSync, readFileSync } from "fs";
 import Logger from "./Logger";
 import { RCEEvents } from "../types";
 import Helper from "./Helper";
+import { clear } from "console";
+
+interface CommandRequest {
+  identifier: string;
+  command: string;
+  timestamp?: string;
+  resolve: (value?: string) => void;
+  reject: (reason?: any) => void;
+  timeout: ReturnType<typeof setTimeout>;
+}
 
 export default class RCEManager extends RCEEvents {
   private logger: Logger;
@@ -29,6 +39,7 @@ export default class RCEManager extends RCEEvents {
   private servers: Map<string, RustServer> = new Map();
   private socket?: WebSocket;
   private requests: Map<string, WebsocketRequest> = new Map();
+  private commands: CommandRequest[] = [];
   private queue: (() => void)[] = [];
   private authMethod: {
     method: "file" | "manual";
@@ -39,6 +50,7 @@ export default class RCEManager extends RCEEvents {
     refreshToken: "",
     file: "",
   };
+  private lastLogDate: Date = new Date();
 
   /*
     * Create a new RCEManager instance
@@ -265,22 +277,103 @@ export default class RCEManager extends RCEEvents {
     }, 30_000);
   }
 
+  private updateLastLogDate() {
+    this.lastLogDate = new Date();
+
+    // If no logs are received for 10 minutes, restart the websocket connection
+    setTimeout(() => {
+      const now = new Date();
+      const diff = now.getTime() - this.lastLogDate.getTime();
+
+      if (diff >= 600_000) {
+        this.logger.warn(
+          "No logs received for 10 minutes; restarting websocket"
+        );
+        this.socket?.close();
+        this.socket = undefined;
+        this.connectWebsocket(60_000);
+      }
+    }, 600_000);
+  }
+
   private handleWebsocketMessage(
     message: WebsocketMessage,
     server: RustServer
   ) {
-    const logMessages: string[] =
-      message?.payload?.data?.consoleMessages?.message?.split(
-        /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}:LOG:DEFAULT: /gm
-      );
+    const logMessages =
+      message?.payload?.data?.consoleMessages?.message?.split("\n") || [];
 
     if (logMessages.length > 2) return;
 
-    logMessages.forEach((logMessage) => {
-      const log = logMessage.trim();
-      if (!log || log.startsWith("Executing console system command")) {
-        return;
+    logMessages?.forEach((logMessage) => {
+      const logMatch = logMessage.match(
+        /(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}):LOG:[^:]+: (.+)$/
+      );
+      if (!logMatch) return;
+
+      const logMessageDate = logMatch[1];
+      const logMessageContent = logMatch[2];
+
+      const log = logMessageContent.trim();
+      if (!log) return;
+
+      // Check for a command being executed
+      const executingMatch = log.match(
+        /Executing console system command '([^']+)'/
+      );
+      if (executingMatch) {
+        this.logger.debug(`Executing message found for: ${executingMatch[1]}`);
+        const command = executingMatch[1];
+
+        this.emit(RCEEvent.EXECUTING_COMMAND, {
+          server,
+          command,
+        });
+
+        // Handle command responses (if using sendCommand function)
+        const commandRequest = this.commands.find(
+          (req) =>
+            req.command === command &&
+            req.identifier === server.identifier &&
+            !req.timestamp
+        );
+        if (commandRequest) {
+          this.logger.debug(`Command "${command}" found in queue`);
+          commandRequest.timestamp = logMessageDate;
+
+          this.commands = this.commands.map((req) =>
+            req.command === command ? commandRequest : req
+          );
+
+          this.logger.debug(`Command "${command}" updated with timestamp`);
+
+          return;
+        }
       }
+
+      // Check for a command response
+      const commandRequest = this.commands.find(
+        (req) =>
+          req.identifier === server.identifier &&
+          req.timestamp === logMessageDate
+      );
+      if (commandRequest) {
+        this.logger.debug(
+          `Command response found for: ${commandRequest.command}`
+        );
+
+        commandRequest.resolve(log);
+        clearTimeout(commandRequest.timeout);
+
+        this.commands = this.commands.filter(
+          (req) =>
+            req.command !== commandRequest.command &&
+            req.identifier !== commandRequest.identifier &&
+            req.timestamp !== commandRequest.timestamp
+        );
+      }
+
+      this.updateLastLogDate();
 
       // Population
       if (log.startsWith("<slot:")) {
@@ -563,25 +656,27 @@ export default class RCEManager extends RCEEvents {
 
     * @param {string} identifier - The server identifier
     * @param {string} command - The command to send
-    * @returns {Promise<boolean>}
+    * @param {boolean} [response=false] - Whether to wait for a response
+    * @returns {Promise<string | undefined | null>}
     * @memberof RCEManager
     * @example
     * await rce.sendCommand("server1", "RemoveOwner username");
     * @example
-    * await rce.sendCommand("server1", "BanID username");
+    * await rce.sendCommand("server1", "BanID username", true);
   */
   public async sendCommand(
     identifier: string,
-    command: string
-  ): Promise<boolean> {
+    command: string,
+    response: boolean = false
+  ): Promise<string | undefined | null> {
     if (!this.auth?.access_token) {
       this.logger.error("Failed to send command: No access token");
-      return false;
+      return null;
     }
 
     if (!this.socket || !this.socket.OPEN) {
       this.logger.error("Failed to send command: No websocket connection");
-      return false;
+      return null;
     }
 
     const server = this.servers.get(identifier);
@@ -590,7 +685,7 @@ export default class RCEManager extends RCEEvents {
       this.logger.error(
         `Failed to send command: No server found for ID ${identifier}`
       );
-      return false;
+      return null;
     }
 
     this.logger.debug(`Sending command "${command}" to ${server.identifier}`);
@@ -606,26 +701,76 @@ export default class RCEManager extends RCEEvents {
         "mutation sendConsoleMessage($sid: Int!, $region: REGION!, $message: String!) {\n  sendConsoleMessage(rsid: {id: $sid, region: $region}, message: $message) {\n    ok\n    __typename\n  }\n}",
     };
 
-    try {
-      const response = await fetch(GPORTALRoutes.COMMAND, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `${this.auth.token_type} ${this.auth.access_token}`,
-        },
-        body: JSON.stringify(payload),
+    if (response) {
+      return new Promise((resolve, reject) => {
+        this.commands.push({
+          identifier,
+          command,
+          resolve,
+          reject,
+          timeout: setTimeout(() => {
+            this.commands = this.commands.filter(
+              (req) => req.command !== command && req.identifier !== identifier
+            );
+            resolve(undefined);
+          }, 5_000),
+        });
+
+        this.logger.debug(`Command "${command}" added to queue`);
+
+        try {
+          fetch(GPORTALRoutes.COMMAND, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `${this.auth.token_type} ${this.auth.access_token}`,
+            },
+            body: JSON.stringify(payload),
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(
+                  `Failed to send command: ${response.statusText}`
+                );
+              }
+
+              this.logger.debug(`Command "${command}" sent successfully`);
+            })
+            .catch((err) => {
+              this.commands = this.commands.filter(
+                (req) =>
+                  req.command !== command && req.identifier !== identifier
+              );
+              reject(err);
+            });
+        } catch (err) {
+          this.commands = this.commands.filter(
+            (req) => req.command !== command && req.identifier !== identifier
+          );
+          reject(err);
+        }
       });
+    } else {
+      try {
+        const response = await fetch(GPORTALRoutes.COMMAND, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${this.auth.token_type} ${this.auth.access_token}`,
+          },
+          body: JSON.stringify(payload),
+        });
 
-      if (!response.ok) {
-        throw new Error(`Failed to send command: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Failed to send command: ${response.statusText}`);
+        }
+
+        this.logger.debug(`Command "${command}" sent successfully`);
+        return undefined;
+      } catch (err) {
+        this.logger.error(`Failed to send command: ${err}`);
+        return null;
       }
-
-      this.logger.debug(`Command "${command}" sent successfully`);
-
-      return true;
-    } catch (err) {
-      this.logger.error(`Failed to send command: ${err}`);
-      return false;
     }
   }
 

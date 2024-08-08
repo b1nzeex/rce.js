@@ -44,6 +44,7 @@ var RCEEvent;
     RCEEvent["TEAM_LEAVE"] = "team_leave";
     RCEEvent["SPECIAL_EVENT_START"] = "special_event_start";
     RCEEvent["SPECIAL_EVENT_END"] = "special_event_end";
+    RCEEvent["EXECUTING_COMMAND"] = "executing_command";
 })(RCEEvent || (exports.RCEEvent = RCEEvent = {}));
 var QuickChat;
 (function (QuickChat) {

@@ -36,7 +36,8 @@ export declare enum RCEEvent {
     TEAM_JOIN = "team_join",
     TEAM_LEAVE = "team_leave",
     SPECIAL_EVENT_START = "special_event_start",
-    SPECIAL_EVENT_END = "special_event_end"
+    SPECIAL_EVENT_END = "special_event_end",
+    EXECUTING_COMMAND = "executing_command"
 }
 export declare enum QuickChat {
     COMBAT_WereUnderAttack = "d11_quick_chat_combat_slot_0",
