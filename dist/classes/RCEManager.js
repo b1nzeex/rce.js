@@ -529,17 +529,6 @@ class RCEManager extends types_1.RCEEvents {
         };
         if (response) {
             return new Promise((resolve, reject) => {
-                this.commands.push({
-                    identifier,
-                    command,
-                    resolve,
-                    reject,
-                    timeout: setTimeout(() => {
-                        this.commands = this.commands.filter((req) => req.command !== command && req.identifier !== identifier);
-                        resolve(undefined);
-                    }, 5_000),
-                });
-                this.logger.debug(`Command "${command}" added to queue`);
                 try {
                     fetch(constants_1.GPORTALRoutes.COMMAND, {
                         method: "POST",
@@ -554,6 +543,17 @@ class RCEManager extends types_1.RCEEvents {
                             throw new Error(`Failed to send command: ${response.statusText}`);
                         }
                         this.logger.debug(`Command "${command}" sent successfully`);
+                        this.commands.push({
+                            identifier,
+                            command,
+                            resolve,
+                            reject,
+                            timeout: setTimeout(() => {
+                                this.commands = this.commands.filter((req) => req.command !== command && req.identifier !== identifier);
+                                resolve(undefined);
+                            }, 5_000),
+                        });
+                        this.logger.debug(`Command "${command}" added to queue`);
                     })
                         .catch((err) => {
                         this.commands = this.commands.filter((req) => req.command !== command && req.identifier !== identifier);
