@@ -18,6 +18,7 @@ import {
   TeamLeaveEventPayload,
   KitGiveEventPayload,
   KitSpawnEventPayload,
+  ExecutingCommandEventPayload,
 } from "./types";
 
 export {
@@ -42,4 +43,5 @@ export {
   TeamLeaveEventPayload,
   KitGiveEventPayload,
   KitSpawnEventPayload,
+  ExecutingCommandEventPayload,
 };
