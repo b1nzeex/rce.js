@@ -20,6 +20,7 @@ export interface RustServer {
     refreshPlayers?: number;
     players: string[];
     added: boolean;
+    ready: boolean;
 }
 export interface ServerOptions {
     identifier: string;
@@ -125,6 +126,8 @@ export interface SpecialEventEndEventPayload extends EventPayload {
 export interface ExecutingCommandEventPayload extends EventPayload {
     command: string;
 }
+export interface ServerReadyEventPayload extends EventPayload {
+}
 export interface RCEEventTypes {
     [RCEEvent.MESSAGE]: MessageEventPayload;
     [RCEEvent.PLAYERLIST_UPDATE]: PlayerListUpdateEventPayload;
@@ -146,6 +149,7 @@ export interface RCEEventTypes {
     [RCEEvent.SPECIAL_EVENT_START]: SpecialEventStartEventPayload;
     [RCEEvent.SPECIAL_EVENT_END]: SpecialEventEndEventPayload;
     [RCEEvent.EXECUTING_COMMAND]: ExecutingCommandEventPayload;
+    [RCEEvent.SERVER_READY]: ServerReadyEventPayload;
 }
 export declare class RCEEvents extends EventEmitter {
     emit<K extends keyof RCEEventTypes>(event: K, ...args: RCEEventTypes[K] extends undefined ? [] : [RCEEventTypes[K]]): boolean;

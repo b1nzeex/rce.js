@@ -70,6 +70,7 @@ class RCEManager extends types_1.RCEEvents {
                 refreshPlayers: server.refreshPlayers || 0,
                 players: [],
                 added: false,
+                ready: false,
             });
         });
     }
@@ -228,10 +229,15 @@ class RCEManager extends types_1.RCEEvents {
         const logMessages = message?.payload?.data?.consoleMessages?.message
             ?.split("\n")
             .filter((e) => e !== "") || [];
-        // this.logger.warn(logMessages.length);
-        // this.logger.warn(logMessages);
-        if (logMessages.length > 2)
+        if (logMessages.length > 2) {
+            this.logger.debug("Found initial console messages; marking server as ready");
+            this.servers.set(server.identifier, {
+                ...server,
+                ready: true,
+            });
+            this.emit(constants_1.RCEEvent.SERVER_READY, { server });
             return;
+        }
         logMessages?.forEach((logMessage) => {
             const logMatch = logMessage.match(/(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}):LOG:[^:]+: (.+)$/);
             if (!logMatch)
@@ -265,7 +271,7 @@ class RCEManager extends types_1.RCEEvents {
             // Check for a command response
             const commandRequest = this.commands.find((req) => req.identifier === server.identifier &&
                 req.timestamp === logMessageDate);
-            if (commandRequest) {
+            if (commandRequest && !log.startsWith("[ SAVE ]")) {
                 this.logger.debug(`Command response found for: ${commandRequest.command}`);
                 commandRequest.resolve(log);
                 clearTimeout(commandRequest.timeout);
@@ -507,6 +513,10 @@ class RCEManager extends types_1.RCEEvents {
             this.logger.error(`Failed to send command: No server found for ID ${identifier}`);
             return null;
         }
+        if (!server.ready) {
+            this.logger.error(`Failed to send command: Server "${identifier}" is not ready`);
+            return null;
+        }
         this.logger.debug(`Sending command "${command}" to ${server.identifier}`);
         const payload = {
             operationName: "sendConsoleMessage",
@@ -603,6 +613,7 @@ class RCEManager extends types_1.RCEEvents {
             refreshPlayers: opts.refreshPlayers || 0,
             players: [],
             added: true,
+            ready: false,
         });
         const payload = {
             type: constants_1.GPORTALWebsocketTypes.START,

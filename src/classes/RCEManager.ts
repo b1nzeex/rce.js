@@ -100,6 +100,7 @@ export default class RCEManager extends RCEEvents {
         refreshPlayers: server.refreshPlayers || 0,
         players: [],
         added: false,
+        ready: false,
       });
     });
   }
@@ -304,10 +305,19 @@ export default class RCEManager extends RCEEvents {
         ?.split("\n")
         .filter((e) => e !== "") || [];
 
-    // this.logger.warn(logMessages.length);
-    // this.logger.warn(logMessages);
+    if (logMessages.length > 2) {
+      this.logger.debug(
+        "Found initial console messages; marking server as ready"
+      );
 
-    if (logMessages.length > 2) return;
+      this.servers.set(server.identifier, {
+        ...server,
+        ready: true,
+      });
+
+      this.emit(RCEEvent.SERVER_READY, { server });
+      return;
+    }
 
     logMessages?.forEach((logMessage) => {
       const logMatch = logMessage.match(
@@ -361,7 +371,7 @@ export default class RCEManager extends RCEEvents {
           req.identifier === server.identifier &&
           req.timestamp === logMessageDate
       );
-      if (commandRequest) {
+      if (commandRequest && !log.startsWith("[ SAVE ]")) {
         this.logger.debug(
           `Command response found for: ${commandRequest.command}`
         );
@@ -692,6 +702,13 @@ export default class RCEManager extends RCEEvents {
       return null;
     }
 
+    if (!server.ready) {
+      this.logger.error(
+        `Failed to send command: Server "${identifier}" is not ready`
+      );
+      return null;
+    }
+
     this.logger.debug(`Sending command "${command}" to ${server.identifier}`);
 
     const payload = {
@@ -808,6 +825,7 @@ export default class RCEManager extends RCEEvents {
       refreshPlayers: opts.refreshPlayers || 0,
       players: [],
       added: true,
+      ready: false,
     });
 
     const payload = {

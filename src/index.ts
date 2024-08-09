@@ -19,6 +19,7 @@ import {
   KitGiveEventPayload,
   KitSpawnEventPayload,
   ExecutingCommandEventPayload,
+  ServerReadyEventPayload,
 } from "./types";
 
 export {
@@ -44,4 +45,5 @@ export {
   KitGiveEventPayload,
   KitSpawnEventPayload,
   ExecutingCommandEventPayload,
+  ServerReadyEventPayload,
 };
