@@ -663,6 +663,12 @@ class RCEManager extends types_1.RCEEvents {
                     }
                 }, opts.refreshPlayers * 60_000);
             }
+            setTimeout(async () => {
+                const s = this.getServer(opts.identifier);
+                if (s && !s.ready) {
+                    await this.handleServerReady(opts.identifier);
+                }
+            }, 20_000);
             this.logger.info(`Server "${opts.identifier}" added successfully`);
         });
     }
