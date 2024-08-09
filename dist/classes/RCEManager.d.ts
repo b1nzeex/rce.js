@@ -19,10 +19,13 @@ export default class RCEManager extends RCEEvents {
     private updateLastLogDate;
     private handleWebsocketMessage;
     private resolveServerId;
+    private markServerAsReady;
+    private handleServerReady;
+    private processQueue;
+    private sendCommandInternal;
     sendCommand(identifier: string, command: string, response?: boolean): Promise<string | undefined | null>;
     addServer(opts: ServerOptions): Promise<void>;
     getServer(identifier: string): RustServer;
     removeServer(identifier: string): void;
     getServers(): Map<string, RustServer>;
-    private processQueue;
 }

@@ -18,6 +18,14 @@ import Logger from "./Logger";
 import { RCEEvents } from "../types";
 import Helper from "./Helper";
 
+interface QueuedCommand {
+  identifier: string;
+  command: string;
+  response: boolean;
+  resolve: (value?: string | undefined | null) => void;
+  reject: (reason?: any) => void;
+}
+
 interface CommandRequest {
   identifier: string;
   command: string;
@@ -39,7 +47,7 @@ export default class RCEManager extends RCEEvents {
   private socket?: WebSocket;
   private requests: Map<string, WebsocketRequest> = new Map();
   private commands: CommandRequest[] = [];
-  private queue: (() => void)[] = [];
+  private queue: QueuedCommand[] = [];
   private authMethod: {
     method: "file" | "manual";
     file: string;
@@ -188,7 +196,6 @@ export default class RCEManager extends RCEEvents {
     this.socket.on("open", async () => {
       this.logger.debug("Websocket connection established");
       await this.authenticateWebsocket();
-      await this.processQueue();
 
       this.servers.forEach(async (server) => {
         if (!server.added) await this.addServer(server);
@@ -310,12 +317,7 @@ export default class RCEManager extends RCEEvents {
         "Found initial console messages; marking server as ready"
       );
 
-      this.servers.set(server.identifier, {
-        ...server,
-        ready: true,
-      });
-
-      this.emit(RCEEvent.SERVER_READY, { server });
+      this.handleServerReady(server.identifier);
       return;
     }
 
@@ -665,23 +667,50 @@ export default class RCEManager extends RCEEvents {
     }
   }
 
-  /*
-    * Send a command to a Rust server
+  private markServerAsReady(server: RustServer) {
+    this.servers.set(server.identifier, {
+      ...server,
+      ready: true,
+    });
+    this.emit(RCEEvent.SERVER_READY, { server });
+    this.logger.info(`Server ${server.identifier} is ready`);
+    this.processQueue();
+  }
 
-    * @param {string} identifier - The server identifier
-    * @param {string} command - The command to send
-    * @param {boolean} [response=false] - Whether to wait for a response
-    * @returns {Promise<string | undefined | null>}
-    * @memberof RCEManager
-    * @example
-    * await rce.sendCommand("server1", "RemoveOwner username");
-    * @example
-    * await rce.sendCommand("server1", "BanID username", true);
-  */
-  public async sendCommand(
-    identifier: string,
+  private handleServerReady(identifier: string) {
+    const s = this.servers.get(identifier);
+    if (s && !s.ready) {
+      this.markServerAsReady(s);
+    }
+  }
+
+  private async processQueue() {
+    this.servers.forEach((server) => {
+      if (server.ready) {
+        const queuedCommands = this.queue.filter(
+          (cmd) => cmd.identifier === server.identifier
+        );
+
+        this.queue = this.queue.filter(
+          (cmd) => cmd.identifier !== server.identifier
+        );
+
+        queuedCommands.forEach(
+          ({ identifier, command, response, resolve, reject }) => {
+            const s = this.getServer(identifier);
+            this.sendCommandInternal(s, command, response)
+              .then(resolve)
+              .catch(reject);
+          }
+        );
+      }
+    });
+  }
+
+  private async sendCommandInternal(
+    server: RustServer,
     command: string,
-    response: boolean = false
+    response: boolean
   ): Promise<string | undefined | null> {
     if (!this.auth?.access_token) {
       this.logger.error("Failed to send command: No access token");
@@ -690,22 +719,6 @@ export default class RCEManager extends RCEEvents {
 
     if (!this.socket || !this.socket.OPEN) {
       this.logger.error("Failed to send command: No websocket connection");
-      return null;
-    }
-
-    const server = this.servers.get(identifier);
-
-    if (!server) {
-      this.logger.error(
-        `Failed to send command: No server found for ID ${identifier}`
-      );
-      return null;
-    }
-
-    if (!server.ready) {
-      this.logger.error(
-        `Failed to send command: Server "${identifier}" is not ready`
-      );
       return null;
     }
 
@@ -743,17 +756,18 @@ export default class RCEManager extends RCEEvents {
               this.logger.debug(`Command "${command}" sent successfully`);
 
               this.commands.push({
-                identifier,
+                identifier: server.identifier,
                 command,
                 resolve,
                 reject,
                 timeout: setTimeout(() => {
                   this.commands = this.commands.filter(
                     (req) =>
-                      req.command !== command && req.identifier !== identifier
+                      req.command !== command &&
+                      req.identifier !== server.identifier
                   );
                   resolve(undefined);
-                }, 5_000),
+                }, 3_000),
               });
 
               this.logger.debug(`Command "${command}" added to queue`);
@@ -761,13 +775,15 @@ export default class RCEManager extends RCEEvents {
             .catch((err) => {
               this.commands = this.commands.filter(
                 (req) =>
-                  req.command !== command && req.identifier !== identifier
+                  req.command !== command &&
+                  req.identifier !== server.identifier
               );
               reject(err);
             });
         } catch (err) {
           this.commands = this.commands.filter(
-            (req) => req.command !== command && req.identifier !== identifier
+            (req) =>
+              req.command !== command && req.identifier !== server.identifier
           );
           reject(err);
         }
@@ -797,6 +813,50 @@ export default class RCEManager extends RCEEvents {
   }
 
   /*
+    * Send a command to a Rust server
+
+    * @param {string} identifier - The server identifier
+    * @param {string} command - The command to send
+    * @param {boolean} [response=false] - Whether to wait for a response
+    * @returns {Promise<string | undefined | null>}
+    * @memberof RCEManager
+    * @example
+    * await rce.sendCommand("server1", "RemoveOwner username");
+    * @example
+    * await rce.sendCommand("server1", "BanID username", true);
+  */
+  public async sendCommand(
+    identifier: string,
+    command: string,
+    response: boolean = false
+  ): Promise<string | undefined | null> {
+    return new Promise((resolve, reject) => {
+      const server = this.servers.get(identifier);
+
+      if (!server) {
+        this.logger.error(
+          `Failed to send command: No server found for ID ${identifier}`
+        );
+        return null;
+      }
+
+      if (server.ready) {
+        this.logger.debug(
+          `Server ${identifier} is ready, sending command immediately`
+        );
+        this.sendCommandInternal(server, command, response)
+          .then(resolve)
+          .catch(reject);
+      } else {
+        this.logger.warn(
+          `Server ${identifier} is not ready, adding command to queue`
+        );
+        this.queue.push({ identifier, command, response, resolve, reject });
+      }
+    });
+  }
+
+  /*
     * Add a Rust server to the manager
 
     * @param {ServerOptions} opts - The server options
@@ -808,13 +868,6 @@ export default class RCEManager extends RCEEvents {
     * await rce.addServer({ identifier: "server2", region: "EU", serverId: 54321, refreshPlayers: 5 });
   */
   public async addServer(opts: ServerOptions) {
-    if (!this.socket || !this.socket.OPEN) {
-      this.queue.push(() => this.addServer(opts));
-      return this.logger.warn(
-        "Failed to add server due to no websocket connection; added to queue"
-      );
-    }
-
     this.logger.debug(`Adding server "${opts.identifier}"`);
 
     const sid = await this.resolveServerId(opts.region, opts.serverId);
@@ -912,12 +965,5 @@ export default class RCEManager extends RCEEvents {
   */
   public getServers() {
     return this.servers;
-  }
-
-  private processQueue() {
-    while (this.queue.length) {
-      const callback = this.queue.shift();
-      if (callback) callback();
-    }
   }
 }
