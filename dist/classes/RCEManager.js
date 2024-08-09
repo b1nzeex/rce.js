@@ -225,7 +225,11 @@ class RCEManager extends types_1.RCEEvents {
         }, 600_000);
     }
     handleWebsocketMessage(message, server) {
-        const logMessages = message?.payload?.data?.consoleMessages?.message?.split("\n") || [];
+        const logMessages = message?.payload?.data?.consoleMessages?.message
+            ?.split("\n")
+            .filter((e) => e !== "") || [];
+        // this.logger.warn(logMessages.length);
+        // this.logger.warn(logMessages);
         if (logMessages.length > 2)
             return;
         logMessages?.forEach((logMessage) => {

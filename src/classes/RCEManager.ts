@@ -17,7 +17,6 @@ import { writeFileSync, readFileSync } from "fs";
 import Logger from "./Logger";
 import { RCEEvents } from "../types";
 import Helper from "./Helper";
-import { clear } from "console";
 
 interface CommandRequest {
   identifier: string;
@@ -301,7 +300,12 @@ export default class RCEManager extends RCEEvents {
     server: RustServer
   ) {
     const logMessages =
-      message?.payload?.data?.consoleMessages?.message?.split("\n") || [];
+      message?.payload?.data?.consoleMessages?.message
+        ?.split("\n")
+        .filter((e) => e !== "") || [];
+
+    // this.logger.warn(logMessages.length);
+    // this.logger.warn(logMessages);
 
     if (logMessages.length > 2) return;
 
