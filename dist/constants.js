@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.QuickChat = exports.RCEEvent = exports.LogLevel = exports.GPORTALWebsocketTypes = exports.GPORTALRoutes = void 0;
+exports.EVENTS = exports.QuickChat = exports.RCEEvent = exports.LogLevel = exports.GPORTALWebsocketTypes = exports.GPORTALRoutes = void 0;
 var GPORTALRoutes;
 (function (GPORTALRoutes) {
     GPORTALRoutes["COMMAND"] = "https://www.g-portal.com/ngpapi/";
@@ -122,4 +122,34 @@ var QuickChat;
     QuickChat["HAVE_Hatchet"] = "d11_quick_chat_i_have_phrase_format hatchet";
     QuickChat["HAVE_HighQualityMetal"] = "d11_quick_chat_i_have_phrase_format metal.refined";
 })(QuickChat || (exports.QuickChat = QuickChat = {}));
+exports.EVENTS = {
+    event_airdrop: {
+        name: "Airdrop",
+        special: false,
+    },
+    event_cargoship: {
+        name: "Cargo Ship",
+        special: false,
+    },
+    event_cargoheli: {
+        name: "Chinook",
+        special: false,
+    },
+    event_helicopter: {
+        name: "Patrol Helicopter",
+        special: false,
+    },
+    event_halloween: {
+        name: "Halloween",
+        special: true,
+    },
+    event_xmas: {
+        name: "Christmas",
+        special: true,
+    },
+    event_easter: {
+        name: "Easter",
+        special: true,
+    },
+};
 //# sourceMappingURL=constants.js.map

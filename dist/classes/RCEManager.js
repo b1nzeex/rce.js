@@ -418,34 +418,16 @@ class RCEManager extends types_1.RCEEvents {
                 this.emit(constants_1.RCEEvent.SPECIAL_EVENT_END, { server });
             }
             // EVENT_START event
-            if (log.includes("[event]")) {
-                let event;
-                let special = false;
-                if (log.includes("event_airdrop")) {
-                    event = "Airdrop";
+            if (log.startsWith("[event]")) {
+                for (const [key, options] of Object.entries(constants_1.EVENTS)) {
+                    if (log.includes(key)) {
+                        this.emit(constants_1.RCEEvent.EVENT_START, {
+                            server,
+                            event: options.name,
+                            special: options.special,
+                        });
+                    }
                 }
-                if (log.includes("event_cargoship")) {
-                    event = "Cargo Ship";
-                }
-                if (log.includes("event_cargoheli")) {
-                    event = "Chinook";
-                }
-                if (log.includes("event_helicopter")) {
-                    event = "Patrol Helicopter";
-                }
-                if (log.includes("event_halloween")) {
-                    event = "Halloween";
-                    special = true;
-                }
-                if (log.includes("event_xmas")) {
-                    event = "Christmas";
-                    special = true;
-                }
-                if (log.includes("event_easter")) {
-                    event = "Easter";
-                    special = true;
-                }
-                this.emit(constants_1.RCEEvent.EVENT_START, { server, event, special });
             }
         });
     }

@@ -11,6 +11,7 @@ import {
   GPORTALWebsocketTypes,
   RCEEvent,
   QuickChat,
+  EVENTS,
 } from "../constants";
 import { WebSocket } from "ws";
 import { writeFileSync, readFileSync } from "fs";
@@ -585,42 +586,16 @@ export default class RCEManager extends RCEEvents {
       }
 
       // EVENT_START event
-      if (log.includes("[event]")) {
-        let event;
-        let special = false;
-
-        if (log.includes("event_airdrop")) {
-          event = "Airdrop";
+      if (log.startsWith("[event]")) {
+        for (const [key, options] of Object.entries(EVENTS)) {
+          if (log.includes(key)) {
+            this.emit(RCEEvent.EVENT_START, {
+              server,
+              event: options.name,
+              special: options.special,
+            });
+          }
         }
-
-        if (log.includes("event_cargoship")) {
-          event = "Cargo Ship";
-        }
-
-        if (log.includes("event_cargoheli")) {
-          event = "Chinook";
-        }
-
-        if (log.includes("event_helicopter")) {
-          event = "Patrol Helicopter";
-        }
-
-        if (log.includes("event_halloween")) {
-          event = "Halloween";
-          special = true;
-        }
-
-        if (log.includes("event_xmas")) {
-          event = "Christmas";
-          special = true;
-        }
-
-        if (log.includes("event_easter")) {
-          event = "Easter";
-          special = true;
-        }
-
-        this.emit(RCEEvent.EVENT_START, { server, event, special });
       }
     });
   }

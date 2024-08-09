@@ -114,3 +114,33 @@ export declare enum QuickChat {
     HAVE_Hatchet = "d11_quick_chat_i_have_phrase_format hatchet",
     HAVE_HighQualityMetal = "d11_quick_chat_i_have_phrase_format metal.refined"
 }
+export declare const EVENTS: {
+    event_airdrop: {
+        name: string;
+        special: boolean;
+    };
+    event_cargoship: {
+        name: string;
+        special: boolean;
+    };
+    event_cargoheli: {
+        name: string;
+        special: boolean;
+    };
+    event_helicopter: {
+        name: string;
+        special: boolean;
+    };
+    event_halloween: {
+        name: string;
+        special: boolean;
+    };
+    event_xmas: {
+        name: string;
+        special: boolean;
+    };
+    event_easter: {
+        name: string;
+        special: boolean;
+    };
+};
