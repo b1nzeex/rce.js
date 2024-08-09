@@ -650,16 +650,21 @@ class RCEManager extends types_1.RCEEvents {
             region: opts.region,
             identifier: opts.identifier,
         });
-        this.socket.send(JSON.stringify(payload));
-        if (opts.refreshPlayers) {
-            this.sendCommand(opts.identifier, "Users");
-            setInterval(() => {
-                if (this.servers.has(opts.identifier)) {
-                    this.sendCommand(opts.identifier, "Users");
-                }
-            }, opts.refreshPlayers * 60_000);
-        }
-        this.logger.info(`Server "${opts.identifier}" added successfully`);
+        this.socket.send(JSON.stringify(payload), (err) => {
+            if (err) {
+                this.logger.error(`Failed to add server "${opts.identifier}": ${err}`);
+                return;
+            }
+            if (opts.refreshPlayers) {
+                this.sendCommand(opts.identifier, "Users");
+                setInterval(() => {
+                    if (this.servers.has(opts.identifier)) {
+                        this.sendCommand(opts.identifier, "Users");
+                    }
+                }, opts.refreshPlayers * 60_000);
+            }
+            this.logger.info(`Server "${opts.identifier}" added successfully`);
+        });
     }
     /*
       * Get a Rust server from the manager
