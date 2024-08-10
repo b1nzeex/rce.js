@@ -480,10 +480,12 @@ export default class RCEManager extends RCEEvents {
       }
 
       // PLAYER_ROLE_ADD event
-      const roleMatch = log.match(/\[(.*?)\]/g);
+      const roleMatch = log.match(
+        /\[?SERVER\]?\s*Added\s*\[([^\]]+)\](?::\[([^\]]+)\])?\s*(?:to\s*(?:Group\s*)?)?\[(\w+)\]/i
+      );
       if (roleMatch && log.includes("Added")) {
         const ign = roleMatch[1];
-        const role = roleMatch[2];
+        const role = roleMatch[3];
 
         this.emit(RCEEvent.PLAYER_ROLE_ADD, { server, ign, role });
       }

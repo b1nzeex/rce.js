@@ -143,7 +143,7 @@ const killData: KillData[] = [
     type: "entity",
   },
   {
-    id: "bradleynpc (entity)",
+    id: "bradleyapc (entity)",
     name: "Bradley APC",
     type: "npc",
   },

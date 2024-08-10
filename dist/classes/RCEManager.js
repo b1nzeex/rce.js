@@ -347,10 +347,10 @@ class RCEManager extends types_1.RCEEvents {
                 this.emit(constants_1.RCEEvent.PLAYER_JOINED, { server, ign, platform });
             }
             // PLAYER_ROLE_ADD event
-            const roleMatch = log.match(/\[(.*?)\]/g);
+            const roleMatch = log.match(/\[?SERVER\]?\s*Added\s*\[([^\]]+)\](?::\[([^\]]+)\])?\s*(?:to\s*(?:Group\s*)?)?\[(\w+)\]/i);
             if (roleMatch && log.includes("Added")) {
                 const ign = roleMatch[1];
-                const role = roleMatch[2];
+                const role = roleMatch[3];
                 this.emit(constants_1.RCEEvent.PLAYER_ROLE_ADD, { server, ign, role });
             }
             // ITEM_SPAWN event
