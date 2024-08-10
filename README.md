@@ -4,7 +4,7 @@
 
 ## Documentation
 
-For a more in-depth documentation, refer to [GitBook](https://rcejs.gitbook.io/rcejs)!
+For a more in-depth documentation, refer to [GitBook](https://rcejs.gitbook.io/rcejs)! You can also join our support [discord server](https://discord.gg/npYygkeXSa)
 
 ## Installation
 
