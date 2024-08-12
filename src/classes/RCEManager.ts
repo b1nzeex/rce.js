@@ -753,7 +753,7 @@ export default class RCEManager extends RCEEvents {
                       req.command !== command &&
                       req.identifier !== server.identifier
                   );
-                  reject(undefined);
+                  resolve(undefined);
                 }, 3_000);
               }
             })
@@ -862,6 +862,11 @@ export default class RCEManager extends RCEEvents {
       serverId: sid,
       region: opts.region,
       refreshPlayers: opts.refreshPlayers || 0,
+      refreshPlayersInterval: opts.refreshPlayers
+        ? setInterval(() => {
+            this.refreshPlayers(opts.identifier);
+          }, opts.refreshPlayers * 60_000)
+        : undefined,
       players: [],
       added: true,
       ready: false,
@@ -897,13 +902,7 @@ export default class RCEManager extends RCEEvents {
       }
 
       if (opts.refreshPlayers) {
-        this.sendCommand(opts.identifier, "Users");
-
-        setInterval(() => {
-          if (this.servers.has(opts.identifier)) {
-            this.sendCommand(opts.identifier, "Users");
-          }
-        }, opts.refreshPlayers * 60_000);
+        this.refreshPlayers(opts.identifier);
       }
 
       setTimeout(async () => {
@@ -915,6 +914,31 @@ export default class RCEManager extends RCEEvents {
 
       this.logger.info(`Server "${opts.identifier}" added successfully`);
     });
+  }
+
+  private async refreshPlayers(identifier: string) {
+    const server = this.servers.get(identifier);
+    if (!server) {
+      this.logger.error(
+        `Failed to refresh players: No server found for ID ${identifier}`
+      );
+      return;
+    }
+
+    const users = await this.sendCommand(identifier, "Users", true);
+    if (!users) this.refreshPlayers(identifier);
+
+    const players = users.match(/"(.*?)"/g).map((ign) => ign.replace(/"/g, ""));
+    players.shift();
+
+    this.servers.set(identifier, {
+      ...server,
+      players,
+    });
+
+    this.emit(RCEEvent.PLAYERLIST_UPDATE, { server, players });
+
+    this.logger.debug(`Players refreshed for ${identifier}`);
   }
 
   /*
@@ -941,6 +965,7 @@ export default class RCEManager extends RCEEvents {
     * rce.removeServer("my-solo-duo-trio-3x");
   */
   public removeServer(identifier: string) {
+    clearInterval(this.servers.get(identifier)?.refreshPlayersInterval);
     this.servers.delete(identifier);
 
     const request = this.requests.get(identifier);

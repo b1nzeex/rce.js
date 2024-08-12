@@ -18,6 +18,7 @@ export interface RustServer {
     serverId: number;
     region: "US" | "EU";
     refreshPlayers?: number;
+    refreshPlayersInterval?: NodeJS.Timeout;
     players: string[];
     added: boolean;
     ready: boolean;

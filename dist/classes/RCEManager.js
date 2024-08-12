@@ -542,7 +542,7 @@ class RCEManager extends types_1.RCEEvents {
                             cmd.timeout = setTimeout(() => {
                                 this.commands = this.commands.filter((req) => req.command !== command &&
                                     req.identifier !== server.identifier);
-                                reject(undefined);
+                                resolve(undefined);
                             }, 3_000);
                         }
                     })
@@ -631,6 +631,11 @@ class RCEManager extends types_1.RCEEvents {
             serverId: sid,
             region: opts.region,
             refreshPlayers: opts.refreshPlayers || 0,
+            refreshPlayersInterval: opts.refreshPlayers
+                ? setInterval(() => {
+                    this.refreshPlayers(opts.identifier);
+                }, opts.refreshPlayers * 60_000)
+                : undefined,
             players: [],
             added: true,
             ready: false,
@@ -662,12 +667,7 @@ class RCEManager extends types_1.RCEEvents {
                 return;
             }
             if (opts.refreshPlayers) {
-                this.sendCommand(opts.identifier, "Users");
-                setInterval(() => {
-                    if (this.servers.has(opts.identifier)) {
-                        this.sendCommand(opts.identifier, "Users");
-                    }
-                }, opts.refreshPlayers * 60_000);
+                this.refreshPlayers(opts.identifier);
             }
             setTimeout(async () => {
                 const s = this.getServer(opts.identifier);
@@ -677,6 +677,24 @@ class RCEManager extends types_1.RCEEvents {
             }, 20_000);
             this.logger.info(`Server "${opts.identifier}" added successfully`);
         });
+    }
+    async refreshPlayers(identifier) {
+        const server = this.servers.get(identifier);
+        if (!server) {
+            this.logger.error(`Failed to refresh players: No server found for ID ${identifier}`);
+            return;
+        }
+        const users = await this.sendCommand(identifier, "Users", true);
+        if (!users)
+            this.refreshPlayers(identifier);
+        const players = users.match(/"(.*?)"/g).map((ign) => ign.replace(/"/g, ""));
+        players.shift();
+        this.servers.set(identifier, {
+            ...server,
+            players,
+        });
+        this.emit(constants_1.RCEEvent.PLAYERLIST_UPDATE, { server, players });
+        this.logger.debug(`Players refreshed for ${identifier}`);
     }
     /*
       * Get a Rust server from the manager
@@ -701,6 +719,7 @@ class RCEManager extends types_1.RCEEvents {
       * rce.removeServer("my-solo-duo-trio-3x");
     */
     removeServer(identifier) {
+        clearInterval(this.servers.get(identifier)?.refreshPlayersInterval);
         this.servers.delete(identifier);
         const request = this.requests.get(identifier);
         if (request)
