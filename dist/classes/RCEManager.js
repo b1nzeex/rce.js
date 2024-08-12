@@ -513,6 +513,14 @@ class RCEManager extends types_1.RCEEvents {
         };
         if (response) {
             return new Promise((resolve, reject) => {
+                this.commands.push({
+                    identifier: server.identifier,
+                    command,
+                    resolve,
+                    reject,
+                    timeout: undefined,
+                });
+                this.logger.debug(`Command "${command}" added to queue`);
                 try {
                     fetch(constants_1.GPORTALRoutes.COMMAND, {
                         method: "POST",
@@ -527,18 +535,16 @@ class RCEManager extends types_1.RCEEvents {
                             throw new Error(`Failed to send command: ${response.statusText}`);
                         }
                         this.logger.debug(`Command "${command}" sent successfully`);
-                        this.commands.push({
-                            identifier: server.identifier,
-                            command,
-                            resolve,
-                            reject,
-                            timeout: setTimeout(() => {
+                        this.logger.debug(`Starting timeout for command "${command}"`);
+                        const cmd = this.commands.find((req) => req.command === command &&
+                            req.identifier === server.identifier);
+                        if (cmd) {
+                            cmd.timeout = setTimeout(() => {
                                 this.commands = this.commands.filter((req) => req.command !== command &&
                                     req.identifier !== server.identifier);
-                                resolve(undefined);
-                            }, 3_000),
-                        });
-                        this.logger.debug(`Command "${command}" added to queue`);
+                                reject(undefined);
+                            }, 3_000);
+                        }
                     })
                         .catch((err) => {
                         this.commands = this.commands.filter((req) => req.command !== command &&
@@ -601,7 +607,7 @@ class RCEManager extends types_1.RCEEvents {
                     .catch(reject);
             }
             else {
-                this.logger.warn(`Server ${identifier} is not ready, adding command to queue`);
+                this.logger.debug(`Server ${identifier} is not ready, adding command to queue`);
                 this.queue.push({ identifier, command, response, resolve, reject });
             }
         });
