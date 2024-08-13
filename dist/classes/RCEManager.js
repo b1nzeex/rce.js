@@ -228,11 +228,11 @@ class RCEManager extends types_1.RCEEvents {
         const logMessages = message?.payload?.data?.consoleMessages?.message
             ?.split("\n")
             .filter((e) => e !== "") || [];
-        if (!server.ready) {
-            this.handleServerReady(server.identifier);
+        if (logMessages.length > 2) {
+            return server.ready
+                ? undefined
+                : this.handleServerReady(server.identifier);
         }
-        if (logMessages.length > 2)
-            return;
         logMessages?.forEach((logMessage) => {
             const logMatch = logMessage.match(/(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}):LOG:[^:]+: (.+)$/);
             if (!logMatch)

@@ -313,11 +313,11 @@ export default class RCEManager extends RCEEvents {
         ?.split("\n")
         .filter((e) => e !== "") || [];
 
-    if (!server.ready) {
-      this.handleServerReady(server.identifier);
+    if (logMessages.length > 2) {
+      return server.ready
+        ? undefined
+        : this.handleServerReady(server.identifier);
     }
-
-    if (logMessages.length > 2) return;
 
     logMessages?.forEach((logMessage) => {
       const logMatch = logMessage.match(
