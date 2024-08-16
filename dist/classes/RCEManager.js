@@ -229,9 +229,9 @@ class RCEManager extends types_1.RCEEvents {
             ?.split("\n")
             .filter((e) => e !== "") || [];
         if (logMessages.length > 2) {
-            return server.ready
-                ? undefined
-                : this.handleServerReady(server.identifier);
+            if (!server.ready)
+                this.handleServerReady(server.identifier);
+            return;
         }
         logMessages?.forEach((logMessage) => {
             const logMatch = logMessage.match(/(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}):LOG:[^:]+: (.+)$/);
@@ -469,7 +469,7 @@ class RCEManager extends types_1.RCEEvents {
             ready: true,
         });
         this.emit(constants_1.RCEEvent.SERVER_READY, { server });
-        this.logger.info(`Server ${server.identifier} is ready`);
+        this.logger.info(`Server "${server.identifier}" added successfully`);
         this.processQueue();
     }
     handleServerReady(identifier) {
@@ -569,7 +569,8 @@ class RCEManager extends types_1.RCEEvents {
                     body: JSON.stringify(payload),
                 });
                 if (!response.ok) {
-                    throw new Error(`Failed to send command: ${response.statusText}`);
+                    this.logger.error(`Failed to send command: ${response.statusText}`);
+                    return null;
                 }
                 this.logger.debug(`Command "${command}" sent successfully`);
                 return undefined;
@@ -616,7 +617,7 @@ class RCEManager extends types_1.RCEEvents {
       * Add a Rust server to the manager
   
       * @param {ServerOptions} opts - The server options
-      * @returns {Promise<void>}
+      * @returns {Promise<boolean>}
       * @memberof RCEManager
       * @example
       * await rce.addServer({ identifier: "server1", region: "US", serverId: 12345 });
@@ -626,6 +627,10 @@ class RCEManager extends types_1.RCEEvents {
     async addServer(opts) {
         this.logger.debug(`Adding server "${opts.identifier}"`);
         const sid = await this.resolveServerId(opts.region, opts.serverId);
+        if (!sid) {
+            this.logger.error(`Failed to add server "${opts.identifier}": No server ID found`);
+            return false;
+        }
         this.servers.set(opts.identifier, {
             identifier: opts.identifier,
             serverId: sid,
@@ -664,7 +669,7 @@ class RCEManager extends types_1.RCEEvents {
         this.socket.send(JSON.stringify(payload), (err) => {
             if (err) {
                 this.logger.error(`Failed to add server "${opts.identifier}": ${err}`);
-                return;
+                return false;
             }
             if (opts.refreshPlayers) {
                 this.refreshPlayers(opts.identifier);
@@ -675,7 +680,6 @@ class RCEManager extends types_1.RCEEvents {
                     await this.handleServerReady(opts.identifier);
                 }
             }, 20_000);
-            this.logger.info(`Server "${opts.identifier}" added successfully`);
         });
     }
     async refreshPlayers(identifier) {
@@ -686,7 +690,7 @@ class RCEManager extends types_1.RCEEvents {
         }
         const users = await this.sendCommand(identifier, "Users", true);
         if (!users)
-            this.refreshPlayers(identifier);
+            return this.refreshPlayers(identifier);
         const players = users.match(/"(.*?)"/g).map((ign) => ign.replace(/"/g, ""));
         players.shift();
         this.servers.set(identifier, {
