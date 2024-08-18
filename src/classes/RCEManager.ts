@@ -129,6 +129,24 @@ export default class RCEManager extends RCEEvents {
     await this.authenticate(timeout);
   }
 
+  /*
+    * Close the RCEManager and clear all intervals
+
+    * @returns {Promise<void>}
+    * @memberof RCEManager
+    * @example
+    * await rce.close();
+  */
+  public async close() {
+    this.socket?.close();
+    this.servers.forEach((server) => {
+      clearInterval(server.refreshPlayersInterval);
+    });
+    this.servers.clear();
+
+    this.logger.info("RCEManager closed successfully");
+  }
+
   private async authenticate(timeout: number) {
     this.logger.debug("Attempting to authenticate");
 
