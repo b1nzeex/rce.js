@@ -157,6 +157,11 @@ export interface ExecutingCommandEventPayload extends EventPayload {
 
 export interface ServerReadyEventPayload extends EventPayload {}
 
+export interface RCEErrorPayload {
+  server?: RustServer;
+  error: string;
+}
+
 export interface RCEEventTypes {
   [RCEEvent.MESSAGE]: MessageEventPayload;
   [RCEEvent.PLAYERLIST_UPDATE]: PlayerListUpdateEventPayload;
@@ -179,6 +184,7 @@ export interface RCEEventTypes {
   [RCEEvent.SPECIAL_EVENT_END]: SpecialEventEndEventPayload;
   [RCEEvent.EXECUTING_COMMAND]: ExecutingCommandEventPayload;
   [RCEEvent.SERVER_READY]: ServerReadyEventPayload;
+  [RCEEvent.ERROR]: RCEErrorPayload;
 }
 
 export class RCEEvents extends EventEmitter {

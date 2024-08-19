@@ -42,6 +42,7 @@ export enum RCEEvent {
   SPECIAL_EVENT_END = "special_event_end",
   EXECUTING_COMMAND = "executing_command",
   SERVER_READY = "server_ready",
+  ERROR = "error",
 }
 
 export enum QuickChat {
