@@ -11,6 +11,7 @@ export default class RCEManager extends RCEEvents {
     private authMethod;
     private lastLogDate;
     private kaInterval?;
+    private connectionAttempt;
     constructor(auth: AuthOptions);
     init(timeout?: number): Promise<void>;
     close(): Promise<void>;

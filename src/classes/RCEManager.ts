@@ -60,6 +60,7 @@ export default class RCEManager extends RCEEvents {
   };
   private lastLogDate: Date = new Date();
   private kaInterval?: NodeJS.Timeout;
+  private connectionAttempt: number = 0;
 
   /*
     * Create a new RCEManager instance
@@ -127,6 +128,10 @@ export default class RCEManager extends RCEEvents {
     * await rce.init(30_000);
   */
   public async init(timeout: number = 60_000) {
+    this.on(RCEEvent.ERROR, (payload) => {
+      this.logger.error(payload.error);
+    });
+
     await this.authenticate(timeout);
   }
 
@@ -231,6 +236,7 @@ export default class RCEManager extends RCEEvents {
 
   private async connectWebsocket(timeout: number) {
     this.logger.debug("Connecting to websocket");
+    this.connectionAttempt++;
 
     this.socket = new WebSocket(GPORTALRoutes.WEBSOCKET, ["graphql-ws"], {
       headers: {
@@ -253,21 +259,30 @@ export default class RCEManager extends RCEEvents {
       this.logError(`Websocket error: ${err.message}`);
       this.clean();
 
-      this.logger.warn(
-        "Disconnected from websocket; attempting reconnecting in 30 seconds"
-      );
-      setTimeout(() => this.connectWebsocket(timeout), 30_000);
+      if (this.connectionAttempt < 5) {
+        this.logger.warn(
+          `Websocket error: Attempting to reconnect in 30 seconds (Attempt ${this.connectionAttempt} of 5)`
+        );
+        setTimeout(() => this.connectWebsocket(timeout), 30_000);
+      } else {
+        this.logError("Failed to connect to websocket: Too many attempts");
+      }
     });
 
     this.socket.on("close", (code: number, reason: string) => {
-      this.logError(`Websocket closed: ${code} ${reason}`);
       this.clean();
 
-      if (code !== 1000) {
-        this.logger.warn(
-          "Disconnected from websocket; attempting reconnecting in 30 seconds"
-        );
-        setTimeout(() => this.connectWebsocket(timeout), 30_000);
+      if ([1005, 1006].includes(code)) {
+        if (this.connectionAttempt < 5) {
+          this.logger.warn(
+            `Websocket closed: Attempting to reconnect in 30 seconds (Attempt ${this.connectionAttempt} of 5)`
+          );
+          setTimeout(() => this.connectWebsocket(timeout), 30_000);
+        } else {
+          this.logError("Failed to connect to websocket: Too many attempts");
+        }
+      } else {
+        this.logError(`Websocket closed: ${reason}`);
       }
     });
 
@@ -284,6 +299,7 @@ export default class RCEManager extends RCEEvents {
         }
 
         if (message.type === "connection_ack") {
+          this.connectionAttempt = 0;
           return this.logger.debug("Websocket authenticated successfully");
         }
 
