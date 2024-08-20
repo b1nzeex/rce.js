@@ -22,6 +22,7 @@ import {
   ServerReadyEventPayload,
   KillPlayerType,
 } from "./types";
+import { killData } from "./classes/Helper";
 
 export {
   RCEManager,
@@ -48,4 +49,5 @@ export {
   ExecutingCommandEventPayload,
   ServerReadyEventPayload,
   KillPlayerType,
+  killData,
 };

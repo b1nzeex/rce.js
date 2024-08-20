@@ -1,12 +1,6 @@
 import { KillPlayer, KillPlayerType } from "../types";
 
-interface KillData {
-  id: string;
-  name: string;
-  type: KillPlayerType;
-}
-
-const killData: KillData[] = [
+const killData = [
   {
     id: "thirst",
     name: "Thirst",
@@ -287,7 +281,20 @@ const killData: KillData[] = [
     name: "Tesla Coil",
     type: KillPlayerType.ENTITY,
   },
-];
+] as const;
+
+export type killData =
+  | (typeof killData)[number]
+  | {
+      id: number;
+      name: "Scientist";
+      type: KillPlayerType.NPC;
+    }
+  | {
+      id: string;
+      name: string;
+      type: KillPlayerType.PLAYER;
+    };
 
 export default class Helper {
   public static getKillInformation(ign: string): KillPlayer {
