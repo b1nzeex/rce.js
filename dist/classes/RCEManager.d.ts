@@ -12,8 +12,11 @@ export default class RCEManager extends RCEEvents {
     private lastLogDate;
     constructor(auth: AuthOptions);
     init(timeout?: number): Promise<void>;
+    close(): Promise<void>;
     private authenticate;
     private refreshToken;
+    private logError;
+    private clean;
     private connectWebsocket;
     private authenticateWebsocket;
     private updateLastLogDate;

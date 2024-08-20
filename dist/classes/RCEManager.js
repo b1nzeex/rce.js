@@ -88,6 +88,18 @@ class RCEManager extends types_1.RCEEvents {
     async init(timeout = 60_000) {
         await this.authenticate(timeout);
     }
+    /*
+      * Close the RCEManager and clear all intervals
+  
+      * @returns {Promise<void>}
+      * @memberof RCEManager
+      * @example
+      * await rce.close();
+    */
+    async close() {
+        this.clean();
+        this.logger.info("RCEManager closed successfully");
+    }
     async authenticate(timeout) {
         this.logger.debug("Attempting to authenticate");
         const s = await this.refreshToken();
@@ -96,14 +108,14 @@ class RCEManager extends types_1.RCEEvents {
             await this.connectWebsocket(timeout);
         }
         else {
-            this.logger.error("Failed to authenticate");
+            this.logError("Failed to authenticate");
             setTimeout(() => this.authenticate(timeout), 60_000);
         }
     }
     async refreshToken() {
         this.logger.debug("Attempting to refresh token");
         if (!this.auth?.refresh_token) {
-            this.logger.error("Failed to refresh token: No refresh token");
+            this.logError("Failed to refresh token: No refresh token");
             return false;
         }
         try {
@@ -131,9 +143,30 @@ class RCEManager extends types_1.RCEEvents {
             return true;
         }
         catch (err) {
-            this.logger.error(`Failed to refresh token: ${err}`);
+            this.logError(`Failed to refresh token: ${err}`);
             return false;
         }
+    }
+    logError(message, server) {
+        this.emit(constants_1.RCEEvent.ERROR, { server, error: message });
+        this.logger.error(`${server ? `[${server.identifier}]: ${message}` : message}`);
+    }
+    clean() {
+        this.logger.debug("Cleaning up all data");
+        this.servers.forEach((server) => {
+            clearInterval(server.refreshPlayersInterval);
+            server.players = [];
+            server.added = false;
+            server.ready = false;
+        });
+        this.requests.clear();
+        this.commands = [];
+        this.queue = [];
+        this.lastLogDate = new Date();
+        if (this.socket?.OPEN)
+            this.socket.close(1000);
+        this.socket = undefined;
+        this.logger.debug("Cleaned up all data successfully");
     }
     async connectWebsocket(timeout) {
         this.logger.debug("Connecting to websocket");
@@ -153,15 +186,18 @@ class RCEManager extends types_1.RCEEvents {
             });
         });
         this.socket.on("error", (err) => {
-            this.logger.error(`Websocket error: ${err.message}`);
-            this.socket?.close();
-            this.socket = undefined;
-            this.connectWebsocket(timeout);
+            this.logError(`Websocket error: ${err.message}`);
+            this.clean();
+            this.logger.warn("Disconnected from websocket; attempting reconnecting in 30 seconds");
+            setTimeout(() => this.connectWebsocket(timeout), 30_000);
         });
         this.socket.on("close", (code, reason) => {
-            this.logger.error(`Websocket closed: ${code} ${reason}`);
-            this.socket = undefined;
-            this.connectWebsocket(timeout);
+            this.logError(`Websocket closed: ${code} ${reason}`);
+            this.clean();
+            if (code !== 1000) {
+                this.logger.warn("Disconnected from websocket; attempting reconnecting in 30 seconds");
+                setTimeout(() => this.connectWebsocket(timeout), 30_000);
+            }
         });
         this.socket.on("message", (data) => {
             try {
@@ -170,7 +206,7 @@ class RCEManager extends types_1.RCEEvents {
                     return;
                 this.logger.debug(`Received message: ${JSON.stringify(message)}`);
                 if (message.type === "error") {
-                    return this.logger.error(`Websocket error: ${message?.payload?.message}`);
+                    return this.logError(`Websocket error: ${message?.payload?.message}`);
                 }
                 if (message.type === "connection_ack") {
                     return this.logger.debug("Websocket authenticated successfully");
@@ -178,24 +214,24 @@ class RCEManager extends types_1.RCEEvents {
                 if (message.type === "data") {
                     const request = this.requests.get(message.id);
                     if (!request) {
-                        return this.logger.error(`Failed to handle message: No request found for ID ${message.id}`);
+                        return this.logError(`Failed to handle message: No request found for ID ${message.id}`);
                     }
                     const server = this.servers.get(request.identifier);
                     if (!server) {
-                        return this.logger.error(`Failed to handle message: No server found for ID ${request.identifier}`);
+                        return this.logError(`Failed to handle message: No server found for ID ${request.identifier}`);
                     }
                     this.handleWebsocketMessage(message, server);
                 }
             }
             catch (err) {
-                this.logger.error(`Failed to handle message: ${err}`);
+                this.logError(`Failed to handle message: ${err}`);
             }
         });
     }
     async authenticateWebsocket() {
         this.logger.debug("Attempting to authenticate websocket");
         if (!this.auth?.access_token) {
-            return this.logger.error("Failed to authenticate websocket: No access token");
+            return this.logError("Failed to authenticate websocket: No access token");
         }
         this.socket.send(JSON.stringify({
             type: constants_1.GPORTALWebsocketTypes.INIT,
@@ -433,7 +469,7 @@ class RCEManager extends types_1.RCEEvents {
     }
     async resolveServerId(region, serverId) {
         if (!this.auth?.access_token) {
-            this.logger.error("Failed to resolve server ID: No access token");
+            this.logError("Failed to resolve server ID: No access token");
             return undefined;
         }
         try {
@@ -459,7 +495,7 @@ class RCEManager extends types_1.RCEEvents {
             return data?.data?.sid;
         }
         catch (err) {
-            this.logger.error(`Failed to resolve server ID: ${err}`);
+            this.logError(`Failed to resolve server ID: ${err}`);
             return undefined;
         }
     }
@@ -494,11 +530,11 @@ class RCEManager extends types_1.RCEEvents {
     }
     async sendCommandInternal(server, command, response) {
         if (!this.auth?.access_token) {
-            this.logger.error("Failed to send command: No access token");
+            this.logError("Failed to send command: No access token");
             return null;
         }
         if (!this.socket || !this.socket.OPEN) {
-            this.logger.error("Failed to send command: No websocket connection");
+            this.logError("Failed to send command: No websocket connection");
             return null;
         }
         this.logger.debug(`Sending command "${command}" to ${server.identifier}`);
@@ -569,14 +605,14 @@ class RCEManager extends types_1.RCEEvents {
                     body: JSON.stringify(payload),
                 });
                 if (!response.ok) {
-                    this.logger.error(`Failed to send command: ${response.statusText}`);
+                    this.logError(`Failed to send command: ${response.statusText}`, server);
                     return null;
                 }
                 this.logger.debug(`Command "${command}" sent successfully`);
                 return undefined;
             }
             catch (err) {
-                this.logger.error(`Failed to send command: ${err}`);
+                this.logError(`Failed to send command: ${err}`, server);
                 return null;
             }
         }
@@ -598,7 +634,7 @@ class RCEManager extends types_1.RCEEvents {
         return new Promise((resolve, reject) => {
             const server = this.servers.get(identifier);
             if (!server) {
-                this.logger.error(`Failed to send command: No server found for ID ${identifier}`);
+                this.logError(`Failed to send command: No server found for ID ${identifier}`);
                 return null;
             }
             if (server.ready) {
@@ -628,7 +664,7 @@ class RCEManager extends types_1.RCEEvents {
         this.logger.debug(`Adding server "${opts.identifier}"`);
         const sid = await this.resolveServerId(opts.region, opts.serverId);
         if (!sid) {
-            this.logger.error(`Failed to add server "${opts.identifier}": No server ID found`);
+            this.logError(`Failed to add server "${opts.identifier}": No server ID found`);
             return false;
         }
         this.servers.set(opts.identifier, {
@@ -668,7 +704,7 @@ class RCEManager extends types_1.RCEEvents {
         });
         this.socket.send(JSON.stringify(payload), (err) => {
             if (err) {
-                this.logger.error(`Failed to add server "${opts.identifier}": ${err}`);
+                this.logError(`Failed to add server "${opts.identifier}": ${err}`);
                 return false;
             }
             if (opts.refreshPlayers) {
@@ -685,7 +721,7 @@ class RCEManager extends types_1.RCEEvents {
     async refreshPlayers(identifier) {
         const server = this.servers.get(identifier);
         if (!server) {
-            this.logger.error(`Failed to refresh players: No server found for ID ${identifier}`);
+            this.logError(`Failed to refresh players: No server found for ID ${identifier}`);
             return;
         }
         const users = await this.sendCommand(identifier, "Users", true);

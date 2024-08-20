@@ -39,9 +39,15 @@ export interface WebsocketMessage {
     payload: any;
     id: string;
 }
+export declare enum KillPlayerType {
+    PLAYER = "player",
+    NPC = "npc",
+    ENTITY = "entity",
+    NATURAL = "natural"
+}
 export interface KillPlayer {
     id: string;
-    type: "player" | "npc" | "entity" | "natural";
+    type: KillPlayerType;
     name: string;
 }
 export interface EventPayload {
@@ -129,6 +135,10 @@ export interface ExecutingCommandEventPayload extends EventPayload {
 }
 export interface ServerReadyEventPayload extends EventPayload {
 }
+export interface RCEErrorPayload {
+    server?: RustServer;
+    error: string;
+}
 export interface RCEEventTypes {
     [RCEEvent.MESSAGE]: MessageEventPayload;
     [RCEEvent.PLAYERLIST_UPDATE]: PlayerListUpdateEventPayload;
@@ -151,6 +161,7 @@ export interface RCEEventTypes {
     [RCEEvent.SPECIAL_EVENT_END]: SpecialEventEndEventPayload;
     [RCEEvent.EXECUTING_COMMAND]: ExecutingCommandEventPayload;
     [RCEEvent.SERVER_READY]: ServerReadyEventPayload;
+    [RCEEvent.ERROR]: RCEErrorPayload;
 }
 export declare class RCEEvents extends EventEmitter {
     emit<K extends keyof RCEEventTypes>(event: K, ...args: RCEEventTypes[K] extends undefined ? [] : [RCEEventTypes[K]]): boolean;

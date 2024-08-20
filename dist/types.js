@@ -1,8 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RCEEvents = void 0;
+exports.RCEEvents = exports.KillPlayerType = void 0;
 const constants_1 = require("./constants");
 const events_1 = require("events");
+var KillPlayerType;
+(function (KillPlayerType) {
+    KillPlayerType["PLAYER"] = "player";
+    KillPlayerType["NPC"] = "npc";
+    KillPlayerType["ENTITY"] = "entity";
+    KillPlayerType["NATURAL"] = "natural";
+})(KillPlayerType || (exports.KillPlayerType = KillPlayerType = {}));
 class RCEEvents extends events_1.EventEmitter {
     emit(event, ...args) {
         return super.emit(event, ...args);
