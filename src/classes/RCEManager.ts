@@ -138,12 +138,7 @@ export default class RCEManager extends RCEEvents {
     * await rce.close();
   */
   public async close() {
-    this.socket?.close();
-    this.servers.forEach((server) => {
-      clearInterval(server.refreshPlayersInterval);
-    });
-    this.servers.clear();
-
+    this.clean();
     this.logger.info("RCEManager closed successfully");
   }
 
@@ -208,6 +203,27 @@ export default class RCEManager extends RCEEvents {
     );
   }
 
+  private clean() {
+    this.logger.debug("Cleaning up all data");
+
+    this.servers.forEach((server) => {
+      clearInterval(server.refreshPlayersInterval);
+      server.players = [];
+      server.added = false;
+      server.ready = false;
+    });
+
+    this.requests.clear();
+    this.commands = [];
+    this.queue = [];
+    this.lastLogDate = new Date();
+
+    if (this.socket?.OPEN) this.socket.close(1000);
+    this.socket = undefined;
+
+    this.logger.debug("Cleaned up all data successfully");
+  }
+
   private async connectWebsocket(timeout: number) {
     this.logger.debug("Connecting to websocket");
 
@@ -230,15 +246,24 @@ export default class RCEManager extends RCEEvents {
 
     this.socket.on("error", (err) => {
       this.logError(`Websocket error: ${err.message}`);
-      this.socket?.close();
-      this.socket = undefined;
-      this.connectWebsocket(timeout);
+      this.clean();
+
+      this.logger.warn(
+        "Disconnected from websocket; attempting reconnecting in 30 seconds"
+      );
+      setTimeout(() => this.connectWebsocket(timeout), 30_000);
     });
 
     this.socket.on("close", (code: number, reason: string) => {
       this.logError(`Websocket closed: ${code} ${reason}`);
-      this.socket = undefined;
-      this.connectWebsocket(timeout);
+      this.clean();
+
+      if (code !== 1000) {
+        this.logger.warn(
+          "Disconnected from websocket; attempting reconnecting in 30 seconds"
+        );
+        setTimeout(() => this.connectWebsocket(timeout), 30_000);
+      }
     });
 
     this.socket.on("message", (data) => {
