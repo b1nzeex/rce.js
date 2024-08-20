@@ -59,6 +59,7 @@ export default class RCEManager extends RCEEvents {
     file: "",
   };
   private lastLogDate: Date = new Date();
+  private kaInterval?: NodeJS.Timeout;
 
   /*
     * Create a new RCEManager instance
@@ -223,6 +224,7 @@ export default class RCEManager extends RCEEvents {
 
     if (this.socket?.OPEN) this.socket.close(1000);
     this.socket = undefined;
+    clearInterval(this.kaInterval);
 
     this.logger.debug("Cleaned up all data successfully");
   }
@@ -240,7 +242,7 @@ export default class RCEManager extends RCEEvents {
 
     this.socket.on("open", async () => {
       this.logger.debug("Websocket connection established");
-      await this.authenticateWebsocket();
+      await this.authenticateWebsocket(timeout);
 
       this.servers.forEach(async (server) => {
         if (!server.added) await this.addServer(server);
@@ -310,28 +312,36 @@ export default class RCEManager extends RCEEvents {
     });
   }
 
-  private async authenticateWebsocket() {
+  private async authenticateWebsocket(timeout: number) {
     this.logger.debug("Attempting to authenticate websocket");
 
     if (!this.auth?.access_token) {
       return this.logError("Failed to authenticate websocket: No access token");
     }
 
-    this.socket.send(
-      JSON.stringify({
-        type: GPORTALWebsocketTypes.INIT,
-        payload: {
-          authorization: this.auth.access_token,
-        },
-      })
-    );
+    if (this.socket?.OPEN) {
+      this.socket.send(
+        JSON.stringify({
+          type: GPORTALWebsocketTypes.INIT,
+          payload: {
+            authorization: this.auth.access_token,
+          },
+        })
+      );
 
-    setInterval(() => {
-      if (this.socket && this.socket.OPEN) {
-        this.logger.debug("Sending keep-alive message");
-        this.socket.send(JSON.stringify({ type: "ka" }));
-      }
-    }, 30_000);
+      this.kaInterval = setInterval(() => {
+        if (this.socket && this.socket.OPEN) {
+          this.logger.debug("Sending keep-alive message");
+          this.socket.send(JSON.stringify({ type: "ka" }));
+        }
+      }, 30_000);
+    } else {
+      this.logError(
+        "Failed to authenticate websocket: No websocket connection"
+      );
+      this.clean();
+      this.connectWebsocket(timeout);
+    }
   }
 
   private updateLastLogDate() {
