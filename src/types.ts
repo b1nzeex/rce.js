@@ -46,9 +46,16 @@ export interface WebsocketMessage {
   id: string;
 }
 
+export enum KillPlayerType {
+  PLAYER = "player",
+  NPC = "npc",
+  ENTITY = "entity",
+  NATURAL = "natural",
+}
+
 export interface KillPlayer {
   id: string;
-  type: "player" | "npc" | "entity" | "natural";
+  type: KillPlayerType;
   name: string;
 }
 
