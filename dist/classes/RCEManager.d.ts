@@ -29,7 +29,7 @@ export default class RCEManager extends RCEEvents {
     private processQueue;
     private sendCommandInternal;
     sendCommand(identifier: string, command: string, response?: boolean): Promise<string | undefined | null>;
-    addServer(opts: ServerOptions, resolved?: boolean): Promise<boolean>;
+    addServer(opts: ServerOptions): Promise<boolean>;
     private refreshPlayers;
     getServer(identifier: string): RustServer;
     removeServer(identifier: string): void;

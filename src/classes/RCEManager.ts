@@ -107,7 +107,6 @@ export default class RCEManager extends RCEEvents {
       this.servers.set(server.identifier, {
         identifier: server.identifier,
         serverId: server.serverId,
-        resolvedServerId: false,
         region: server.region,
         refreshPlayers: server.refreshPlayers || 0,
         players: [],
@@ -221,6 +220,7 @@ export default class RCEManager extends RCEEvents {
       server.players = [];
       server.added = false;
       server.ready = false;
+      server.trueServerId = undefined;
     });
 
     this.requests.clear();
@@ -252,8 +252,7 @@ export default class RCEManager extends RCEEvents {
       await this.authenticateWebsocket(timeout);
 
       this.servers.forEach(async (server) => {
-        if (!server.added)
-          await this.addServer(server, server.resolvedServerId);
+        if (!server.added) await this.addServer(server);
       });
     });
 
@@ -716,7 +715,8 @@ export default class RCEManager extends RCEEvents {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to resolve server ID: ${response.statusText}`);
+        this.logError(`Failed to resolve server ID: ${response.statusText}`);
+        return undefined;
       }
 
       const data = await response.json();
@@ -787,7 +787,7 @@ export default class RCEManager extends RCEEvents {
     const payload = {
       operationName: "sendConsoleMessage",
       variables: {
-        sid: server.serverId,
+        sid: server.trueServerId,
         region: server.region,
         message: command,
       },
@@ -818,9 +818,11 @@ export default class RCEManager extends RCEEvents {
           })
             .then((response) => {
               if (!response.ok) {
-                throw new Error(
-                  `Failed to send command: ${response.statusText}`
+                this.logError(
+                  `Failed to send command: ${response.statusText}`,
+                  server
                 );
+                return null;
               }
 
               this.logger.debug(`Command "${command}" sent successfully`);
@@ -942,15 +944,10 @@ export default class RCEManager extends RCEEvents {
     * @example
     * await rce.addServer({ identifier: "server2", region: "EU", serverId: 54321, refreshPlayers: 5 });
   */
-  public async addServer(
-    opts: ServerOptions,
-    resolved: boolean = false
-  ): Promise<boolean> {
+  public async addServer(opts: ServerOptions): Promise<boolean> {
     this.logger.debug(`Adding server "${opts.identifier}"`);
 
-    const sid = resolved
-      ? opts.serverId
-      : await this.resolveServerId(opts.region, opts.serverId);
+    const sid = await this.resolveServerId(opts.region, opts.serverId);
     if (!sid) {
       this.logError(
         `Failed to add server "${opts.identifier}": No server ID found`
@@ -960,8 +957,8 @@ export default class RCEManager extends RCEEvents {
 
     this.servers.set(opts.identifier, {
       identifier: opts.identifier,
-      serverId: sid,
-      resolvedServerId: true,
+      serverId: opts.serverId,
+      trueServerId: sid,
       region: opts.region,
       refreshPlayers: opts.refreshPlayers || 0,
       refreshPlayersInterval: opts.refreshPlayers

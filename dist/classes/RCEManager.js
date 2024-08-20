@@ -68,7 +68,6 @@ class RCEManager extends types_1.RCEEvents {
             this.servers.set(server.identifier, {
                 identifier: server.identifier,
                 serverId: server.serverId,
-                resolvedServerId: false,
                 region: server.region,
                 refreshPlayers: server.refreshPlayers || 0,
                 players: [],
@@ -167,6 +166,7 @@ class RCEManager extends types_1.RCEEvents {
             server.players = [];
             server.added = false;
             server.ready = false;
+            server.trueServerId = undefined;
         });
         this.requests.clear();
         this.commands = [];
@@ -193,7 +193,7 @@ class RCEManager extends types_1.RCEEvents {
             await this.authenticateWebsocket(timeout);
             this.servers.forEach(async (server) => {
                 if (!server.added)
-                    await this.addServer(server, server.resolvedServerId);
+                    await this.addServer(server);
             });
         });
         this.socket.on("error", (err) => {
@@ -520,7 +520,8 @@ class RCEManager extends types_1.RCEEvents {
                 }),
             });
             if (!response.ok) {
-                throw new Error(`Failed to resolve server ID: ${response.statusText}`);
+                this.logError(`Failed to resolve server ID: ${response.statusText}`);
+                return undefined;
             }
             const data = await response.json();
             return data?.data?.sid;
@@ -572,7 +573,7 @@ class RCEManager extends types_1.RCEEvents {
         const payload = {
             operationName: "sendConsoleMessage",
             variables: {
-                sid: server.serverId,
+                sid: server.trueServerId,
                 region: server.region,
                 message: command,
             },
@@ -599,7 +600,8 @@ class RCEManager extends types_1.RCEEvents {
                     })
                         .then((response) => {
                         if (!response.ok) {
-                            throw new Error(`Failed to send command: ${response.statusText}`);
+                            this.logError(`Failed to send command: ${response.statusText}`, server);
+                            return null;
                         }
                         this.logger.debug(`Command "${command}" sent successfully`);
                         this.logger.debug(`Starting timeout for command "${command}"`);
@@ -691,19 +693,17 @@ class RCEManager extends types_1.RCEEvents {
       * @example
       * await rce.addServer({ identifier: "server2", region: "EU", serverId: 54321, refreshPlayers: 5 });
     */
-    async addServer(opts, resolved = false) {
+    async addServer(opts) {
         this.logger.debug(`Adding server "${opts.identifier}"`);
-        const sid = resolved
-            ? opts.serverId
-            : await this.resolveServerId(opts.region, opts.serverId);
+        const sid = await this.resolveServerId(opts.region, opts.serverId);
         if (!sid) {
             this.logError(`Failed to add server "${opts.identifier}": No server ID found`);
             return false;
         }
         this.servers.set(opts.identifier, {
             identifier: opts.identifier,
-            serverId: sid,
-            resolvedServerId: true,
+            serverId: opts.serverId,
+            trueServerId: sid,
             region: opts.region,
             refreshPlayers: opts.refreshPlayers || 0,
             refreshPlayersInterval: opts.refreshPlayers
