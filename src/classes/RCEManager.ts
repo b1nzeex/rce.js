@@ -92,7 +92,7 @@ export default class RCEManager extends RCEEvents {
     if (this.authMethod.method === "file") {
       try {
         const data = readFileSync(this.authMethod.file, "utf-8");
-        this.auth.refresh_token = data;
+        this.auth.refresh_token = data.replace("\n", "");
       } catch (err) {
         this.logger.warn("File not found; creating new auth file");
         writeFileSync(this.authMethod.file, "REPLACE_WITH_REFRESH_TOKEN");
