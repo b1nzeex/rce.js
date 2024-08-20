@@ -728,6 +728,7 @@ class RCEManager extends types_1.RCEEvents {
             return;
         }
         const users = await this.sendCommand(identifier, "Users", true);
+        this.logger.debug(`Received users for ${identifier}: ${users}`);
         if (!users)
             return this.refreshPlayers(identifier);
         const players = users.match(/"(.*?)"/g).map((ign) => ign.replace(/"/g, ""));
