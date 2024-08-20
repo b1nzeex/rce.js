@@ -722,6 +722,7 @@ class RCEManager extends types_1.RCEEvents {
         });
     }
     async refreshPlayers(identifier) {
+        this.logger.debug(`Refreshing players for ${identifier}`);
         const server = this.servers.get(identifier);
         if (!server) {
             this.logError(`Failed to refresh players: No server found for ID ${identifier}`);

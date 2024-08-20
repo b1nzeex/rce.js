@@ -973,6 +973,8 @@ export default class RCEManager extends RCEEvents {
   }
 
   private async refreshPlayers(identifier: string) {
+    this.logger.debug(`Refreshing players for ${identifier}`);
+
     const server = this.servers.get(identifier);
     if (!server) {
       this.logError(
