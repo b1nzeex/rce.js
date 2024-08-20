@@ -984,8 +984,10 @@ export default class RCEManager extends RCEEvents {
     }
 
     const users = await this.sendCommand(identifier, "Users", true);
-    this.logger.debug(`Received users for ${identifier}: ${users}`);
-    if (!users) return this.refreshPlayers(identifier);
+    if (!users) {
+      this.logger.warn(`Failed to refresh players for ${identifier}`);
+      return;
+    }
 
     const players = users.match(/"(.*?)"/g).map((ign) => ign.replace(/"/g, ""));
     players.shift();
