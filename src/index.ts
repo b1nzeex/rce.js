@@ -20,6 +20,7 @@ import {
   KitSpawnEventPayload,
   ExecutingCommandEventPayload,
   ServerReadyEventPayload,
+  KillPlayerType,
 } from "./types";
 
 export {
@@ -46,4 +47,5 @@ export {
   KitSpawnEventPayload,
   ExecutingCommandEventPayload,
   ServerReadyEventPayload,
+  KillPlayerType,
 };
