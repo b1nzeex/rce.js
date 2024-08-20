@@ -10,6 +10,7 @@ export default class RCEManager extends RCEEvents {
     private queue;
     private authMethod;
     private lastLogDate;
+    private kaInterval?;
     constructor(auth: AuthOptions);
     init(timeout?: number): Promise<void>;
     close(): Promise<void>;
