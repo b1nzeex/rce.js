@@ -131,7 +131,10 @@ class RCEManager extends types_1.RCEEvents {
                 }),
             });
             if (!response.ok) {
-                throw new Error(`Failed to refresh token: ${response.statusText}`);
+                this.logger.debug(this.auth);
+                this.logger.debug(response.body);
+                this.logError(`Failed to refresh token: ${response.statusText}`);
+                return false;
             }
             this.auth = await response.json();
             setTimeout(() => this.refreshToken(), this.auth.expires_in * 1000);
