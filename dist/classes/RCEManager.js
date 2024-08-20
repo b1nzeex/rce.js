@@ -68,6 +68,7 @@ class RCEManager extends types_1.RCEEvents {
             this.servers.set(server.identifier, {
                 identifier: server.identifier,
                 serverId: server.serverId,
+                resolvedServerId: false,
                 region: server.region,
                 refreshPlayers: server.refreshPlayers || 0,
                 players: [],
@@ -192,15 +193,15 @@ class RCEManager extends types_1.RCEEvents {
             await this.authenticateWebsocket(timeout);
             this.servers.forEach(async (server) => {
                 if (!server.added)
-                    await this.addServer(server);
+                    await this.addServer(server, server.resolvedServerId);
             });
         });
         this.socket.on("error", (err) => {
             this.logError(`Websocket error: ${err.message}`);
             this.clean();
             if (this.connectionAttempt < 5) {
-                this.logger.warn(`Websocket error: Attempting to reconnect in 30 seconds (Attempt ${this.connectionAttempt} of 5)`);
-                setTimeout(() => this.connectWebsocket(timeout), 30_000);
+                this.logger.warn(`Websocket error: Attempting to reconnect in ${this.connectionAttempt * 10} seconds (Attempt ${this.connectionAttempt} of 5)`);
+                setTimeout(() => this.connectWebsocket(timeout), this.connectionAttempt * 10_000);
             }
             else {
                 this.logError("Failed to connect to websocket: Too many attempts");
@@ -210,8 +211,8 @@ class RCEManager extends types_1.RCEEvents {
             this.clean();
             if ([1005, 1006].includes(code)) {
                 if (this.connectionAttempt < 5) {
-                    this.logger.warn(`Websocket closed: Attempting to reconnect in 30 seconds (Attempt ${this.connectionAttempt} of 5)`);
-                    setTimeout(() => this.connectWebsocket(timeout), 30_000);
+                    this.logger.warn(`Websocket closed: Attempting to reconnect in ${this.connectionAttempt * 10} seconds (Attempt ${this.connectionAttempt} of 5)`);
+                    setTimeout(() => this.connectWebsocket(timeout), this.connectionAttempt * 10_000);
                 }
                 else {
                     this.logError("Failed to connect to websocket: Too many attempts");
@@ -690,9 +691,11 @@ class RCEManager extends types_1.RCEEvents {
       * @example
       * await rce.addServer({ identifier: "server2", region: "EU", serverId: 54321, refreshPlayers: 5 });
     */
-    async addServer(opts) {
+    async addServer(opts, resolved = false) {
         this.logger.debug(`Adding server "${opts.identifier}"`);
-        const sid = await this.resolveServerId(opts.region, opts.serverId);
+        const sid = resolved
+            ? opts.serverId
+            : await this.resolveServerId(opts.region, opts.serverId);
         if (!sid) {
             this.logError(`Failed to add server "${opts.identifier}": No server ID found`);
             return false;
@@ -700,6 +703,7 @@ class RCEManager extends types_1.RCEEvents {
         this.servers.set(opts.identifier, {
             identifier: opts.identifier,
             serverId: sid,
+            resolvedServerId: true,
             region: opts.region,
             refreshPlayers: opts.refreshPlayers || 0,
             refreshPlayersInterval: opts.refreshPlayers

@@ -16,6 +16,7 @@ export interface Auth {
 export interface RustServer {
     identifier: string;
     serverId: number;
+    resolvedServerId: boolean;
     region: "US" | "EU";
     refreshPlayers?: number;
     refreshPlayersInterval?: NodeJS.Timeout;
