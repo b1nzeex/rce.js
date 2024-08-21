@@ -264,7 +264,7 @@ export default class RCEManager extends RCEEvents {
         this.logger.warn(
           `Websocket error: Attempting to reconnect in ${
             this.connectionAttempt * 10
-          } seconds (Attempt ${this.connectionAttempt} of 5)`
+          } seconds (Attempt ${this.connectionAttempt + 1} of 5)`
         );
         setTimeout(
           () => this.connectWebsocket(timeout),
@@ -283,7 +283,7 @@ export default class RCEManager extends RCEEvents {
           this.logger.warn(
             `Websocket closed: Attempting to reconnect in ${
               this.connectionAttempt * 10
-            } seconds (Attempt ${this.connectionAttempt} of 5)`
+            } seconds (Attempt ${this.connectionAttempt + 1} of 5)`
           );
           setTimeout(
             () => this.connectWebsocket(timeout),
