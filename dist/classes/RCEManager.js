@@ -200,7 +200,7 @@ class RCEManager extends types_1.RCEEvents {
             this.logError(`Websocket error: ${err.message}`);
             this.clean();
             if (this.connectionAttempt < 5) {
-                this.logger.warn(`Websocket error: Attempting to reconnect in ${this.connectionAttempt * 10} seconds (Attempt ${this.connectionAttempt} of 5)`);
+                this.logger.warn(`Websocket error: Attempting to reconnect in ${this.connectionAttempt * 10} seconds (Attempt ${this.connectionAttempt + 1} of 5)`);
                 setTimeout(() => this.connectWebsocket(timeout), this.connectionAttempt * 10_000);
             }
             else {
@@ -209,9 +209,9 @@ class RCEManager extends types_1.RCEEvents {
         });
         this.socket.on("close", (code, reason) => {
             this.clean();
-            if ([1005, 1006].includes(code)) {
+            if (code !== 1000) {
                 if (this.connectionAttempt < 5) {
-                    this.logger.warn(`Websocket closed: Attempting to reconnect in ${this.connectionAttempt * 10} seconds (Attempt ${this.connectionAttempt} of 5)`);
+                    this.logger.warn(`Websocket closed: Attempting to reconnect in ${this.connectionAttempt * 10} seconds (Attempt ${this.connectionAttempt + 1} of 5)`);
                     setTimeout(() => this.connectWebsocket(timeout), this.connectionAttempt * 10_000);
                 }
                 else {
