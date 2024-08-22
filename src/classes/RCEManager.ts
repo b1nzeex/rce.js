@@ -278,7 +278,7 @@ export default class RCEManager extends RCEEvents {
     this.socket.on("close", (code: number, reason: string) => {
       this.clean();
 
-      if ([1005, 1006].includes(code)) {
+      if (code !== 1000) {
         if (this.connectionAttempt < 5) {
           this.logger.warn(
             `Websocket closed: Attempting to reconnect in ${
