@@ -1,45 +1,43 @@
 export declare enum GPORTALRoutes {
-    COMMAND = "https://www.g-portal.com/ngpapi/",
-    REFRESH = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/token",
-    WEBSOCKET = "wss://www.g-portal.com/ngpapi/",
-    ORIGIN = "https://www.g-portal.com",
-    HOME = "https://www.g-portal.com/en"
+    Command = "https://www.g-portal.com/ngpapi/",
+    Refresh = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/token",
+    WebSocket = "wss://www.g-portal.com/ngpapi/",
+    Origin = "https://www.g-portal.com",
+    Home = "https://www.g-portal.com/en"
 }
 export declare enum GPORTALWebsocketTypes {
-    INIT = "connection_init",
-    START = "start"
+    Init = "connection_init",
+    Start = "start"
 }
 export declare enum LogLevel {
-    NONE = 0,
-    ERROR = 1,
-    WARN = 2,
-    INFO = 3,
-    DEBUG = 4
+    None = 0,
+    Error = 1,
+    Warn = 2,
+    Info = 3,
+    Debug = 4
 }
 export declare enum RCEEvent {
-    CONNECTED = "connected",
-    MESSAGE = "message",
-    PLAYER_KILL = "player_kill",
-    PLAYER_JOINED = "player_joined",
-    PLAYER_RESPAWNED = "player_respawned",
-    PLAYER_SUICIDE = "player_suicide",
-    PLAYER_ROLE_ADD = "player_role_add",
-    QUICK_CHAT = "quick_chat",
-    NOTE_EDIT = "note_edit",
-    EVENT_START = "event_start",
-    PLAYERLIST_UPDATE = "playerlist_update",
-    ITEM_SPAWN = "item_spawn",
-    VENDING_MACHINE_NAME = "vending_machine_name",
-    KIT_SPAWN = "kit_spawn",
-    KIT_GIVE = "kit_give",
-    TEAM_CREATE = "team_create",
-    TEAM_JOIN = "team_join",
-    TEAM_LEAVE = "team_leave",
-    SPECIAL_EVENT_START = "special_event_start",
-    SPECIAL_EVENT_END = "special_event_end",
-    EXECUTING_COMMAND = "executing_command",
-    SERVER_READY = "server_ready",
-    ERROR = "error"
+    Message = "message",
+    PlayerKill = "player_kill",
+    PlayerJoined = "player_joined",
+    PlayerRespawned = "player_respawned",
+    PlayerSuicide = "player_suicide",
+    PlayerRoleAdd = "player_role_add",
+    QuickChat = "quick_chat",
+    NoteEdit = "note_edit",
+    EventStart = "event_start",
+    PlayerlistUpdate = "playerlist_update",
+    ItemSpawn = "item_spawn",
+    VendingMachineName = "vending_machine_name",
+    KitSpawn = "kit_spawn",
+    KitGive = "kit_give",
+    TeamCreate = "team_create",
+    TeamJoin = "team_join",
+    TeamLeave = "team_leave",
+    SpecialEventStart = "special_event_start",
+    SpecialEventEnd = "special_event_end",
+    ExecutingCommand = "executing_command",
+    Error = "error"
 }
 export declare enum QuickChat {
     COMBAT_WereUnderAttack = "d11_quick_chat_combat_slot_0",

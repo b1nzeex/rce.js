@@ -1,4 +1,4 @@
-import { AuthOptions, RustServer, ServerOptions } from "../types";
+import { AuthOptions, RustServer, ServerOptions, LoggerOptions } from "../types";
 import { RCEEvents } from "../types";
 export default class RCEManager extends RCEEvents {
     private logger;
@@ -12,7 +12,7 @@ export default class RCEManager extends RCEEvents {
     private lastLogDate;
     private kaInterval?;
     private connectionAttempt;
-    constructor(auth: AuthOptions);
+    constructor(auth: AuthOptions, logger?: LoggerOptions);
     init(timeout?: number): Promise<void>;
     close(): Promise<void>;
     private authenticate;

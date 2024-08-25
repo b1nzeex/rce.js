@@ -1,7 +1,9 @@
-import { LogLevel } from "../constants";
+import { type LoggerOptions } from "../types";
 export default class Logger {
     private level;
-    constructor(level?: LogLevel);
+    private file;
+    constructor(opts: LoggerOptions);
+    private logToFile;
     private format;
     error(content: any): void;
     warn(content: any): void;

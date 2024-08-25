@@ -5,10 +5,10 @@ const constants_1 = require("./constants");
 const events_1 = require("events");
 var KillPlayerType;
 (function (KillPlayerType) {
-    KillPlayerType["PLAYER"] = "player";
-    KillPlayerType["NPC"] = "npc";
-    KillPlayerType["ENTITY"] = "entity";
-    KillPlayerType["NATURAL"] = "natural";
+    KillPlayerType["Player"] = "player";
+    KillPlayerType["Npc"] = "npc";
+    KillPlayerType["Entity"] = "entity";
+    KillPlayerType["Natural"] = "natural";
 })(KillPlayerType || (exports.KillPlayerType = KillPlayerType = {}));
 class RCEEvents extends events_1.EventEmitter {
     emit(event, ...args) {

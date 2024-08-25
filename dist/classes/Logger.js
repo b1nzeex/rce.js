@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("../constants");
 const util_1 = require("util");
+const fs_1 = __importDefault(require("fs"));
 var ConsoleColor;
 (function (ConsoleColor) {
     ConsoleColor["Reset"] = "\u001B[0m";
@@ -30,8 +34,20 @@ var ConsoleColor;
 })(ConsoleColor || (ConsoleColor = {}));
 class Logger {
     level;
-    constructor(level = constants_1.LogLevel.INFO) {
-        this.level = level;
+    file;
+    constructor(opts) {
+        this.level = opts.logLevel || constants_1.LogLevel.Info;
+        this.file = opts.logFile;
+    }
+    logToFile(content) {
+        if (this.file) {
+            if (typeof content === "string") {
+                fs_1.default.appendFileSync(this.file, content + "\n");
+            }
+            else {
+                fs_1.default.appendFileSync(this.file, (0, util_1.inspect)(content, { depth: 5 }) + "\n");
+            }
+        }
     }
     format(content) {
         return typeof content === "string"
@@ -39,22 +55,26 @@ class Logger {
             : (0, util_1.inspect)(content, { depth: 5 });
     }
     error(content) {
-        if (this.level >= constants_1.LogLevel.ERROR) {
+        this.logToFile(content);
+        if (this.level >= constants_1.LogLevel.Error) {
             console.log(`[rce.js] ${ConsoleColor.FgRed}[ERROR]${ConsoleColor.Reset} ${this.format(content)}`);
         }
     }
     warn(content) {
-        if (this.level >= constants_1.LogLevel.WARN) {
+        this.logToFile(content);
+        if (this.level >= constants_1.LogLevel.Warn) {
             console.log(`[rce.js] ${ConsoleColor.FgYellow}[WARN]${ConsoleColor.Reset} ${this.format(content)}`);
         }
     }
     info(content) {
-        if (this.level >= constants_1.LogLevel.INFO) {
+        this.logToFile(content);
+        if (this.level >= constants_1.LogLevel.Info) {
             console.log(`[rce.js] ${ConsoleColor.FgCyan}[INFO]${ConsoleColor.Reset} ${this.format(content)}`);
         }
     }
     debug(content) {
-        if (this.level >= constants_1.LogLevel.DEBUG) {
+        this.logToFile(content);
+        if (this.level >= constants_1.LogLevel.Debug) {
             console.log(`[rce.js] ${ConsoleColor.FgGreen}[DEBUG]${ConsoleColor.Reset} ${this.format(content)}`);
         }
     }

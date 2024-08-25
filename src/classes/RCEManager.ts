@@ -5,6 +5,7 @@ import {
   WebsocketRequest,
   WebsocketMessage,
   ServerOptions,
+  LoggerOptions,
 } from "../types";
 import {
   GPORTALRoutes,
@@ -72,10 +73,10 @@ export default class RCEManager extends RCEEvents {
     * @example
     * const rce = new RCEManager({ servers: [{ identifier: "server1", region: "US", serverId: 12345 }], logLevel: LogLevel.INFO, authMethod: "file", file: "auth.txt" });
   */
-  public constructor(auth: AuthOptions) {
+  public constructor(auth: AuthOptions, logger: LoggerOptions = {}) {
     super();
 
-    this.logger = new Logger(auth.logLevel);
+    this.logger = new Logger(logger);
 
     this.authMethod.refreshToken = auth.refreshToken;
     this.authMethod.file = auth.file || "auth.txt";
@@ -128,7 +129,7 @@ export default class RCEManager extends RCEEvents {
     * await rce.init(30_000);
   */
   public async init(timeout: number = 60_000) {
-    this.on(RCEEvent.ERROR, (payload) => {
+    this.on(RCEEvent.Error, (payload) => {
       this.logger.error(payload.error);
     });
 
@@ -170,7 +171,7 @@ export default class RCEManager extends RCEEvents {
     }
 
     try {
-      const response = await fetch(GPORTALRoutes.REFRESH, {
+      const response = await fetch(GPORTALRoutes.Refresh, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -206,7 +207,7 @@ export default class RCEManager extends RCEEvents {
   }
 
   private logError(message: string, server?: RustServer) {
-    this.emit(RCEEvent.ERROR, { server, error: message });
+    this.emit(RCEEvent.Error, { server, error: message });
     this.logger.error(
       `${server ? `[${server.identifier}]: ${message}` : message}`
     );
@@ -239,9 +240,9 @@ export default class RCEManager extends RCEEvents {
     this.logger.debug("Connecting to websocket");
     this.connectionAttempt++;
 
-    this.socket = new WebSocket(GPORTALRoutes.WEBSOCKET, ["graphql-ws"], {
+    this.socket = new WebSocket(GPORTALRoutes.WebSocket, ["graphql-ws"], {
       headers: {
-        origin: GPORTALRoutes.ORIGIN,
+        origin: GPORTALRoutes.Origin,
         host: "www.g-portal.com",
       },
       timeout,
@@ -263,7 +264,7 @@ export default class RCEManager extends RCEEvents {
       if (this.connectionAttempt < 5) {
         this.logger.warn(
           `Websocket error: Attempting to reconnect in ${
-            this.connectionAttempt * 10
+            this.connectionAttempt + 1 * 10
           } seconds (Attempt ${this.connectionAttempt + 1} of 5)`
         );
         setTimeout(
@@ -282,7 +283,7 @@ export default class RCEManager extends RCEEvents {
         if (this.connectionAttempt < 5) {
           this.logger.warn(
             `Websocket closed: Attempting to reconnect in ${
-              this.connectionAttempt * 10
+              this.connectionAttempt + 1 * 10
             } seconds (Attempt ${this.connectionAttempt + 1} of 5)`
           );
           setTimeout(
@@ -349,7 +350,7 @@ export default class RCEManager extends RCEEvents {
     if (this.socket?.OPEN) {
       this.socket.send(
         JSON.stringify({
-          type: GPORTALWebsocketTypes.INIT,
+          type: GPORTALWebsocketTypes.Init,
           payload: {
             authorization: this.auth.access_token,
           },
@@ -424,7 +425,7 @@ export default class RCEManager extends RCEEvents {
         this.logger.debug(`Executing message found for: ${executingMatch[1]}`);
         const command = executingMatch[1];
 
-        this.emit(RCEEvent.EXECUTING_COMMAND, {
+        this.emit(RCEEvent.ExecutingCommand, {
           server,
           command,
         });
@@ -474,22 +475,7 @@ export default class RCEManager extends RCEEvents {
 
       this.updateLastLogDate();
 
-      // Population
-      if (log.startsWith("<slot:")) {
-        const players = log
-          .match(/"(.*?)"/g)
-          .map((ign) => ign.replace(/"/g, ""));
-        players.shift();
-
-        this.emit(RCEEvent.PLAYERLIST_UPDATE, { server, players });
-
-        return this.servers.set(server.identifier, {
-          ...server,
-          players,
-        });
-      }
-
-      this.emit(RCEEvent.MESSAGE, { server, message: log });
+      this.emit(RCEEvent.Message, { server, message: log });
       this.logger.debug(`Received message: ${log} from ${server.identifier}`);
 
       // PLAYER_KILL event
@@ -501,7 +487,7 @@ export default class RCEManager extends RCEEvents {
         const victimData = Helper.getKillInformation(victim);
         const killerData = Helper.getKillInformation(killer);
 
-        this.emit(RCEEvent.PLAYER_KILL, {
+        this.emit(RCEEvent.PlayerKill, {
           server,
           victim: victimData,
           killer: killerData,
@@ -517,7 +503,7 @@ export default class RCEManager extends RCEEvents {
         const oldName = vendingMachineMatch[2];
         const newName = vendingMachineMatch[3];
 
-        this.emit(RCEEvent.VENDING_MACHINE_NAME, {
+        this.emit(RCEEvent.VendingMachineName, {
           server,
           ign,
           oldName,
@@ -526,14 +512,21 @@ export default class RCEManager extends RCEEvents {
       }
 
       // QUICK_CHAT event
-      if (log.includes("[CHAT LOCAL]") || log.includes("[CHAT SERVER]")) {
-        const type = log.includes("[CHAT LOCAL]") ? "local" : "server";
-        const msg = log.split(" : ")[1];
-        const ign = log.includes("[CHAT LOCAL]")
-          ? log.split("[CHAT LOCAL] ")[1].split(" : ")[0]
-          : log.split("[CHAT SERVER] ")[1].split(" : ")[0];
+      const quickChatMatch = log.match(
+        /(\[CHAT (TEAM|SERVER|LOCAL)\]) (\w+) : (.+)/
+      );
+      if (quickChatMatch) {
+        const quickChatTypes = {
+          "[CHAT TEAM]": "team",
+          "[CHAT SERVER]": "server",
+          "[CHAT LOCAL]": "local",
+        };
 
-        this.emit(RCEEvent.QUICK_CHAT, {
+        const type = quickChatTypes[quickChatMatch[1]];
+        const ign = quickChatMatch[3];
+        const msg = quickChatMatch[4] as QuickChat;
+
+        this.emit(RCEEvent.QuickChat, {
           server,
           type,
           ign,
@@ -545,7 +538,7 @@ export default class RCEManager extends RCEEvents {
       if (log.includes("was suicide by Suicide")) {
         const ign = log.split(" was suicide by Suicide")[0];
 
-        this.emit(RCEEvent.PLAYER_SUICIDE, { server, ign });
+        this.emit(RCEEvent.PlayerSuicide, { server, ign });
       }
 
       // PLAYER_RESPAWNED event
@@ -553,7 +546,7 @@ export default class RCEManager extends RCEEvents {
         const ign = log.split(" [")[0];
         const platform = log.includes("[xboxone]") ? "XBL" : "PS";
 
-        this.emit(RCEEvent.PLAYER_RESPAWNED, { server, ign, platform });
+        this.emit(RCEEvent.PlayerRespawned, { server, ign, platform });
       }
 
       // PLAYER_JOINED event
@@ -561,7 +554,7 @@ export default class RCEManager extends RCEEvents {
         const ign = log.split(" joined ")[0];
         const platform = log.includes("[xboxone]") ? "XBL" : "PS";
 
-        this.emit(RCEEvent.PLAYER_JOINED, { server, ign, platform });
+        this.emit(RCEEvent.PlayerJoined, { server, ign, platform });
       }
 
       // PLAYER_ROLE_ADD event
@@ -572,7 +565,7 @@ export default class RCEManager extends RCEEvents {
         const ign = roleMatch[1];
         const role = roleMatch[3];
 
-        this.emit(RCEEvent.PLAYER_ROLE_ADD, { server, ign, role });
+        this.emit(RCEEvent.PlayerRoleAdd, { server, ign, role });
       }
 
       // ITEM_SPAWN event
@@ -582,7 +575,7 @@ export default class RCEManager extends RCEEvents {
         const quantity = Number(itemSpawnMatch[2]);
         const item = itemSpawnMatch[3];
 
-        this.emit(RCEEvent.ITEM_SPAWN, { server, ign, item, quantity });
+        this.emit(RCEEvent.ItemSpawn, { server, ign, item, quantity });
       }
 
       // NOTE_EDIT event
@@ -595,7 +588,7 @@ export default class RCEManager extends RCEEvents {
         const newContent = noteMatch[3].trim().split("\\n")[0];
 
         if (newContent.length > 0 && oldContent !== newContent) {
-          this.emit(RCEEvent.NOTE_EDIT, {
+          this.emit(RCEEvent.NoteEdit, {
             server,
             ign,
             oldContent,
@@ -612,7 +605,7 @@ export default class RCEManager extends RCEEvents {
         const owner = teamCreateMatch[1];
         const id = Number(teamCreateMatch[2]);
 
-        this.emit(RCEEvent.TEAM_CREATE, { server, owner, id });
+        this.emit(RCEEvent.TeamCreate, { server, owner, id });
       }
 
       // TEAM_JOIN event
@@ -624,7 +617,7 @@ export default class RCEManager extends RCEEvents {
         const owner = teamJoinMatch[2];
         const id = Number(teamJoinMatch[3]);
 
-        this.emit(RCEEvent.TEAM_JOIN, { server, ign, owner, id });
+        this.emit(RCEEvent.TeamJoin, { server, ign, owner, id });
       }
 
       // TEAM_LEAVE event
@@ -637,7 +630,7 @@ export default class RCEManager extends RCEEvents {
         const owner = teamLeaveMatch[2];
         const id = Number(teamLeaveMatch[3]);
 
-        this.emit(RCEEvent.TEAM_LEAVE, { server, ign, owner, id });
+        this.emit(RCEEvent.TeamLeave, { server, ign, owner, id });
       }
 
       // KIT_SPAWN event
@@ -646,7 +639,7 @@ export default class RCEManager extends RCEEvents {
         const ign = kitSpawnMatch[1];
         const kit = kitSpawnMatch[2];
 
-        this.emit(RCEEvent.KIT_SPAWN, { server, ign, kit });
+        this.emit(RCEEvent.KitSpawn, { server, ign, kit });
       }
 
       // KIT_GIVE event
@@ -658,7 +651,7 @@ export default class RCEManager extends RCEEvents {
         const ign = kitGiveMatch[2];
         const kit = kitGiveMatch[3];
 
-        this.emit(RCEEvent.KIT_GIVE, { server, admin, ign, kit });
+        this.emit(RCEEvent.KitGive, { server, admin, ign, kit });
       }
 
       // SPECIAL_EVENT_START event
@@ -671,19 +664,19 @@ export default class RCEManager extends RCEEvents {
           | "HalloweenPortal"
           | "XmasPortal";
 
-        this.emit(RCEEvent.SPECIAL_EVENT_START, { server, event });
+        this.emit(RCEEvent.SpecialEventStart, { server, event });
       }
 
       // SPECIAL_EVENT_END event
       if (log.startsWith("Event set as: none")) {
-        this.emit(RCEEvent.SPECIAL_EVENT_END, { server });
+        this.emit(RCEEvent.SpecialEventEnd, { server });
       }
 
       // EVENT_START event
       if (log.startsWith("[event]")) {
         for (const [key, options] of Object.entries(EVENTS)) {
           if (log.includes(key)) {
-            this.emit(RCEEvent.EVENT_START, {
+            this.emit(RCEEvent.EventStart, {
               server,
               event: options.name,
               special: options.special,
@@ -704,7 +697,7 @@ export default class RCEManager extends RCEEvents {
     }
 
     try {
-      const response = await fetch(GPORTALRoutes.COMMAND, {
+      const response = await fetch(GPORTALRoutes.Command, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -739,7 +732,7 @@ export default class RCEManager extends RCEEvents {
       ...server,
       ready: true,
     });
-    this.emit(RCEEvent.SERVER_READY, { server });
+
     this.logger.info(`Server "${server.identifier}" added successfully`);
     this.processQueue();
   }
@@ -815,7 +808,7 @@ export default class RCEManager extends RCEEvents {
         this.logger.debug(`Command "${command}" added to queue`);
 
         try {
-          fetch(GPORTALRoutes.COMMAND, {
+          fetch(GPORTALRoutes.Command, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -870,7 +863,7 @@ export default class RCEManager extends RCEEvents {
       });
     } else {
       try {
-        const response = await fetch(GPORTALRoutes.COMMAND, {
+        const response = await fetch(GPORTALRoutes.Command, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -979,7 +972,7 @@ export default class RCEManager extends RCEEvents {
     });
 
     const payload = {
-      type: GPORTALWebsocketTypes.START,
+      type: GPORTALWebsocketTypes.Start,
       payload: {
         variables: { sid, region: opts.region },
         extensions: {},
@@ -1045,7 +1038,7 @@ export default class RCEManager extends RCEEvents {
       players,
     });
 
-    this.emit(RCEEvent.PLAYERLIST_UPDATE, { server, players });
+    this.emit(RCEEvent.PlayerlistUpdate, { server, players });
 
     this.logger.debug(`Players refreshed for ${identifier}`);
   }

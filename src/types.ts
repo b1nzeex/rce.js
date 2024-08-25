@@ -1,9 +1,13 @@
 import { RCEEvent, QuickChat } from "./constants";
 import { EventEmitter } from "events";
 
+export interface LoggerOptions {
+  logLevel?: number;
+  logFile?: string;
+}
+
 export interface AuthOptions {
   servers?: ServerOptions[];
-  logLevel?: number;
   refreshToken?: string;
   file?: string;
   authMethod?: "file" | "manual";
@@ -48,10 +52,10 @@ export interface WebsocketMessage {
 }
 
 export enum KillPlayerType {
-  PLAYER = "player",
-  NPC = "npc",
-  ENTITY = "entity",
-  NATURAL = "natural",
+  Player = "player",
+  Npc = "npc",
+  Entity = "entity",
+  Natural = "natural",
 }
 
 export interface KillPlayer {
@@ -73,7 +77,7 @@ export interface PlayerListUpdateEventPayload extends EventPayload {
 }
 
 export interface QuickChatEventPayload extends EventPayload {
-  type: "local" | "server";
+  type: "local" | "server" | "team";
   ign: string;
   message: QuickChat;
 }
@@ -163,36 +167,33 @@ export interface ExecutingCommandEventPayload extends EventPayload {
   command: string;
 }
 
-export interface ServerReadyEventPayload extends EventPayload {}
-
 export interface RCEErrorPayload {
   server?: RustServer;
   error: string;
 }
 
 export interface RCEEventTypes {
-  [RCEEvent.MESSAGE]: MessageEventPayload;
-  [RCEEvent.PLAYERLIST_UPDATE]: PlayerListUpdateEventPayload;
-  [RCEEvent.QUICK_CHAT]: QuickChatEventPayload;
-  [RCEEvent.PLAYER_JOINED]: PlayerJoinedEventPayload;
-  [RCEEvent.PLAYER_SUICIDE]: PlayerSuicideEventPayload;
-  [RCEEvent.PLAYER_RESPAWNED]: PlayerRespawnedEventPayload;
-  [RCEEvent.PLAYER_ROLE_ADD]: PlayerRoleAddEventPayload;
-  [RCEEvent.NOTE_EDIT]: NoteEditEventPayload;
-  [RCEEvent.EVENT_START]: EventStartEventPayload;
-  [RCEEvent.PLAYER_KILL]: PlayerKillEventPayload;
-  [RCEEvent.ITEM_SPAWN]: ItemSpawnEventPayload;
-  [RCEEvent.VENDING_MACHINE_NAME]: VendingMachineNameEventPayload;
-  [RCEEvent.KIT_SPAWN]: KitSpawnEventPayload;
-  [RCEEvent.KIT_GIVE]: KitGiveEventPayload;
-  [RCEEvent.TEAM_CREATE]: TeamCreateEventPayload;
-  [RCEEvent.TEAM_JOIN]: TeamJoinEventPayload;
-  [RCEEvent.TEAM_LEAVE]: TeamLeaveEventPayload;
-  [RCEEvent.SPECIAL_EVENT_START]: SpecialEventStartEventPayload;
-  [RCEEvent.SPECIAL_EVENT_END]: SpecialEventEndEventPayload;
-  [RCEEvent.EXECUTING_COMMAND]: ExecutingCommandEventPayload;
-  [RCEEvent.SERVER_READY]: ServerReadyEventPayload;
-  [RCEEvent.ERROR]: RCEErrorPayload;
+  [RCEEvent.Message]: MessageEventPayload;
+  [RCEEvent.PlayerlistUpdate]: PlayerListUpdateEventPayload;
+  [RCEEvent.QuickChat]: QuickChatEventPayload;
+  [RCEEvent.PlayerJoined]: PlayerJoinedEventPayload;
+  [RCEEvent.PlayerSuicide]: PlayerSuicideEventPayload;
+  [RCEEvent.PlayerRespawned]: PlayerRespawnedEventPayload;
+  [RCEEvent.PlayerRoleAdd]: PlayerRoleAddEventPayload;
+  [RCEEvent.NoteEdit]: NoteEditEventPayload;
+  [RCEEvent.EventStart]: EventStartEventPayload;
+  [RCEEvent.PlayerKill]: PlayerKillEventPayload;
+  [RCEEvent.ItemSpawn]: ItemSpawnEventPayload;
+  [RCEEvent.VendingMachineName]: VendingMachineNameEventPayload;
+  [RCEEvent.KitSpawn]: KitSpawnEventPayload;
+  [RCEEvent.KitGive]: KitGiveEventPayload;
+  [RCEEvent.TeamCreate]: TeamCreateEventPayload;
+  [RCEEvent.TeamJoin]: TeamJoinEventPayload;
+  [RCEEvent.TeamLeave]: TeamLeaveEventPayload;
+  [RCEEvent.SpecialEventStart]: SpecialEventStartEventPayload;
+  [RCEEvent.SpecialEventEnd]: SpecialEventEndEventPayload;
+  [RCEEvent.ExecutingCommand]: ExecutingCommandEventPayload;
+  [RCEEvent.Error]: RCEErrorPayload;
 }
 
 export class RCEEvents extends EventEmitter {

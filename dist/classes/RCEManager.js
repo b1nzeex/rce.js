@@ -40,9 +40,9 @@ class RCEManager extends types_1.RCEEvents {
       * @example
       * const rce = new RCEManager({ servers: [{ identifier: "server1", region: "US", serverId: 12345 }], logLevel: LogLevel.INFO, authMethod: "file", file: "auth.txt" });
     */
-    constructor(auth) {
+    constructor(auth, logger = {}) {
         super();
-        this.logger = new Logger_1.default(auth.logLevel);
+        this.logger = new Logger_1.default(logger);
         this.authMethod.refreshToken = auth.refreshToken;
         this.authMethod.file = auth.file || "auth.txt";
         this.authMethod.method = auth.authMethod || "manual";
@@ -88,7 +88,7 @@ class RCEManager extends types_1.RCEEvents {
       * await rce.init(30_000);
     */
     async init(timeout = 60_000) {
-        this.on(constants_1.RCEEvent.ERROR, (payload) => {
+        this.on(constants_1.RCEEvent.Error, (payload) => {
             this.logger.error(payload.error);
         });
         await this.authenticate(timeout);
@@ -124,7 +124,7 @@ class RCEManager extends types_1.RCEEvents {
             return false;
         }
         try {
-            const response = await fetch(constants_1.GPORTALRoutes.REFRESH, {
+            const response = await fetch(constants_1.GPORTALRoutes.Refresh, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -156,7 +156,7 @@ class RCEManager extends types_1.RCEEvents {
         }
     }
     logError(message, server) {
-        this.emit(constants_1.RCEEvent.ERROR, { server, error: message });
+        this.emit(constants_1.RCEEvent.Error, { server, error: message });
         this.logger.error(`${server ? `[${server.identifier}]: ${message}` : message}`);
     }
     clean() {
@@ -181,9 +181,9 @@ class RCEManager extends types_1.RCEEvents {
     async connectWebsocket(timeout) {
         this.logger.debug("Connecting to websocket");
         this.connectionAttempt++;
-        this.socket = new ws_1.WebSocket(constants_1.GPORTALRoutes.WEBSOCKET, ["graphql-ws"], {
+        this.socket = new ws_1.WebSocket(constants_1.GPORTALRoutes.WebSocket, ["graphql-ws"], {
             headers: {
-                origin: constants_1.GPORTALRoutes.ORIGIN,
+                origin: constants_1.GPORTALRoutes.Origin,
                 host: "www.g-portal.com",
             },
             timeout,
@@ -200,7 +200,7 @@ class RCEManager extends types_1.RCEEvents {
             this.logError(`Websocket error: ${err.message}`);
             this.clean();
             if (this.connectionAttempt < 5) {
-                this.logger.warn(`Websocket error: Attempting to reconnect in ${this.connectionAttempt * 10} seconds (Attempt ${this.connectionAttempt + 1} of 5)`);
+                this.logger.warn(`Websocket error: Attempting to reconnect in ${this.connectionAttempt + 1 * 10} seconds (Attempt ${this.connectionAttempt + 1} of 5)`);
                 setTimeout(() => this.connectWebsocket(timeout), this.connectionAttempt * 10_000);
             }
             else {
@@ -211,7 +211,7 @@ class RCEManager extends types_1.RCEEvents {
             this.clean();
             if (code !== 1000) {
                 if (this.connectionAttempt < 5) {
-                    this.logger.warn(`Websocket closed: Attempting to reconnect in ${this.connectionAttempt * 10} seconds (Attempt ${this.connectionAttempt + 1} of 5)`);
+                    this.logger.warn(`Websocket closed: Attempting to reconnect in ${this.connectionAttempt + 1 * 10} seconds (Attempt ${this.connectionAttempt + 1} of 5)`);
                     setTimeout(() => this.connectWebsocket(timeout), this.connectionAttempt * 10_000);
                 }
                 else {
@@ -259,7 +259,7 @@ class RCEManager extends types_1.RCEEvents {
         }
         if (this.socket?.OPEN) {
             this.socket.send(JSON.stringify({
-                type: constants_1.GPORTALWebsocketTypes.INIT,
+                type: constants_1.GPORTALWebsocketTypes.Init,
                 payload: {
                     authorization: this.auth.access_token,
                 },
@@ -314,7 +314,7 @@ class RCEManager extends types_1.RCEEvents {
             if (executingMatch) {
                 this.logger.debug(`Executing message found for: ${executingMatch[1]}`);
                 const command = executingMatch[1];
-                this.emit(constants_1.RCEEvent.EXECUTING_COMMAND, {
+                this.emit(constants_1.RCEEvent.ExecutingCommand, {
                     server,
                     command,
                 });
@@ -342,19 +342,7 @@ class RCEManager extends types_1.RCEEvents {
                     req.timestamp !== commandRequest.timestamp);
             }
             this.updateLastLogDate();
-            // Population
-            if (log.startsWith("<slot:")) {
-                const players = log
-                    .match(/"(.*?)"/g)
-                    .map((ign) => ign.replace(/"/g, ""));
-                players.shift();
-                this.emit(constants_1.RCEEvent.PLAYERLIST_UPDATE, { server, players });
-                return this.servers.set(server.identifier, {
-                    ...server,
-                    players,
-                });
-            }
-            this.emit(constants_1.RCEEvent.MESSAGE, { server, message: log });
+            this.emit(constants_1.RCEEvent.Message, { server, message: log });
             this.logger.debug(`Received message: ${log} from ${server.identifier}`);
             // PLAYER_KILL event
             if (log.includes(" was killed by ")) {
@@ -363,7 +351,7 @@ class RCEManager extends types_1.RCEEvents {
                     .map((str) => str.trim());
                 const victimData = Helper_1.default.getKillInformation(victim);
                 const killerData = Helper_1.default.getKillInformation(killer);
-                this.emit(constants_1.RCEEvent.PLAYER_KILL, {
+                this.emit(constants_1.RCEEvent.PlayerKill, {
                     server,
                     victim: victimData,
                     killer: killerData,
@@ -375,7 +363,7 @@ class RCEManager extends types_1.RCEEvents {
                 const ign = vendingMachineMatch[1];
                 const oldName = vendingMachineMatch[2];
                 const newName = vendingMachineMatch[3];
-                this.emit(constants_1.RCEEvent.VENDING_MACHINE_NAME, {
+                this.emit(constants_1.RCEEvent.VendingMachineName, {
                     server,
                     ign,
                     oldName,
@@ -383,13 +371,17 @@ class RCEManager extends types_1.RCEEvents {
                 });
             }
             // QUICK_CHAT event
-            if (log.includes("[CHAT LOCAL]") || log.includes("[CHAT SERVER]")) {
-                const type = log.includes("[CHAT LOCAL]") ? "local" : "server";
-                const msg = log.split(" : ")[1];
-                const ign = log.includes("[CHAT LOCAL]")
-                    ? log.split("[CHAT LOCAL] ")[1].split(" : ")[0]
-                    : log.split("[CHAT SERVER] ")[1].split(" : ")[0];
-                this.emit(constants_1.RCEEvent.QUICK_CHAT, {
+            const quickChatMatch = log.match(/(\[CHAT (TEAM|SERVER|LOCAL)\]) (\w+) : (.+)/);
+            if (quickChatMatch) {
+                const quickChatTypes = {
+                    "[CHAT TEAM]": "team",
+                    "[CHAT SERVER]": "server",
+                    "[CHAT LOCAL]": "local",
+                };
+                const type = quickChatTypes[quickChatMatch[1]];
+                const ign = quickChatMatch[3];
+                const msg = quickChatMatch[4];
+                this.emit(constants_1.RCEEvent.QuickChat, {
                     server,
                     type,
                     ign,
@@ -399,26 +391,26 @@ class RCEManager extends types_1.RCEEvents {
             // PLAYER_SUICIDE event
             if (log.includes("was suicide by Suicide")) {
                 const ign = log.split(" was suicide by Suicide")[0];
-                this.emit(constants_1.RCEEvent.PLAYER_SUICIDE, { server, ign });
+                this.emit(constants_1.RCEEvent.PlayerSuicide, { server, ign });
             }
             // PLAYER_RESPAWNED event
             if (log.includes("has entered the game")) {
                 const ign = log.split(" [")[0];
                 const platform = log.includes("[xboxone]") ? "XBL" : "PS";
-                this.emit(constants_1.RCEEvent.PLAYER_RESPAWNED, { server, ign, platform });
+                this.emit(constants_1.RCEEvent.PlayerRespawned, { server, ign, platform });
             }
             // PLAYER_JOINED event
             if (log.includes("joined [xboxone]") || log.includes("joined [ps4]")) {
                 const ign = log.split(" joined ")[0];
                 const platform = log.includes("[xboxone]") ? "XBL" : "PS";
-                this.emit(constants_1.RCEEvent.PLAYER_JOINED, { server, ign, platform });
+                this.emit(constants_1.RCEEvent.PlayerJoined, { server, ign, platform });
             }
             // PLAYER_ROLE_ADD event
             const roleMatch = log.match(/\[?SERVER\]?\s*Added\s*\[([^\]]+)\](?::\[([^\]]+)\])?\s*(?:to\s*(?:Group\s*)?)?\[(\w+)\]/i);
             if (roleMatch && log.includes("Added")) {
                 const ign = roleMatch[1];
                 const role = roleMatch[3];
-                this.emit(constants_1.RCEEvent.PLAYER_ROLE_ADD, { server, ign, role });
+                this.emit(constants_1.RCEEvent.PlayerRoleAdd, { server, ign, role });
             }
             // ITEM_SPAWN event
             const itemSpawnMatch = log.match(/\bgiving (\w+) (\d+) x ([\w\s]+)\b/);
@@ -426,22 +418,29 @@ class RCEManager extends types_1.RCEEvents {
                 const ign = itemSpawnMatch[1];
                 const quantity = Number(itemSpawnMatch[2]);
                 const item = itemSpawnMatch[3];
-                this.emit(constants_1.RCEEvent.ITEM_SPAWN, { server, ign, item, quantity });
+                this.emit(constants_1.RCEEvent.ItemSpawn, { server, ign, item, quantity });
             }
             // NOTE_EDIT event
             const noteMatch = log.match(/\[NOTE PANEL\] Player \[ ([^\]]+) \] changed name from \[\s*([\s\S]*?)\s*\] to \[\s*([\s\S]*?)\s*\]/);
             if (noteMatch) {
                 const ign = noteMatch[1].trim();
-                const oldContent = noteMatch[2].trim();
-                const newContent = noteMatch[3].trim();
-                this.emit(constants_1.RCEEvent.NOTE_EDIT, { server, ign, oldContent, newContent });
+                const oldContent = noteMatch[2].trim().split("\\n")[0];
+                const newContent = noteMatch[3].trim().split("\\n")[0];
+                if (newContent.length > 0 && oldContent !== newContent) {
+                    this.emit(constants_1.RCEEvent.NoteEdit, {
+                        server,
+                        ign,
+                        oldContent,
+                        newContent,
+                    });
+                }
             }
             // TEAM_CREATE event
             const teamCreateMatch = log.match(/\[([^\]]+)\] created a new team, ID: (\d+)/);
             if (teamCreateMatch) {
                 const owner = teamCreateMatch[1];
                 const id = Number(teamCreateMatch[2]);
-                this.emit(constants_1.RCEEvent.TEAM_CREATE, { server, owner, id });
+                this.emit(constants_1.RCEEvent.TeamCreate, { server, owner, id });
             }
             // TEAM_JOIN event
             const teamJoinMatch = log.match(/\[([^\]]+)\] has joined \[([^\]]+)]s team, ID: \[(\d+)\]/);
@@ -449,7 +448,7 @@ class RCEManager extends types_1.RCEEvents {
                 const ign = teamJoinMatch[1];
                 const owner = teamJoinMatch[2];
                 const id = Number(teamJoinMatch[3]);
-                this.emit(constants_1.RCEEvent.TEAM_JOIN, { server, ign, owner, id });
+                this.emit(constants_1.RCEEvent.TeamJoin, { server, ign, owner, id });
             }
             // TEAM_LEAVE event
             const teamLeaveMatch = log.match(/\[([^\]]+)\] has left \[([^\]]+)]s team, ID: \[(\d+)\]/);
@@ -457,14 +456,14 @@ class RCEManager extends types_1.RCEEvents {
                 const ign = teamLeaveMatch[1];
                 const owner = teamLeaveMatch[2];
                 const id = Number(teamLeaveMatch[3]);
-                this.emit(constants_1.RCEEvent.TEAM_LEAVE, { server, ign, owner, id });
+                this.emit(constants_1.RCEEvent.TeamLeave, { server, ign, owner, id });
             }
             // KIT_SPAWN event
             const kitSpawnMatch = log.match(/SERVER giving (.+?) kit (\w+)/);
             if (kitSpawnMatch) {
                 const ign = kitSpawnMatch[1];
                 const kit = kitSpawnMatch[2];
-                this.emit(constants_1.RCEEvent.KIT_SPAWN, { server, ign, kit });
+                this.emit(constants_1.RCEEvent.KitSpawn, { server, ign, kit });
             }
             // KIT_GIVE event
             const kitGiveMatch = log.match(/\[ServerVar\] (\w+) giving (\w+) kit (\w+)/);
@@ -472,23 +471,23 @@ class RCEManager extends types_1.RCEEvents {
                 const admin = kitGiveMatch[1];
                 const ign = kitGiveMatch[2];
                 const kit = kitGiveMatch[3];
-                this.emit(constants_1.RCEEvent.KIT_GIVE, { server, admin, ign, kit });
+                this.emit(constants_1.RCEEvent.KitGive, { server, admin, ign, kit });
             }
             // SPECIAL_EVENT_START event
             const specialEventStartMatch = log.match(/Setting event as :(\w+)/);
             if (specialEventStartMatch) {
                 const event = specialEventStartMatch[1];
-                this.emit(constants_1.RCEEvent.SPECIAL_EVENT_START, { server, event });
+                this.emit(constants_1.RCEEvent.SpecialEventStart, { server, event });
             }
             // SPECIAL_EVENT_END event
             if (log.startsWith("Event set as: none")) {
-                this.emit(constants_1.RCEEvent.SPECIAL_EVENT_END, { server });
+                this.emit(constants_1.RCEEvent.SpecialEventEnd, { server });
             }
             // EVENT_START event
             if (log.startsWith("[event]")) {
                 for (const [key, options] of Object.entries(constants_1.EVENTS)) {
                     if (log.includes(key)) {
-                        this.emit(constants_1.RCEEvent.EVENT_START, {
+                        this.emit(constants_1.RCEEvent.EventStart, {
                             server,
                             event: options.name,
                             special: options.special,
@@ -504,7 +503,7 @@ class RCEManager extends types_1.RCEEvents {
             return undefined;
         }
         try {
-            const response = await fetch(constants_1.GPORTALRoutes.COMMAND, {
+            const response = await fetch(constants_1.GPORTALRoutes.Command, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -536,7 +535,6 @@ class RCEManager extends types_1.RCEEvents {
             ...server,
             ready: true,
         });
-        this.emit(constants_1.RCEEvent.SERVER_READY, { server });
         this.logger.info(`Server "${server.identifier}" added successfully`);
         this.processQueue();
     }
@@ -590,7 +588,7 @@ class RCEManager extends types_1.RCEEvents {
                 });
                 this.logger.debug(`Command "${command}" added to queue`);
                 try {
-                    fetch(constants_1.GPORTALRoutes.COMMAND, {
+                    fetch(constants_1.GPORTALRoutes.Command, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -629,7 +627,7 @@ class RCEManager extends types_1.RCEEvents {
         }
         else {
             try {
-                const response = await fetch(constants_1.GPORTALRoutes.COMMAND, {
+                const response = await fetch(constants_1.GPORTALRoutes.Command, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -716,7 +714,7 @@ class RCEManager extends types_1.RCEEvents {
             ready: false,
         });
         const payload = {
-            type: constants_1.GPORTALWebsocketTypes.START,
+            type: constants_1.GPORTALWebsocketTypes.Start,
             payload: {
                 variables: { sid, region: opts.region },
                 extensions: {},
@@ -770,7 +768,7 @@ class RCEManager extends types_1.RCEEvents {
             ...server,
             players,
         });
-        this.emit(constants_1.RCEEvent.PLAYERLIST_UPDATE, { server, players });
+        this.emit(constants_1.RCEEvent.PlayerlistUpdate, { server, players });
         this.logger.debug(`Players refreshed for ${identifier}`);
     }
     /*

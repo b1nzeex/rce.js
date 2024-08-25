@@ -1,5 +1,7 @@
 import { LogLevel } from "../constants";
 import { inspect } from "util";
+import { type LoggerOptions } from "../types";
+import fs from "fs";
 
 enum ConsoleColor {
   Reset = "\x1b[0m",
@@ -31,9 +33,21 @@ enum ConsoleColor {
 
 export default class Logger {
   private level: LogLevel;
+  private file;
 
-  public constructor(level: LogLevel = LogLevel.INFO) {
-    this.level = level;
+  public constructor(opts: LoggerOptions) {
+    this.level = opts.logLevel || LogLevel.Info;
+    this.file = opts.logFile;
+  }
+
+  private logToFile(content: any) {
+    if (this.file) {
+      if (typeof content === "string") {
+        fs.appendFileSync(this.file, content + "\n");
+      } else {
+        fs.appendFileSync(this.file, inspect(content, { depth: 5 }) + "\n");
+      }
+    }
   }
 
   private format(content: any) {
@@ -43,7 +57,8 @@ export default class Logger {
   }
 
   public error(content: any) {
-    if (this.level >= LogLevel.ERROR) {
+    this.logToFile(content);
+    if (this.level >= LogLevel.Error) {
       console.log(
         `[rce.js] ${ConsoleColor.FgRed}[ERROR]${
           ConsoleColor.Reset
@@ -53,7 +68,8 @@ export default class Logger {
   }
 
   public warn(content: any) {
-    if (this.level >= LogLevel.WARN) {
+    this.logToFile(content);
+    if (this.level >= LogLevel.Warn) {
       console.log(
         `[rce.js] ${ConsoleColor.FgYellow}[WARN]${
           ConsoleColor.Reset
@@ -63,7 +79,8 @@ export default class Logger {
   }
 
   public info(content: any) {
-    if (this.level >= LogLevel.INFO) {
+    this.logToFile(content);
+    if (this.level >= LogLevel.Info) {
       console.log(
         `[rce.js] ${ConsoleColor.FgCyan}[INFO]${
           ConsoleColor.Reset
@@ -73,7 +90,8 @@ export default class Logger {
   }
 
   public debug(content: any) {
-    if (this.level >= LogLevel.DEBUG) {
+    this.logToFile(content);
+    if (this.level >= LogLevel.Debug) {
       console.log(
         `[rce.js] ${ConsoleColor.FgGreen}[DEBUG]${
           ConsoleColor.Reset
