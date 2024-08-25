@@ -40,12 +40,15 @@ export default class Logger {
     this.file = opts.logFile;
   }
 
-  private logToFile(content: any) {
+  private logToFile(type: string, content: any) {
     if (this.file) {
       if (typeof content === "string") {
-        fs.appendFileSync(this.file, content + "\n");
+        fs.appendFileSync(this.file, `[${type}]: ` + content + "\n");
       } else {
-        fs.appendFileSync(this.file, inspect(content, { depth: 5 }) + "\n");
+        fs.appendFileSync(
+          this.file,
+          `[${type}]: ${inspect(content, { depth: 5 }) + "\n"}`
+        );
       }
     }
   }
@@ -57,7 +60,7 @@ export default class Logger {
   }
 
   public error(content: any) {
-    this.logToFile(content);
+    this.logToFile("ERROR", content);
     if (this.level >= LogLevel.Error) {
       console.log(
         `[rce.js] ${ConsoleColor.FgRed}[ERROR]${
@@ -68,7 +71,7 @@ export default class Logger {
   }
 
   public warn(content: any) {
-    this.logToFile(content);
+    this.logToFile("WARN", content);
     if (this.level >= LogLevel.Warn) {
       console.log(
         `[rce.js] ${ConsoleColor.FgYellow}[WARN]${
@@ -79,7 +82,7 @@ export default class Logger {
   }
 
   public info(content: any) {
-    this.logToFile(content);
+    this.logToFile("INFO", content);
     if (this.level >= LogLevel.Info) {
       console.log(
         `[rce.js] ${ConsoleColor.FgCyan}[INFO]${
@@ -90,7 +93,7 @@ export default class Logger {
   }
 
   public debug(content: any) {
-    this.logToFile(content);
+    this.logToFile("DEBUG", content);
     if (this.level >= LogLevel.Debug) {
       console.log(
         `[rce.js] ${ConsoleColor.FgGreen}[DEBUG]${

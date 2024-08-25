@@ -39,13 +39,13 @@ class Logger {
         this.level = opts.logLevel || constants_1.LogLevel.Info;
         this.file = opts.logFile;
     }
-    logToFile(content) {
+    logToFile(type, content) {
         if (this.file) {
             if (typeof content === "string") {
-                fs_1.default.appendFileSync(this.file, content + "\n");
+                fs_1.default.appendFileSync(this.file, `[${type}]: ` + content + "\n");
             }
             else {
-                fs_1.default.appendFileSync(this.file, (0, util_1.inspect)(content, { depth: 5 }) + "\n");
+                fs_1.default.appendFileSync(this.file, `[${type}]: ${(0, util_1.inspect)(content, { depth: 5 }) + "\n"}`);
             }
         }
     }
@@ -55,25 +55,25 @@ class Logger {
             : (0, util_1.inspect)(content, { depth: 5 });
     }
     error(content) {
-        this.logToFile(content);
+        this.logToFile("ERROR", content);
         if (this.level >= constants_1.LogLevel.Error) {
             console.log(`[rce.js] ${ConsoleColor.FgRed}[ERROR]${ConsoleColor.Reset} ${this.format(content)}`);
         }
     }
     warn(content) {
-        this.logToFile(content);
+        this.logToFile("WARN", content);
         if (this.level >= constants_1.LogLevel.Warn) {
             console.log(`[rce.js] ${ConsoleColor.FgYellow}[WARN]${ConsoleColor.Reset} ${this.format(content)}`);
         }
     }
     info(content) {
-        this.logToFile(content);
+        this.logToFile("INFO", content);
         if (this.level >= constants_1.LogLevel.Info) {
             console.log(`[rce.js] ${ConsoleColor.FgCyan}[INFO]${ConsoleColor.Reset} ${this.format(content)}`);
         }
     }
     debug(content) {
-        this.logToFile(content);
+        this.logToFile("DEBUG", content);
         if (this.level >= constants_1.LogLevel.Debug) {
             console.log(`[rce.js] ${ConsoleColor.FgGreen}[DEBUG]${ConsoleColor.Reset} ${this.format(content)}`);
         }
