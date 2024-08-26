@@ -733,6 +733,8 @@ export default class RCEManager extends RCEEvents {
       ready: true,
     });
 
+    this.logger.debug(this.servers.get(server.identifier));
+
     this.logger.info(`Server "${server.identifier}" added successfully`);
     this.processQueue();
   }

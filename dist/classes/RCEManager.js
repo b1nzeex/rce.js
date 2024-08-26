@@ -535,6 +535,7 @@ class RCEManager extends types_1.RCEEvents {
             ...server,
             ready: true,
         });
+        this.logger.debug(this.servers.get(server.identifier));
         this.logger.info(`Server "${server.identifier}" added successfully`);
         this.processQueue();
     }
