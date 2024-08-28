@@ -699,57 +699,63 @@ class RCEManager extends types_1.RCEEvents {
             this.logError(`Failed to add server "${opts.identifier}": No server ID found`);
             return false;
         }
-        this.servers.set(opts.identifier, {
-            identifier: opts.identifier,
-            serverId: opts.serverId,
-            trueServerId: sid,
-            region: opts.region,
-            refreshPlayers: opts.refreshPlayers || 0,
-            refreshPlayersInterval: opts.refreshPlayers
-                ? setInterval(() => {
-                    this.refreshPlayers(opts.identifier);
-                }, opts.refreshPlayers * 60_000)
-                : undefined,
-            players: [],
-            added: true,
-            ready: false,
-        });
-        const payload = {
-            type: constants_1.GPORTALWebsocketTypes.Start,
-            payload: {
-                variables: { sid, region: opts.region },
-                extensions: {},
-                operationName: "consoleMessages",
-                query: `subscription consoleMessages($sid: Int!, $region: REGION!) {
-          consoleMessages(rsid: {id: $sid, region: $region}) {
-            stream
-            message
-            __typename
-          }
-        }`,
-            },
-            id: opts.identifier,
-        };
-        this.requests.set(opts.identifier, {
-            sid,
-            region: opts.region,
-            identifier: opts.identifier,
-        });
-        this.socket.send(JSON.stringify(payload), (err) => {
-            if (err) {
-                this.logError(`Failed to add server "${opts.identifier}": ${err}`);
-                return false;
+        if (this.socket?.OPEN) {
+            this.servers.set(opts.identifier, {
+                identifier: opts.identifier,
+                serverId: opts.serverId,
+                trueServerId: sid,
+                region: opts.region,
+                refreshPlayers: opts.refreshPlayers || 0,
+                refreshPlayersInterval: opts.refreshPlayers
+                    ? setInterval(() => {
+                        this.refreshPlayers(opts.identifier);
+                    }, opts.refreshPlayers * 60_000)
+                    : undefined,
+                players: [],
+                added: true,
+                ready: false,
+            });
+            const payload = {
+                type: constants_1.GPORTALWebsocketTypes.Start,
+                payload: {
+                    variables: { sid, region: opts.region },
+                    extensions: {},
+                    operationName: "consoleMessages",
+                    query: `subscription consoleMessages($sid: Int!, $region: REGION!) {
+            consoleMessages(rsid: {id: $sid, region: $region}) {
+              stream
+              message
+              __typename
             }
-            if (opts.refreshPlayers) {
-                this.refreshPlayers(opts.identifier);
-            }
-            setTimeout(async () => {
-                const s = this.getServer(opts.identifier);
-                if (s && !s.ready) {
-                    await this.handleServerReady(opts.identifier);
+          }`,
+                },
+                id: opts.identifier,
+            };
+            this.requests.set(opts.identifier, {
+                sid,
+                region: opts.region,
+                identifier: opts.identifier,
+            });
+            this.socket.send(JSON.stringify(payload), (err) => {
+                if (err) {
+                    this.logError(`Failed to add server "${opts.identifier}": ${err}`);
+                    return false;
                 }
-            }, 20_000);
-        });
+                if (opts.refreshPlayers) {
+                    this.refreshPlayers(opts.identifier);
+                }
+                setTimeout(async () => {
+                    const s = this.getServer(opts.identifier);
+                    if (s && !s.ready) {
+                        await this.handleServerReady(opts.identifier);
+                    }
+                }, 20_000);
+            });
+        }
+        else {
+            this.logger.warn(`Failed to add server "${opts.identifier}": No websocket connection, retrying in 5 seconds`);
+            setTimeout(() => this.addServer(opts), 5_000);
+        }
     }
     async refreshPlayers(identifier) {
         this.logger.debug(`Refreshing players for ${identifier}`);
