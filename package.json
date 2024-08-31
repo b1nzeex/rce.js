@@ -1,6 +1,6 @@
 {
   "name": "rce.js",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "main": "dist/index.js",
   "directories": {
     "test": "tests"
