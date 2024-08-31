@@ -6,6 +6,10 @@
     "test": "tests"
   },
   "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/b1nzeex/rce.js.git"
+  },
   "keywords": [
     "rce",
     "rust console edition",
