@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
-      - name: Install dev dependencies
+      - name: Install development dependencies
         run: |
           npm install -g typescript
       - name: Compile
