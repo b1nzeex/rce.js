@@ -26,7 +26,15 @@ jobs:
           npm install -g typescript
       - name: Compile
         run: tsc
-      - name: Publish
-        run: npm publish
+      - name: Setup git configuration
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Push
+        run: |
+          git add .
+          git commit -m "Push compiled dist folder"
+          git push
         env:
-          NODE_AUTH_TOKEN: ${{secrets.GIT_KEY}}
+          GITHUB_TOKEN: ${{secrets.GIT_TOKEN}}
