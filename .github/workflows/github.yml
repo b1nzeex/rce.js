@@ -1,6 +1,5 @@
 permissions:
-  contents: read
-  packages: write
+  contents: write
 
 name: "github_publish"
 on:
