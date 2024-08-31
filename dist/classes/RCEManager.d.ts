@@ -1,0 +1,37 @@
+import { AuthOptions, RustServer, ServerOptions, LoggerOptions } from "../types";
+import { RCEEvents } from "../types";
+export default class RCEManager extends RCEEvents {
+    private logger;
+    private auth?;
+    private servers;
+    private socket?;
+    private requests;
+    private commands;
+    private queue;
+    private authMethod;
+    private lastLogDate;
+    private kaInterval?;
+    private connectionAttempt;
+    constructor(auth: AuthOptions, logger?: LoggerOptions);
+    init(timeout?: number): Promise<void>;
+    close(): Promise<void>;
+    private authenticate;
+    private refreshToken;
+    private logError;
+    private clean;
+    private connectWebsocket;
+    private authenticateWebsocket;
+    private updateLastLogDate;
+    private handleWebsocketMessage;
+    private resolveServerId;
+    private markServerAsReady;
+    private handleServerReady;
+    private processQueue;
+    private sendCommandInternal;
+    sendCommand(identifier: string, command: string, response?: boolean): Promise<string | undefined | null>;
+    addServer(opts: ServerOptions): Promise<boolean>;
+    private refreshPlayers;
+    getServer(identifier: string): RustServer;
+    removeServer(identifier: string): void;
+    getServers(): Map<string, RustServer>;
+}
