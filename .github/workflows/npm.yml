@@ -17,3 +17,12 @@ jobs:
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_KEY}}
+
+      - name: Create branch
+        run: |
+          TAG_NAME=${GITHUB_REF_NAME}
+          BRANCH_NAME="v${TAG_NAME}"
+          git checkout -b $BRANCH_NAME
+          git push origin $BRANCH_NAME
+        env:
+          GITHUB_TOKEN: ${{secrets.GIT_TOKEN}}

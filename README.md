@@ -20,7 +20,7 @@ import { RCEManager, LogLevel, RCEEvent } from "rce.js";
 const rce = new RCEManager({
   authMethod: "manual", // Can set to "manual" or "file" - manual requires a "refreshToken" in the AuthOptions and must be updated everytime you restart your application, file handles auth through a txt file which stores your refresh token
   refreshToken: "", // Obtained via the G-PORTAL website, scroll to the bottom of this documentation for a guide on obtaining this
-  logLevel: LogLevel.INFO, // Uses "INFO" by default if left blank
+  logLevel: LogLevel.Info, // Uses "Info" by default if left blank
   servers: [
     {
       identifier: "server1", // A unique name for your server to be recognised by
@@ -38,7 +38,7 @@ const rce = new RCEManager({
 
 await rce.init(); // This attempts to login to GPORTAL - this is required for everything else to function
 
-rce.on(RCEEvent.PLAYER_KILL, (data) => {
+rce.on(RCEEvent.PlayerKill, (data) => {
   console.log(
     `[${data.server.identifier}] ${data.killer.name} killed ${data.victim.name}`
   );
@@ -59,7 +59,7 @@ const { RCEManager, LogLevel, RCEEvent } = require("rce.js");
 const rce = new RCEManager({
   authMethod: "file", // Can set to "manual" or "file" - manual requires a "refreshToken" in the AuthOptions and must be updated everytime you restart your application, file handles auth through a txt file which stores your refresh token
   file: "", // By default, it will create an "auth.txt" file if not specified, otherwise you can provide your own file path
-  logLevel: LogLevel.INFO, // Uses "INFO" by default if left blank
+  logLevel: LogLevel.Info, // Uses "Info" by default if left blank
   servers: [
     {
       identifier: "server1", // A unique name for your server to be recognised by
@@ -77,7 +77,7 @@ const rce = new RCEManager({
 
 await rce.init(); // This attempts to login to GPORTAL - this is required for everything else to function
 
-rce.on(RCEEvent.PLAYER_KILL, (data) => {
+rce.on(RCEEvent.PlayerKill, (data) => {
   console.log(
     `[${data.server.identifier}] ${data.killer.name} killed ${data.victim.name}`
   );
