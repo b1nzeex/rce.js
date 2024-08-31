@@ -20,8 +20,8 @@ jobs:
 
       - name: Setup git configuration
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "b1nzeex"
+          git config --global user.email "86171540+b1nzeex@users.noreply.github.com"
 
       - name: Create branch
         run: |
