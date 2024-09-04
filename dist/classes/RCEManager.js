@@ -27,7 +27,6 @@ class RCEManager extends types_1.RCEEvents {
         refreshToken: "",
         file: "",
     };
-    lastLogDate = new Date();
     kaInterval;
     connectionAttempt = 0;
     /*
@@ -70,6 +69,7 @@ class RCEManager extends types_1.RCEEvents {
                 serverId: server.serverId,
                 region: server.region,
                 refreshPlayers: server.refreshPlayers || 0,
+                state: server.state || [],
                 players: [],
                 added: false,
                 ready: false,
@@ -171,7 +171,6 @@ class RCEManager extends types_1.RCEEvents {
         this.requests.clear();
         this.commands = [];
         this.queue = [];
-        this.lastLogDate = new Date();
         if (this.socket?.OPEN)
             this.socket.close(1000);
         this.socket = undefined;
@@ -277,20 +276,6 @@ class RCEManager extends types_1.RCEEvents {
             this.connectWebsocket(timeout);
         }
     }
-    updateLastLogDate() {
-        this.lastLogDate = new Date();
-        // If no logs are received for 10 minutes, restart the websocket connection
-        setTimeout(() => {
-            const now = new Date();
-            const diff = now.getTime() - this.lastLogDate.getTime();
-            if (diff >= 600_000) {
-                this.logger.warn("No logs received for 10 minutes; restarting websocket");
-                this.socket?.close();
-                this.socket = undefined;
-                this.connectWebsocket(60_000);
-            }
-        }, 600_000);
-    }
     handleWebsocketMessage(message, server) {
         const logMessages = message?.payload?.data?.consoleMessages?.message
             ?.split("\n")
@@ -341,7 +326,6 @@ class RCEManager extends types_1.RCEEvents {
                     req.identifier !== commandRequest.identifier &&
                     req.timestamp !== commandRequest.timestamp);
             }
-            this.updateLastLogDate();
             this.emit(constants_1.RCEEvent.Message, { server, message: log });
             this.logger.debug(`Received message: ${log} from ${server.identifier}`);
             // PLAYER_KILL event
@@ -706,6 +690,7 @@ class RCEManager extends types_1.RCEEvents {
                 trueServerId: sid,
                 region: opts.region,
                 refreshPlayers: opts.refreshPlayers || 0,
+                state: opts.state || [],
                 refreshPlayersInterval: opts.refreshPlayers
                     ? setInterval(() => {
                         this.refreshPlayers(opts.identifier);

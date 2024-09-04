@@ -23,6 +23,7 @@ export interface RustServer {
     region: "US" | "EU";
     refreshPlayers?: number;
     refreshPlayersInterval?: NodeJS.Timeout;
+    state?: string | string[];
     players: string[];
     added: boolean;
     ready: boolean;
@@ -32,6 +33,7 @@ export interface ServerOptions {
     serverId: number;
     region: "US" | "EU";
     refreshPlayers?: number;
+    state?: string | string[];
 }
 export interface WebsocketRequest {
     identifier: string;

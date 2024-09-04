@@ -9,7 +9,6 @@ export default class RCEManager extends RCEEvents {
     private commands;
     private queue;
     private authMethod;
-    private lastLogDate;
     private kaInterval?;
     private connectionAttempt;
     constructor(auth: AuthOptions, logger?: LoggerOptions);
@@ -21,7 +20,6 @@ export default class RCEManager extends RCEEvents {
     private clean;
     private connectWebsocket;
     private authenticateWebsocket;
-    private updateLastLogDate;
     private handleWebsocketMessage;
     private resolveServerId;
     private markServerAsReady;
