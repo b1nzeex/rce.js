@@ -323,7 +323,7 @@ export default class RCEManager extends RCEEvents {
             );
           }
 
-          const server = this.servers.get(request.identifier);
+          const server = this.getServer(request.identifier);
 
           if (!server) {
             return this.logError(
@@ -711,14 +711,14 @@ export default class RCEManager extends RCEEvents {
       ready: true,
     });
 
-    this.logger.debug(this.servers.get(server.identifier));
+    this.logger.debug(this.getServer(server.identifier));
 
     this.logger.info(`Server "${server.identifier}" added successfully`);
     this.processQueue();
   }
 
   private handleServerReady(identifier: string) {
-    const s = this.servers.get(identifier);
+    const s = this.getServer(identifier);
     if (s && !s.ready) {
       this.markServerAsReady(s);
     }
@@ -888,7 +888,7 @@ export default class RCEManager extends RCEEvents {
     response: boolean = false
   ): Promise<string | undefined | null> {
     return new Promise((resolve, reject) => {
-      const server = this.servers.get(identifier);
+      const server = this.getServer(identifier);
       this.logger.debug(server);
 
       if (!server) {
@@ -1006,7 +1006,7 @@ export default class RCEManager extends RCEEvents {
   private async refreshPlayers(identifier: string) {
     this.logger.debug(`Refreshing players for ${identifier}`);
 
-    const server = this.servers.get(identifier);
+    const server = this.getServer(identifier);
     if (!server) {
       this.logError(
         `Failed to refresh players: No server found for ID ${identifier}`
@@ -1057,7 +1057,7 @@ export default class RCEManager extends RCEEvents {
     * rce.removeServer("my-solo-duo-trio-3x");
   */
   public removeServer(identifier: string) {
-    clearInterval(this.servers.get(identifier)?.refreshPlayersInterval);
+    clearInterval(this.getServer(identifier)?.refreshPlayersInterval);
     this.servers.delete(identifier);
 
     const request = this.requests.get(identifier);

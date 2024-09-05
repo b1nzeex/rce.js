@@ -239,7 +239,7 @@ class RCEManager extends types_1.RCEEvents {
                     if (!request) {
                         return this.logError(`Failed to handle message: No request found for ID ${message.id}`);
                     }
-                    const server = this.servers.get(request.identifier);
+                    const server = this.getServer(request.identifier);
                     if (!server) {
                         return this.logError(`Failed to handle message: No server found for ID ${request.identifier}`);
                     }
@@ -519,12 +519,12 @@ class RCEManager extends types_1.RCEEvents {
             ...server,
             ready: true,
         });
-        this.logger.debug(this.servers.get(server.identifier));
+        this.logger.debug(this.getServer(server.identifier));
         this.logger.info(`Server "${server.identifier}" added successfully`);
         this.processQueue();
     }
     handleServerReady(identifier) {
-        const s = this.servers.get(identifier);
+        const s = this.getServer(identifier);
         if (s && !s.ready) {
             this.markServerAsReady(s);
         }
@@ -648,7 +648,7 @@ class RCEManager extends types_1.RCEEvents {
     */
     async sendCommand(identifier, command, response = false) {
         return new Promise((resolve, reject) => {
-            const server = this.servers.get(identifier);
+            const server = this.getServer(identifier);
             this.logger.debug(server);
             if (!server) {
                 this.logError(`Failed to send command: No server found for ID ${identifier}`);
@@ -745,7 +745,7 @@ class RCEManager extends types_1.RCEEvents {
     }
     async refreshPlayers(identifier) {
         this.logger.debug(`Refreshing players for ${identifier}`);
-        const server = this.servers.get(identifier);
+        const server = this.getServer(identifier);
         if (!server) {
             this.logError(`Failed to refresh players: No server found for ID ${identifier}`);
             return;
@@ -787,7 +787,7 @@ class RCEManager extends types_1.RCEEvents {
       * rce.removeServer("my-solo-duo-trio-3x");
     */
     removeServer(identifier) {
-        clearInterval(this.servers.get(identifier)?.refreshPlayersInterval);
+        clearInterval(this.getServer(identifier)?.refreshPlayersInterval);
         this.servers.delete(identifier);
         const request = this.requests.get(identifier);
         if (request)
