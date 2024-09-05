@@ -380,9 +380,8 @@ export default class RCEManager extends RCEEvents {
         ?.split("\n")
         .filter((e) => e !== "") || [];
 
-    if (logMessages.length > 2) {
-      if (!server.ready) this.handleServerReady(server.identifier);
-      return;
+    if (logMessages.length > 2 && !server.ready) {
+      return this.handleServerReady(server.identifier);
     }
 
     logMessages?.forEach((logMessage) => {
