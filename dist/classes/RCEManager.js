@@ -578,9 +578,18 @@ class RCEManager extends types_1.RCEEvents {
                         },
                         body: JSON.stringify(payload),
                     })
-                        .then((response) => {
-                        if (!response.ok) {
-                            this.logError(`Failed to send command: ${response.statusText}`, server);
+                        .then((res) => {
+                        if (!res.ok) {
+                            if (res.status === 400) {
+                                this.logger.debug(`Command "${command}" failed to send, retrying in 3 seconds`);
+                                setTimeout(() => {
+                                    this.sendCommandInternal(server, command, response)
+                                        .then(resolve)
+                                        .catch(reject);
+                                }, 3_000);
+                                return null;
+                            }
+                            this.logError(`Failed to send command: ${res.statusText}`, server);
                             return null;
                         }
                         this.logger.debug(`Command "${command}" sent successfully`);
