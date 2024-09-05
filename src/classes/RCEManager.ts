@@ -889,7 +889,6 @@ export default class RCEManager extends RCEEvents {
   ): Promise<string | undefined | null> {
     return new Promise((resolve, reject) => {
       const server = this.getServer(identifier);
-      this.logger.debug(server);
 
       if (!server) {
         this.logError(
@@ -1023,11 +1022,10 @@ export default class RCEManager extends RCEEvents {
     const players = users.match(/"(.*?)"/g).map((ign) => ign.replace(/"/g, ""));
     players.shift();
 
-    this.logger.debug("Server from refresh");
-    this.logger.debug(server);
+    const s = this.getServer(identifier);
 
     this.servers.set(identifier, {
-      ...server,
+      ...s,
       players,
     });
 
