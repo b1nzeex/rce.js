@@ -546,7 +546,9 @@ export default class RCEManager extends RCEEvents {
       }
 
       // ITEM_SPAWN event
-      const itemSpawnMatch = log.match(/\bgiving (\w+) (\d+) x ([\w\s]+)\b/);
+      const itemSpawnMatch = log.match(
+        /\bgiving (\w+) ([\d.]+) x ([\w\s.]+)\b/
+      );
       if (itemSpawnMatch) {
         const ign = itemSpawnMatch[1];
         const quantity = Number(itemSpawnMatch[2]);
