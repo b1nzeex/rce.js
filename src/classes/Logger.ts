@@ -42,6 +42,11 @@ export default class Logger {
 
   private logToFile(type: string, content: any) {
     if (this.file) {
+      const stats = fs.statSync(this.file);
+      if (stats.size > 300000000) {
+        fs.writeFileSync(this.file, "");
+      }
+
       if (typeof content === "string") {
         fs.appendFileSync(this.file, `[${type}]: ` + content + "\n");
       } else {
