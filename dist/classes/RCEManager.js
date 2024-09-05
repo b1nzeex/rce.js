@@ -649,6 +649,7 @@ class RCEManager extends types_1.RCEEvents {
     async sendCommand(identifier, command, response = false) {
         return new Promise((resolve, reject) => {
             const server = this.servers.get(identifier);
+            this.logger.debug(server);
             if (!server) {
                 this.logError(`Failed to send command: No server found for ID ${identifier}`);
                 return null;

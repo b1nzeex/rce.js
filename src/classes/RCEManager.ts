@@ -889,6 +889,7 @@ export default class RCEManager extends RCEEvents {
   ): Promise<string | undefined | null> {
     return new Promise((resolve, reject) => {
       const server = this.servers.get(identifier);
+      this.logger.debug(server);
 
       if (!server) {
         this.logError(
