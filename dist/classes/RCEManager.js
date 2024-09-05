@@ -757,7 +757,8 @@ class RCEManager extends types_1.RCEEvents {
         }
         const players = users.match(/"(.*?)"/g).map((ign) => ign.replace(/"/g, ""));
         players.shift();
-        this.logger.debug(`Server from refresh: ${server}`);
+        this.logger.debug("Server from refresh");
+        this.logger.debug(server);
         this.servers.set(identifier, {
             ...server,
             players,
