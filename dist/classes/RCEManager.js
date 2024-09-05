@@ -353,7 +353,7 @@ class RCEManager extends types_1.RCEEvents {
                 });
             }
             // QUICK_CHAT event
-            const quickChatMatch = log.match(/(\[CHAT (TEAM|SERVER|LOCAL)\]) (\w+) : (.+)/);
+            const quickChatMatch = log.match(/(\[CHAT (TEAM|SERVER|LOCAL)\]) ([\w\s]+) : (.+)/);
             if (quickChatMatch) {
                 const quickChatTypes = {
                     "[CHAT TEAM]": "team",
