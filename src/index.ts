@@ -19,6 +19,7 @@ import {
   KitGiveEventPayload,
   KitSpawnEventPayload,
   ExecutingCommandEventPayload,
+  RCEErrorPayload,
   KillPlayerType,
 } from "./types";
 import { killData } from "./classes/Helper";
@@ -46,6 +47,7 @@ export {
   KitGiveEventPayload,
   KitSpawnEventPayload,
   ExecutingCommandEventPayload,
+  RCEErrorPayload,
   KillPlayerType,
   killData,
 };
