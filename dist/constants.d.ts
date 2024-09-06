@@ -14,7 +14,8 @@ export declare enum LogLevel {
     Error = 1,
     Warn = 2,
     Info = 3,
-    Debug = 4
+    Debug = 4,
+    Custom = 5
 }
 export declare enum RCEEvent {
     Message = "message",
@@ -37,7 +38,8 @@ export declare enum RCEEvent {
     SpecialEventStart = "special_event_start",
     SpecialEventEnd = "special_event_end",
     ExecutingCommand = "executing_command",
-    Error = "error"
+    Error = "error",
+    Log = "log"
 }
 export declare enum QuickChat {
     COMBAT_WereUnderAttack = "d11_quick_chat_combat_slot_0",

@@ -1,4 +1,4 @@
-import { RCEEvent, QuickChat } from "./constants";
+import { RCEEvent, QuickChat, LogLevel } from "./constants";
 import { EventEmitter } from "events";
 export interface LoggerOptions {
     logLevel?: number;
@@ -143,6 +143,10 @@ export interface RCEErrorPayload {
     server?: RustServer;
     error: string;
 }
+export interface RCELogPayload {
+    level: LogLevel;
+    content: string;
+}
 export interface RCEEventTypes {
     [RCEEvent.Message]: MessageEventPayload;
     [RCEEvent.PlayerlistUpdate]: PlayerListUpdateEventPayload;
@@ -165,6 +169,7 @@ export interface RCEEventTypes {
     [RCEEvent.SpecialEventEnd]: SpecialEventEndEventPayload;
     [RCEEvent.ExecutingCommand]: ExecutingCommandEventPayload;
     [RCEEvent.Error]: RCEErrorPayload;
+    [RCEEvent.Log]: RCELogPayload;
 }
 export declare class RCEEvents extends EventEmitter {
     emit<K extends keyof RCEEventTypes>(event: K, ...args: RCEEventTypes[K] extends undefined ? [] : [RCEEventTypes[K]]): boolean;

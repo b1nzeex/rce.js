@@ -21,6 +21,7 @@ var LogLevel;
     LogLevel[LogLevel["Warn"] = 2] = "Warn";
     LogLevel[LogLevel["Info"] = 3] = "Info";
     LogLevel[LogLevel["Debug"] = 4] = "Debug";
+    LogLevel[LogLevel["Custom"] = 5] = "Custom";
 })(LogLevel || (exports.LogLevel = LogLevel = {}));
 var RCEEvent;
 (function (RCEEvent) {
@@ -45,6 +46,7 @@ var RCEEvent;
     RCEEvent["SpecialEventEnd"] = "special_event_end";
     RCEEvent["ExecutingCommand"] = "executing_command";
     RCEEvent["Error"] = "error";
+    RCEEvent["Log"] = "log";
 })(RCEEvent || (exports.RCEEvent = RCEEvent = {}));
 var QuickChat;
 (function (QuickChat) {

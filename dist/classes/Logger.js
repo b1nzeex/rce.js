@@ -33,11 +33,13 @@ var ConsoleColor;
     ConsoleColor["BgWhite"] = "\u001B[47m";
 })(ConsoleColor || (ConsoleColor = {}));
 class Logger {
+    emitter;
     level;
     file;
-    constructor(opts) {
+    constructor(emitter, opts) {
         this.level = opts.logLevel || constants_1.LogLevel.Info;
         this.file = opts.logFile;
+        this.emitter = emitter;
     }
     logToFile(type, content) {
         if (this.file) {
@@ -60,24 +62,48 @@ class Logger {
     }
     error(content) {
         this.logToFile("ERROR", content);
+        if (this.level === constants_1.LogLevel.Custom) {
+            return this.emitter.emit(constants_1.RCEEvent.Log, {
+                level: constants_1.LogLevel.Error,
+                content: this.format(content),
+            });
+        }
         if (this.level >= constants_1.LogLevel.Error) {
             console.log(`[rce.js] ${ConsoleColor.FgRed}[ERROR]${ConsoleColor.Reset} ${this.format(content)}`);
         }
     }
     warn(content) {
         this.logToFile("WARN", content);
+        if (this.level === constants_1.LogLevel.Custom) {
+            return this.emitter.emit(constants_1.RCEEvent.Log, {
+                level: constants_1.LogLevel.Warn,
+                content: this.format(content),
+            });
+        }
         if (this.level >= constants_1.LogLevel.Warn) {
             console.log(`[rce.js] ${ConsoleColor.FgYellow}[WARN]${ConsoleColor.Reset} ${this.format(content)}`);
         }
     }
     info(content) {
         this.logToFile("INFO", content);
+        if (this.level === constants_1.LogLevel.Custom) {
+            return this.emitter.emit(constants_1.RCEEvent.Log, {
+                level: constants_1.LogLevel.Info,
+                content: this.format(content),
+            });
+        }
         if (this.level >= constants_1.LogLevel.Info) {
             console.log(`[rce.js] ${ConsoleColor.FgCyan}[INFO]${ConsoleColor.Reset} ${this.format(content)}`);
         }
     }
     debug(content) {
         this.logToFile("DEBUG", content);
+        if (this.level === constants_1.LogLevel.Custom) {
+            return this.emitter.emit(constants_1.RCEEvent.Log, {
+                level: constants_1.LogLevel.Debug,
+                content: this.format(content),
+            });
+        }
         if (this.level >= constants_1.LogLevel.Debug) {
             console.log(`[rce.js] ${ConsoleColor.FgGreen}[DEBUG]${ConsoleColor.Reset} ${this.format(content)}`);
         }
