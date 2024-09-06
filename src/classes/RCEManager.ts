@@ -75,7 +75,7 @@ export default class RCEManager extends RCEEvents {
   public constructor(auth: AuthOptions, logger: LoggerOptions = {}) {
     super();
 
-    this.logger = new Logger(logger);
+    this.logger = new Logger(this, logger);
 
     this.authMethod.refreshToken = auth.refreshToken;
     this.authMethod.file = auth.file || "auth.txt";

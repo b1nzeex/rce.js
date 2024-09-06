@@ -17,6 +17,7 @@ export enum LogLevel {
   Warn = 2,
   Info = 3,
   Debug = 4,
+  Custom = 5,
 }
 
 export enum RCEEvent {
@@ -41,6 +42,7 @@ export enum RCEEvent {
   SpecialEventEnd = "special_event_end",
   ExecutingCommand = "executing_command",
   Error = "error",
+  Log = "log",
 }
 
 export enum QuickChat {

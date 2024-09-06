@@ -1,4 +1,4 @@
-import { RCEEvent, QuickChat } from "./constants";
+import { RCEEvent, QuickChat, LogLevel } from "./constants";
 import { EventEmitter } from "events";
 
 export interface LoggerOptions {
@@ -174,6 +174,11 @@ export interface RCEErrorPayload {
   error: string;
 }
 
+export interface RCELogPayload {
+  level: LogLevel;
+  content: string;
+}
+
 export interface RCEEventTypes {
   [RCEEvent.Message]: MessageEventPayload;
   [RCEEvent.PlayerlistUpdate]: PlayerListUpdateEventPayload;
@@ -196,6 +201,7 @@ export interface RCEEventTypes {
   [RCEEvent.SpecialEventEnd]: SpecialEventEndEventPayload;
   [RCEEvent.ExecutingCommand]: ExecutingCommandEventPayload;
   [RCEEvent.Error]: RCEErrorPayload;
+  [RCEEvent.Log]: RCELogPayload;
 }
 
 export class RCEEvents extends EventEmitter {
