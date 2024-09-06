@@ -14,8 +14,7 @@ export declare enum LogLevel {
     Error = 1,
     Warn = 2,
     Info = 3,
-    Debug = 4,
-    Custom = 5
+    Debug = 4
 }
 export declare enum RCEEvent {
     Message = "message",

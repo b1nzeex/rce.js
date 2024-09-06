@@ -7,8 +7,8 @@ export default class Logger {
     constructor(emitter: RCEManager, opts: LoggerOptions);
     private logToFile;
     private format;
-    error(content: any): boolean;
-    warn(content: any): boolean;
-    info(content: any): boolean;
-    debug(content: any): boolean;
+    error(content: any): void;
+    warn(content: any): void;
+    info(content: any): void;
+    debug(content: any): void;
 }

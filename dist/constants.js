@@ -21,7 +21,6 @@ var LogLevel;
     LogLevel[LogLevel["Warn"] = 2] = "Warn";
     LogLevel[LogLevel["Info"] = 3] = "Info";
     LogLevel[LogLevel["Debug"] = 4] = "Debug";
-    LogLevel[LogLevel["Custom"] = 5] = "Custom";
 })(LogLevel || (exports.LogLevel = LogLevel = {}));
 var RCEEvent;
 (function (RCEEvent) {
