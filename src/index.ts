@@ -21,6 +21,7 @@ import {
   ExecutingCommandEventPayload,
   RCEErrorPayload,
   KillPlayerType,
+  RCELogPayload,
 } from "./types";
 import { killData } from "./classes/Helper";
 
@@ -50,4 +51,5 @@ export {
   RCEErrorPayload,
   KillPlayerType,
   killData,
+  RCELogPayload,
 };
