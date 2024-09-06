@@ -37,7 +37,7 @@ class Logger {
     level;
     file;
     constructor(emitter, opts) {
-        this.level = opts.logLevel || constants_1.LogLevel.Info;
+        this.level = opts.logLevel ?? constants_1.LogLevel.Info;
         this.file = opts.logFile;
         this.emitter = emitter;
     }
