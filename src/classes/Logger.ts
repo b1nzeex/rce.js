@@ -38,7 +38,7 @@ export default class Logger {
   private file;
 
   public constructor(emitter: RCEManager, opts: LoggerOptions) {
-    this.level = opts.logLevel || LogLevel.Info;
+    this.level = opts.logLevel ?? LogLevel.Info;
     this.file = opts.logFile;
     this.emitter = emitter;
   }
