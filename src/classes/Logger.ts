@@ -69,13 +69,10 @@ export default class Logger {
 
   public error(content: any) {
     this.logToFile("ERROR", content);
-
-    if (this.level === LogLevel.Custom) {
-      return this.emitter.emit(RCEEvent.Log, {
-        level: LogLevel.Error,
-        content: this.format(content),
-      });
-    }
+    this.emitter.emit(RCEEvent.Log, {
+      level: LogLevel.Error,
+      content: this.format(content),
+    });
 
     if (this.level >= LogLevel.Error) {
       console.log(
@@ -88,13 +85,10 @@ export default class Logger {
 
   public warn(content: any) {
     this.logToFile("WARN", content);
-
-    if (this.level === LogLevel.Custom) {
-      return this.emitter.emit(RCEEvent.Log, {
-        level: LogLevel.Warn,
-        content: this.format(content),
-      });
-    }
+    this.emitter.emit(RCEEvent.Log, {
+      level: LogLevel.Warn,
+      content: this.format(content),
+    });
 
     if (this.level >= LogLevel.Warn) {
       console.log(
@@ -107,13 +101,10 @@ export default class Logger {
 
   public info(content: any) {
     this.logToFile("INFO", content);
-
-    if (this.level === LogLevel.Custom) {
-      return this.emitter.emit(RCEEvent.Log, {
-        level: LogLevel.Info,
-        content: this.format(content),
-      });
-    }
+    this.emitter.emit(RCEEvent.Log, {
+      level: LogLevel.Info,
+      content: this.format(content),
+    });
 
     if (this.level >= LogLevel.Info) {
       console.log(
@@ -126,13 +117,10 @@ export default class Logger {
 
   public debug(content: any) {
     this.logToFile("DEBUG", content);
-
-    if (this.level === LogLevel.Custom) {
-      return this.emitter.emit(RCEEvent.Log, {
-        level: LogLevel.Debug,
-        content: this.format(content),
-      });
-    }
+    this.emitter.emit(RCEEvent.Log, {
+      level: LogLevel.Debug,
+      content: this.format(content),
+    });
 
     if (this.level >= LogLevel.Debug) {
       console.log(
