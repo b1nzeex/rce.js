@@ -490,7 +490,7 @@ export default class RCEManager extends RCEEvents {
 
       // QUICK_CHAT event
       const quickChatMatch = log.match(
-        /(\[CHAT (TEAM|SERVER|LOCAL)\]) ([\w\s]+) : (.+)/
+        /(\[CHAT (TEAM|SERVER|LOCAL)\]) ([\w\s\-_]+) : (.+)/
       );
       if (quickChatMatch) {
         const quickChatTypes = {
