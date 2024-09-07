@@ -547,7 +547,7 @@ export default class RCEManager extends RCEEvents {
 
       // ITEM_SPAWN event
       const itemSpawnMatch = log.match(
-        /\bgiving (\w+) ([\d.]+) x ([\w\s.]+)\b/
+        /\bgiving ([\w\s_-]+) ([\d.]+) x ([\w\s.]+)\b/
       );
       if (itemSpawnMatch) {
         const ign = itemSpawnMatch[1];
@@ -623,7 +623,7 @@ export default class RCEManager extends RCEEvents {
 
       // KIT_GIVE event
       const kitGiveMatch = log.match(
-        /\[ServerVar\] (\w+) giving (\w+) kit (\w+)/
+        /\[ServerVar\] ([\w\s_-]+) giving ([\w\s_-]+) kit ([\w\s_-]+)/
       );
       if (kitGiveMatch) {
         const admin = kitGiveMatch[1];
