@@ -395,7 +395,7 @@ class RCEManager extends types_1.RCEEvents {
                 this.emit(constants_1.RCEEvent.PlayerRoleAdd, { server, ign, role });
             }
             // ITEM_SPAWN event
-            const itemSpawnMatch = log.match(/\bgiving (\w+) ([\d.]+) x ([\w\s.]+)\b/);
+            const itemSpawnMatch = log.match(/\bgiving ([\w\s_-]+) ([\d.]+) x ([\w\s.]+)\b/);
             if (itemSpawnMatch) {
                 const ign = itemSpawnMatch[1];
                 const quantity = Number(itemSpawnMatch[2]);
@@ -448,7 +448,7 @@ class RCEManager extends types_1.RCEEvents {
                 this.emit(constants_1.RCEEvent.KitSpawn, { server, ign, kit });
             }
             // KIT_GIVE event
-            const kitGiveMatch = log.match(/\[ServerVar\] (\w+) giving (\w+) kit (\w+)/);
+            const kitGiveMatch = log.match(/\[ServerVar\] ([\w\s_-]+) giving ([\w\s_-]+) kit ([\w\s_-]+)/);
             if (kitGiveMatch) {
                 const admin = kitGiveMatch[1];
                 const ign = kitGiveMatch[2];
