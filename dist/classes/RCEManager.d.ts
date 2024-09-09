@@ -28,6 +28,7 @@ export default class RCEManager extends RCEEvents {
     private sendCommandInternal;
     sendCommand(identifier: string, command: string, response?: boolean): Promise<string | undefined | null>;
     addServer(opts: ServerOptions): Promise<boolean>;
+    private comparePopulation;
     private refreshPlayers;
     getServer(identifier: string): RustServer;
     removeServer(identifier: string): void;

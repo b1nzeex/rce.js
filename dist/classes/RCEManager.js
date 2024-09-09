@@ -748,6 +748,11 @@ class RCEManager extends types_1.RCEEvents {
             setTimeout(() => this.addServer(opts), 5_000);
         }
     }
+    comparePopulation(oldList, newList) {
+        const joined = newList.filter((ign) => !oldList.includes(ign));
+        const left = oldList.filter((ign) => !newList.includes(ign));
+        return { joined, left };
+    }
     async refreshPlayers(identifier) {
         this.logger.debug(`Refreshing players for ${identifier}`);
         const server = this.getServer(identifier);
@@ -763,11 +768,12 @@ class RCEManager extends types_1.RCEEvents {
         const players = users.match(/"(.*?)"/g).map((ign) => ign.replace(/"/g, ""));
         players.shift();
         const s = this.getServer(identifier);
+        const { joined, left } = this.comparePopulation(s.players, players);
         this.servers.set(identifier, {
             ...s,
             players,
         });
-        this.emit(constants_1.RCEEvent.PlayerlistUpdate, { server, players });
+        this.emit(constants_1.RCEEvent.PlayerlistUpdate, { server, players, joined, left });
         this.logger.debug(`Players refreshed for ${identifier}`);
     }
     /*
