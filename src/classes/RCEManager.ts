@@ -1013,6 +1013,19 @@ export default class RCEManager extends RCEEvents {
     }
   }
 
+  private comparePopulation(
+    oldList: string[],
+    newList: string[]
+  ): {
+    joined: string[];
+    left: string[];
+  } {
+    const joined = newList.filter((ign) => !oldList.includes(ign));
+    const left = oldList.filter((ign) => !newList.includes(ign));
+
+    return { joined, left };
+  }
+
   private async refreshPlayers(identifier: string) {
     this.logger.debug(`Refreshing players for ${identifier}`);
 
@@ -1035,12 +1048,14 @@ export default class RCEManager extends RCEEvents {
 
     const s = this.getServer(identifier);
 
+    const { joined, left } = this.comparePopulation(s.players, players);
+
     this.servers.set(identifier, {
       ...s,
       players,
     });
 
-    this.emit(RCEEvent.PlayerlistUpdate, { server, players });
+    this.emit(RCEEvent.PlayerlistUpdate, { server, players, joined, left });
 
     this.logger.debug(`Players refreshed for ${identifier}`);
   }

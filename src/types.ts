@@ -76,6 +76,8 @@ export interface MessageEventPayload extends EventPayload {
 
 export interface PlayerListUpdateEventPayload extends EventPayload {
   players: string[];
+  joined: string[];
+  left: string[];
 }
 
 export interface QuickChatEventPayload extends EventPayload {
