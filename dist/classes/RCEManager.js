@@ -17,6 +17,7 @@ class RCEManager extends types_1.RCEEvents {
         token_type: "Bearer",
         expires_in: 0,
     };
+    tokenRefreshing = false;
     servers = new Map();
     socket;
     requests = new Map();
@@ -118,6 +119,7 @@ class RCEManager extends types_1.RCEEvents {
         }
     }
     async refreshToken() {
+        this.tokenRefreshing = true;
         this.logger.debug("Attempting to refresh token");
         if (!this.auth?.refresh_token) {
             this.logError("Failed to refresh token: No refresh token");
@@ -148,6 +150,7 @@ class RCEManager extends types_1.RCEEvents {
                 (0, fs_1.writeFileSync)(this.authMethod.file, this.auth.refresh_token);
             }
             this.logger.debug("Token refreshed successfully");
+            this.tokenRefreshing = false;
             return true;
         }
         catch (err) {
@@ -199,7 +202,7 @@ class RCEManager extends types_1.RCEEvents {
             this.logError(`Websocket error: ${err.message}`);
             this.clean();
             if (this.connectionAttempt < 5) {
-                this.logger.warn(`Websocket error: Attempting to reconnect in ${this.connectionAttempt + 1 * 10} seconds (Attempt ${this.connectionAttempt + 1} of 5)`);
+                this.logger.warn(`Websocket error: Attempting to reconnect in ${(this.connectionAttempt + 1) * 10} seconds (Attempt ${this.connectionAttempt + 1} of 5)`);
                 setTimeout(() => this.connectWebsocket(timeout), this.connectionAttempt * 10_000);
             }
             else {
@@ -210,7 +213,7 @@ class RCEManager extends types_1.RCEEvents {
             this.clean();
             if (code !== 1000) {
                 if (this.connectionAttempt < 5) {
-                    this.logger.warn(`Websocket closed: Attempting to reconnect in ${this.connectionAttempt + 1 * 10} seconds (Attempt ${this.connectionAttempt + 1} of 5)`);
+                    this.logger.warn(`Websocket closed: Attempting to reconnect in ${(this.connectionAttempt + 1) * 10} seconds (Attempt ${this.connectionAttempt + 1} of 5)`);
                     setTimeout(() => this.connectWebsocket(timeout), this.connectionAttempt * 10_000);
                 }
                 else {
@@ -242,6 +245,9 @@ class RCEManager extends types_1.RCEEvents {
                     const server = this.getServer(request.identifier);
                     if (!server) {
                         return this.logError(`Failed to handle message: No server found for ID ${request.identifier}`);
+                    }
+                    if (message?.payload?.errors?.length) {
+                        return this.logError(message.payload.errors[0].message, server);
                     }
                     this.handleWebsocketMessage(message, server);
                 }
@@ -381,12 +387,6 @@ class RCEManager extends types_1.RCEEvents {
                 const platform = log.includes("[xboxone]") ? "XBL" : "PS";
                 this.emit(constants_1.RCEEvent.PlayerRespawned, { server, ign, platform });
             }
-            // PLAYER_JOINED event
-            if (log.includes("joined [xboxone]") || log.includes("joined [ps4]")) {
-                const ign = log.split(" joined ")[0];
-                const platform = log.includes("[xboxone]") ? "XBL" : "PS";
-                this.emit(constants_1.RCEEvent.PlayerJoined, { server, ign, platform });
-            }
             // PLAYER_ROLE_ADD event
             const roleMatch = log.match(/\[?SERVER\]?\s*Added\s*\[([^\]]+)\](?::\[([^\]]+)\])?\s*(?:to\s*(?:Group\s*)?)?\[(\w+)\]/i);
             if (roleMatch && log.includes("Added")) {
@@ -484,6 +484,11 @@ class RCEManager extends types_1.RCEEvents {
             this.logError("Failed to resolve server ID: No access token");
             return undefined;
         }
+        if (this.tokenRefreshing) {
+            this.logger.warn("Token is refreshing, retrying in a few seconds");
+            await this.sleep(3_000);
+            return this.resolveServerId(region, serverId);
+        }
         try {
             const response = await fetch(constants_1.GPORTALRoutes.Command, {
                 method: "POST",
@@ -549,6 +554,11 @@ class RCEManager extends types_1.RCEEvents {
             this.logError("Failed to send command: No websocket connection");
             return null;
         }
+        if (this.tokenRefreshing) {
+            this.logger.warn("Token is refreshing, retrying in a few seconds");
+            await this.sleep(3_000);
+            return this.sendCommandInternal(server, command, response);
+        }
         this.logger.debug(`Sending command "${command}" to ${server.identifier}`);
         const payload = {
             operationName: "sendConsoleMessage",
@@ -580,15 +590,6 @@ class RCEManager extends types_1.RCEEvents {
                     })
                         .then((res) => {
                         if (!res.ok) {
-                            if (res.status === 400) {
-                                this.logger.debug(`Command "${command}" failed to send, retrying in 3 seconds`);
-                                setTimeout(() => {
-                                    this.sendCommandInternal(server, command, response)
-                                        .then(resolve)
-                                        .catch(reject);
-                                }, 3_000);
-                                return null;
-                            }
                             this.logError(`Failed to send command: ${res.statusText}`, server);
                             return null;
                         }
@@ -769,6 +770,12 @@ class RCEManager extends types_1.RCEEvents {
         players.shift();
         const s = this.getServer(identifier);
         const { joined, left } = this.comparePopulation(s.players, players);
+        joined.forEach((ign) => {
+            this.emit(constants_1.RCEEvent.PlayerJoined, { server, ign });
+        });
+        left.forEach((ign) => {
+            this.emit(constants_1.RCEEvent.PlayerLeft, { server, ign });
+        });
         this.servers.set(identifier, {
             ...s,
             players,
@@ -819,6 +826,9 @@ class RCEManager extends types_1.RCEEvents {
     */
     getServers() {
         return this.servers;
+    }
+    async sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }
 exports.default = RCEManager;

@@ -3,6 +3,7 @@ import { RCEEvents } from "../types";
 export default class RCEManager extends RCEEvents {
     private logger;
     private auth?;
+    private tokenRefreshing;
     private servers;
     private socket?;
     private requests;
@@ -33,4 +34,5 @@ export default class RCEManager extends RCEEvents {
     getServer(identifier: string): RustServer;
     removeServer(identifier: string): void;
     getServers(): Map<string, RustServer>;
+    private sleep;
 }

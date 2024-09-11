@@ -27,6 +27,7 @@ var RCEEvent;
     RCEEvent["Message"] = "message";
     RCEEvent["PlayerKill"] = "player_kill";
     RCEEvent["PlayerJoined"] = "player_joined";
+    RCEEvent["PlayerLeft"] = "player_left";
     RCEEvent["PlayerRespawned"] = "player_respawned";
     RCEEvent["PlayerSuicide"] = "player_suicide";
     RCEEvent["PlayerRoleAdd"] = "player_role_add";
