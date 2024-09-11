@@ -88,7 +88,10 @@ export interface QuickChatEventPayload extends EventPayload {
 
 export interface PlayerJoinedEventPayload extends EventPayload {
   ign: string;
-  platform: "XBL" | "PS";
+}
+
+export interface PlayerLeftEventPayload extends EventPayload {
+  ign: string;
 }
 
 export interface PlayerSuicideEventPayload extends EventPayload {
@@ -186,6 +189,7 @@ export interface RCEEventTypes {
   [RCEEvent.PlayerlistUpdate]: PlayerListUpdateEventPayload;
   [RCEEvent.QuickChat]: QuickChatEventPayload;
   [RCEEvent.PlayerJoined]: PlayerJoinedEventPayload;
+  [RCEEvent.PlayerLeft]: PlayerLeftEventPayload;
   [RCEEvent.PlayerSuicide]: PlayerSuicideEventPayload;
   [RCEEvent.PlayerRespawned]: PlayerRespawnedEventPayload;
   [RCEEvent.PlayerRoleAdd]: PlayerRoleAddEventPayload;

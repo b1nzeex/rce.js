@@ -23,6 +23,7 @@ export enum RCEEvent {
   Message = "message",
   PlayerKill = "player_kill",
   PlayerJoined = "player_joined",
+  PlayerLeft = "player_left",
   PlayerRespawned = "player_respawned",
   PlayerSuicide = "player_suicide",
   PlayerRoleAdd = "player_role_add",

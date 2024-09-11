@@ -45,6 +45,7 @@ export default class RCEManager extends RCEEvents {
     token_type: "Bearer",
     expires_in: 0,
   };
+  private tokenRefreshing: boolean = false;
   private servers: Map<string, RustServer> = new Map();
   private socket?: WebSocket;
   private requests: Map<string, WebsocketRequest> = new Map();
@@ -163,6 +164,7 @@ export default class RCEManager extends RCEEvents {
   }
 
   private async refreshToken() {
+    this.tokenRefreshing = true;
     this.logger.debug("Attempting to refresh token");
 
     if (!this.auth?.refresh_token) {
@@ -199,6 +201,7 @@ export default class RCEManager extends RCEEvents {
       }
 
       this.logger.debug("Token refreshed successfully");
+      this.tokenRefreshing = false;
       return true;
     } catch (err) {
       this.logError(`Failed to refresh token: ${err}`);
@@ -263,7 +266,7 @@ export default class RCEManager extends RCEEvents {
       if (this.connectionAttempt < 5) {
         this.logger.warn(
           `Websocket error: Attempting to reconnect in ${
-            this.connectionAttempt + 1 * 10
+            (this.connectionAttempt + 1) * 10
           } seconds (Attempt ${this.connectionAttempt + 1} of 5)`
         );
         setTimeout(
@@ -282,7 +285,7 @@ export default class RCEManager extends RCEEvents {
         if (this.connectionAttempt < 5) {
           this.logger.warn(
             `Websocket closed: Attempting to reconnect in ${
-              this.connectionAttempt + 1 * 10
+              (this.connectionAttempt + 1) * 10
             } seconds (Attempt ${this.connectionAttempt + 1} of 5)`
           );
           setTimeout(
@@ -329,6 +332,10 @@ export default class RCEManager extends RCEEvents {
             return this.logError(
               `Failed to handle message: No server found for ID ${request.identifier}`
             );
+          }
+
+          if (message?.payload?.errors?.length) {
+            return this.logError(message.payload.errors[0].message, server);
           }
 
           this.handleWebsocketMessage(message, server);
@@ -526,14 +533,6 @@ export default class RCEManager extends RCEEvents {
         this.emit(RCEEvent.PlayerRespawned, { server, ign, platform });
       }
 
-      // PLAYER_JOINED event
-      if (log.includes("joined [xboxone]") || log.includes("joined [ps4]")) {
-        const ign = log.split(" joined ")[0];
-        const platform = log.includes("[xboxone]") ? "XBL" : "PS";
-
-        this.emit(RCEEvent.PlayerJoined, { server, ign, platform });
-      }
-
       // PLAYER_ROLE_ADD event
       const roleMatch = log.match(
         /\[?SERVER\]?\s*Added\s*\[([^\]]+)\](?::\[([^\]]+)\])?\s*(?:to\s*(?:Group\s*)?)?\[(\w+)\]/i
@@ -675,6 +674,12 @@ export default class RCEManager extends RCEEvents {
       return undefined;
     }
 
+    if (this.tokenRefreshing) {
+      this.logger.warn("Token is refreshing, retrying in a few seconds");
+      await this.sleep(3_000);
+      return this.resolveServerId(region, serverId);
+    }
+
     try {
       const response = await fetch(GPORTALRoutes.Command, {
         method: "POST",
@@ -761,6 +766,12 @@ export default class RCEManager extends RCEEvents {
       return null;
     }
 
+    if (this.tokenRefreshing) {
+      this.logger.warn("Token is refreshing, retrying in a few seconds");
+      await this.sleep(3_000);
+      return this.sendCommandInternal(server, command, response);
+    }
+
     this.logger.debug(`Sending command "${command}" to ${server.identifier}`);
 
     const payload = {
@@ -797,18 +808,6 @@ export default class RCEManager extends RCEEvents {
           })
             .then((res) => {
               if (!res.ok) {
-                if (res.status === 400) {
-                  this.logger.debug(
-                    `Command "${command}" failed to send, retrying in 3 seconds`
-                  );
-                  setTimeout(() => {
-                    this.sendCommandInternal(server, command, response)
-                      .then(resolve)
-                      .catch(reject);
-                  }, 3_000);
-                  return null;
-                }
-
                 this.logError(
                   `Failed to send command: ${res.statusText}`,
                   server
@@ -1050,6 +1049,14 @@ export default class RCEManager extends RCEEvents {
 
     const { joined, left } = this.comparePopulation(s.players, players);
 
+    joined.forEach((ign) => {
+      this.emit(RCEEvent.PlayerJoined, { server, ign });
+    });
+
+    left.forEach((ign) => {
+      this.emit(RCEEvent.PlayerLeft, { server, ign });
+    });
+
     this.servers.set(identifier, {
       ...s,
       players,
@@ -1106,5 +1113,9 @@ export default class RCEManager extends RCEEvents {
   */
   public getServers() {
     return this.servers;
+  }
+
+  private async sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
