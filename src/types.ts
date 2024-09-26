@@ -8,9 +8,8 @@ export interface LoggerOptions {
 
 export interface AuthOptions {
   servers?: ServerOptions[];
-  refreshToken?: string;
-  file?: string;
-  authMethod?: "file" | "manual";
+  email: string;
+  password: string;
 }
 
 export interface Auth {

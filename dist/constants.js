@@ -4,10 +4,11 @@ exports.EVENTS = exports.QuickChat = exports.RCEEvent = exports.LogLevel = expor
 var GPORTALRoutes;
 (function (GPORTALRoutes) {
     GPORTALRoutes["Command"] = "https://www.g-portal.com/ngpapi/";
-    GPORTALRoutes["Refresh"] = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/token";
+    GPORTALRoutes["Token"] = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/token";
     GPORTALRoutes["WebSocket"] = "wss://www.g-portal.com/ngpapi/";
     GPORTALRoutes["Origin"] = "https://www.g-portal.com";
     GPORTALRoutes["Home"] = "https://www.g-portal.com/en";
+    GPORTALRoutes["Login"] = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/auth?client_id=website&redirect_uri=https%3A%2F%2Fwww.g-portal.com%2Fen&response_mode=query&response_type=code&scope=openid%20email%20profile%20gportal";
 })(GPORTALRoutes || (exports.GPORTALRoutes = GPORTALRoutes = {}));
 var GPORTALWebsocketTypes;
 (function (GPORTALWebsocketTypes) {

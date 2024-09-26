@@ -5,11 +5,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("../constants");
 const ws_1 = require("ws");
-const fs_1 = require("fs");
 const Logger_1 = __importDefault(require("./Logger"));
 const types_1 = require("../types");
 const Helper_1 = __importDefault(require("./Helper"));
+const cheerio_1 = require("cheerio");
 class RCEManager extends types_1.RCEEvents {
+    email;
+    password;
     logger;
     auth = {
         refresh_token: "",
@@ -23,11 +25,6 @@ class RCEManager extends types_1.RCEEvents {
     requests = new Map();
     commands = [];
     queue = [];
-    authMethod = {
-        method: "manual",
-        refreshToken: "",
-        file: "",
-    };
     kaInterval;
     connectionAttempt = 0;
     /*
@@ -43,26 +40,8 @@ class RCEManager extends types_1.RCEEvents {
     constructor(auth, logger = {}) {
         super();
         this.logger = new Logger_1.default(this, logger);
-        this.authMethod.refreshToken = auth.refreshToken;
-        this.authMethod.file = auth.file || "auth.txt";
-        this.authMethod.method = auth.authMethod || "manual";
-        if (this.authMethod.method === "manual") {
-            if (!auth.refreshToken) {
-                throw new Error("No refreshToken argument provided; required for manual auth");
-            }
-            this.auth.refresh_token = auth.refreshToken;
-        }
-        if (this.authMethod.method === "file") {
-            try {
-                const data = (0, fs_1.readFileSync)(this.authMethod.file, "utf-8");
-                this.auth.refresh_token = data.replace("\n", "");
-            }
-            catch (err) {
-                this.logger.warn("File not found; creating new auth file");
-                (0, fs_1.writeFileSync)(this.authMethod.file, "REPLACE_WITH_REFRESH_TOKEN");
-                throw new Error("No refresh token provided in file; please add it");
-            }
-        }
+        this.email = auth.email;
+        this.password = auth.password;
         const servers = auth.servers || [];
         servers.forEach((server) => {
             this.servers.set(server.identifier, {
@@ -92,6 +71,10 @@ class RCEManager extends types_1.RCEEvents {
         this.on(constants_1.RCEEvent.Error, (payload) => {
             this.logger.error(payload.error);
         });
+        const login = await this.login();
+        if (!login) {
+            throw new Error("Failed to login");
+        }
         await this.authenticate(timeout);
     }
     /*
@@ -118,6 +101,57 @@ class RCEManager extends types_1.RCEEvents {
             setTimeout(() => this.authenticate(timeout), 60_000);
         }
     }
+    async login() {
+        const loginRes = await fetch(constants_1.GPORTALRoutes.Login);
+        const loginRaw = await loginRes.text();
+        const cookies = loginRes.headers.get("set-cookie");
+        const $ = (0, cheerio_1.load)(loginRaw);
+        const loginUrl = $("#kc-form-login").attr("action");
+        if (!loginUrl) {
+            this.logError("Failed to login: No login URL found");
+            return false;
+        }
+        const postRes = await fetch(loginUrl, {
+            method: "POST",
+            headers: {
+                Cookie: cookies,
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+                username: this.email,
+                password: this.password,
+                credentialId: "",
+            }),
+        });
+        if (!postRes.ok) {
+            this.logError(`Failed to login: ${postRes.statusText}`);
+            return false;
+        }
+        const code = new URLSearchParams(new URL(postRes.url).search).get("code");
+        if (!code) {
+            this.logError("Failed to login: No code found");
+            return false;
+        }
+        const tokenRes = await fetch(constants_1.GPORTALRoutes.Token, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+                grant_type: "authorization_code",
+                client_id: "website",
+                code,
+                redirect_uri: "https://www.g-portal.com/en",
+            }),
+        });
+        if (!tokenRes.ok) {
+            this.logError(`Failed to login: ${tokenRes.statusText}`);
+            return false;
+        }
+        this.auth = await tokenRes.json();
+        setTimeout(() => this.refreshToken(), this.auth.expires_in * 1000);
+        return true;
+    }
     async refreshToken() {
         this.tokenRefreshing = true;
         this.logger.debug("Attempting to refresh token");
@@ -126,7 +160,7 @@ class RCEManager extends types_1.RCEEvents {
             return false;
         }
         try {
-            const response = await fetch(constants_1.GPORTALRoutes.Refresh, {
+            const response = await fetch(constants_1.GPORTALRoutes.Token, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -145,10 +179,6 @@ class RCEManager extends types_1.RCEEvents {
             }
             this.auth = await response.json();
             setTimeout(() => this.refreshToken(), this.auth.expires_in * 1000);
-            if (this.authMethod.method === "file" && this.authMethod.file) {
-                this.logger.debug("Writing auth data to file");
-                (0, fs_1.writeFileSync)(this.authMethod.file, this.auth.refresh_token);
-            }
             this.logger.debug("Token refreshed successfully");
             this.tokenRefreshing = false;
             return true;
@@ -247,6 +277,15 @@ class RCEManager extends types_1.RCEEvents {
                         return this.logError(`Failed to handle message: No server found for ID ${request.identifier}`);
                     }
                     if (message?.payload?.errors?.length) {
+                        const error = message.payload.errors[0].message;
+                        const aioRpcErrorMatch = error.match(/status\s*=\s*([^\n]+)\s+details\s*=\s*"([^"]+)"/);
+                        if (aioRpcErrorMatch) {
+                            // const status = aioRpcErrorMatch[1].trim();
+                            const details = aioRpcErrorMatch[2].trim();
+                            if (details === "Socket closed") {
+                                return this.logger.warn("AioRpcError: Socket closed due to G-PORTAL maintenance, the socket should automatically reconnect. On average, this takes 30-60 minutes.");
+                            }
+                        }
                         return this.logError(message.payload.errors[0].message, server);
                     }
                     this.handleWebsocketMessage(message, server);

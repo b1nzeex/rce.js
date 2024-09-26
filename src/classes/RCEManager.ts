@@ -15,10 +15,10 @@ import {
   EVENTS,
 } from "../constants";
 import { WebSocket } from "ws";
-import { writeFileSync, readFileSync } from "fs";
 import Logger from "./Logger";
 import { RCEEvents } from "../types";
 import Helper from "./Helper";
+import { load } from "cheerio";
 
 interface QueuedCommand {
   identifier: string;
@@ -38,6 +38,8 @@ interface CommandRequest {
 }
 
 export default class RCEManager extends RCEEvents {
+  private email: string;
+  private password: string;
   private logger: Logger;
   private auth?: Auth = {
     refresh_token: "",
@@ -51,15 +53,6 @@ export default class RCEManager extends RCEEvents {
   private requests: Map<string, WebsocketRequest> = new Map();
   private commands: CommandRequest[] = [];
   private queue: QueuedCommand[] = [];
-  private authMethod: {
-    method: "file" | "manual";
-    file: string;
-    refreshToken: string;
-  } = {
-    method: "manual",
-    refreshToken: "",
-    file: "",
-  };
   private kaInterval?: NodeJS.Timeout;
   private connectionAttempt: number = 0;
 
@@ -78,30 +71,8 @@ export default class RCEManager extends RCEEvents {
 
     this.logger = new Logger(this, logger);
 
-    this.authMethod.refreshToken = auth.refreshToken;
-    this.authMethod.file = auth.file || "auth.txt";
-    this.authMethod.method = auth.authMethod || "manual";
-
-    if (this.authMethod.method === "manual") {
-      if (!auth.refreshToken) {
-        throw new Error(
-          "No refreshToken argument provided; required for manual auth"
-        );
-      }
-
-      this.auth.refresh_token = auth.refreshToken;
-    }
-
-    if (this.authMethod.method === "file") {
-      try {
-        const data = readFileSync(this.authMethod.file, "utf-8");
-        this.auth.refresh_token = data.replace("\n", "");
-      } catch (err) {
-        this.logger.warn("File not found; creating new auth file");
-        writeFileSync(this.authMethod.file, "REPLACE_WITH_REFRESH_TOKEN");
-        throw new Error("No refresh token provided in file; please add it");
-      }
-    }
+    this.email = auth.email;
+    this.password = auth.password;
 
     const servers = auth.servers || [];
     servers.forEach((server) => {
@@ -134,6 +105,11 @@ export default class RCEManager extends RCEEvents {
       this.logger.error(payload.error);
     });
 
+    const login = await this.login();
+    if (!login) {
+      throw new Error("Failed to login");
+    }
+
     await this.authenticate(timeout);
   }
 
@@ -163,6 +139,66 @@ export default class RCEManager extends RCEEvents {
     }
   }
 
+  private async login(): Promise<boolean> {
+    const loginRes = await fetch(GPORTALRoutes.Login);
+    const loginRaw = await loginRes.text();
+    const cookies = loginRes.headers.get("set-cookie");
+
+    const $ = load(loginRaw);
+    const loginUrl = $("#kc-form-login").attr("action");
+
+    if (!loginUrl) {
+      this.logError("Failed to login: No login URL found");
+      return false;
+    }
+
+    const postRes = await fetch(loginUrl, {
+      method: "POST",
+      headers: {
+        Cookie: cookies,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        username: this.email,
+        password: this.password,
+        credentialId: "",
+      }),
+    });
+
+    if (!postRes.ok) {
+      this.logError(`Failed to login: ${postRes.statusText}`);
+      return false;
+    }
+
+    const code = new URLSearchParams(new URL(postRes.url).search).get("code");
+    if (!code) {
+      this.logError("Failed to login: No code found");
+      return false;
+    }
+
+    const tokenRes = await fetch(GPORTALRoutes.Token, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: "website",
+        code,
+        redirect_uri: "https://www.g-portal.com/en",
+      }),
+    });
+
+    if (!tokenRes.ok) {
+      this.logError(`Failed to login: ${tokenRes.statusText}`);
+      return false;
+    }
+
+    this.auth = await tokenRes.json();
+    setTimeout(() => this.refreshToken(), this.auth.expires_in * 1000);
+    return true;
+  }
+
   private async refreshToken() {
     this.tokenRefreshing = true;
     this.logger.debug("Attempting to refresh token");
@@ -173,7 +209,7 @@ export default class RCEManager extends RCEEvents {
     }
 
     try {
-      const response = await fetch(GPORTALRoutes.Refresh, {
+      const response = await fetch(GPORTALRoutes.Token, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -194,11 +230,6 @@ export default class RCEManager extends RCEEvents {
 
       this.auth = await response.json();
       setTimeout(() => this.refreshToken(), this.auth.expires_in * 1000);
-
-      if (this.authMethod.method === "file" && this.authMethod.file) {
-        this.logger.debug("Writing auth data to file");
-        writeFileSync(this.authMethod.file, this.auth.refresh_token);
-      }
 
       this.logger.debug("Token refreshed successfully");
       this.tokenRefreshing = false;
@@ -335,6 +366,21 @@ export default class RCEManager extends RCEEvents {
           }
 
           if (message?.payload?.errors?.length) {
+            const error: string = message.payload.errors[0].message;
+            const aioRpcErrorMatch = error.match(
+              /status\s*=\s*([^\n]+)\s+details\s*=\s*"([^"]+)"/
+            );
+            if (aioRpcErrorMatch) {
+              // const status = aioRpcErrorMatch[1].trim();
+              const details = aioRpcErrorMatch[2].trim();
+
+              if (details === "Socket closed") {
+                return this.logger.warn(
+                  "AioRpcError: Socket closed due to G-PORTAL maintenance, the socket should automatically reconnect. On average, this takes 30-60 minutes."
+                );
+              }
+            }
+
             return this.logError(message.payload.errors[0].message, server);
           }
 

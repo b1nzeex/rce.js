@@ -25,6 +25,7 @@
     "@types/ws": "^8.5.11"
   },
   "dependencies": {
+    "cheerio": "^1.0.0",
     "ws": "^8.18.0"
   }
 }
