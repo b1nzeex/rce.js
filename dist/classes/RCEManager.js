@@ -280,10 +280,15 @@ class RCEManager extends types_1.RCEEvents {
                         const error = message.payload.errors[0].message;
                         const aioRpcErrorMatch = error.match(/status\s*=\s*([^\n]+)\s+details\s*=\s*"([^"]+)"/);
                         if (aioRpcErrorMatch) {
-                            // const status = aioRpcErrorMatch[1].trim();
-                            const details = aioRpcErrorMatch[2].trim();
-                            if (details === "Socket closed") {
-                                return this.logger.warn("AioRpcError: Socket closed due to G-PORTAL maintenance, the socket should automatically reconnect. On average, this takes 30-60 minutes.");
+                            const status = aioRpcErrorMatch[1].trim();
+                            // const details = aioRpcErrorMatch[2].trim();
+                            if (status === "StatusCode.UNAVAILABLE") {
+                                this.logError("AioRpcError: Server is unavailable", server);
+                                this.clean();
+                                this.logger.warn("AioRpcError: Will attempt to reconnect in 10 seconds");
+                                setTimeout(() => {
+                                    this.connectWebsocket(timeout);
+                                }, 10_000);
                             }
                         }
                         return this.logError(message.payload.errors[0].message, server);
