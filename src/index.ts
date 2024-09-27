@@ -22,6 +22,7 @@ import {
   RCEErrorPayload,
   KillPlayerType,
   RCELogPayload,
+  ServiceStateEventPayload,
 } from "./types";
 import { killData } from "./classes/Helper";
 
@@ -52,4 +53,5 @@ export {
   KillPlayerType,
   killData,
   RCELogPayload,
+  ServiceStateEventPayload,
 };
