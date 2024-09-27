@@ -53,6 +53,7 @@ class RCEManager extends types_1.RCEEvents {
                 players: [],
                 added: false,
                 ready: false,
+                serviceState: "UNKNOWN",
             });
         });
     }
@@ -293,7 +294,12 @@ class RCEManager extends types_1.RCEEvents {
                         }
                         return this.logError(message.payload.errors[0].message, server);
                     }
-                    this.handleWebsocketMessage(message, server);
+                    if (message?.payload?.data?.consoleMessages) {
+                        this.handleWebsocketMessage(message, server);
+                    }
+                    else if (message?.payload?.data?.serviceState) {
+                        this.handleServiceState(message, server);
+                    }
                 }
             }
             catch (err) {
@@ -326,13 +332,64 @@ class RCEManager extends types_1.RCEEvents {
             this.connectWebsocket(timeout);
         }
     }
+    async fetchServiceState(sid, region) {
+        if (!this.auth?.access_token) {
+            this.logError("Failed to fetch service state: No access token");
+            return null;
+        }
+        if (this.tokenRefreshing) {
+            this.logger.warn("Token is refreshing, retrying in a few seconds");
+            await this.sleep(3_000);
+            return this.fetchServiceState(sid, region);
+        }
+        try {
+            const response = await fetch(constants_1.GPORTALRoutes.Command, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `${this.auth.token_type} ${this.auth.access_token}`,
+                },
+                body: JSON.stringify({
+                    operationName: "ctx",
+                    variables: {
+                        sid,
+                        region,
+                    },
+                    query: "query ctx($sid: Int!, $region: REGION!) {\n  cfgContext(rsid: {id: $sid, region: $region}) {\n    ns {\n      ...CtxFields\n      __typename\n    }\n    errors {\n      mutator\n      affectedPaths\n      error {\n        class_\n        args\n        __typename\n      }\n      scope\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment GameServerFields on GameServer {\n  id\n  serverName\n  serverPort\n  serverIp\n  __typename\n}\n\nfragment PermissionFields on Permission {\n  userName\n  created\n  __typename\n}\n\nfragment MysqlDbFields on CustomerMysqlDb {\n  httpUrl\n  host\n  port\n  database\n  username\n  password\n  __typename\n}\n\nfragment ServiceStateFields on ServiceState {\n  state\n  fsmState\n  fsmIsTransitioning\n  fsmIsExclusiveLocked\n  fsmFileAccess\n  fsmLastStateChange\n  fsmStateLiveProgress {\n    ... on InstallProgress {\n      action\n      percentage\n      __typename\n    }\n    ... on BroadcastProgress {\n      nextMessageAt\n      stateExitAt\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment RestartTaskFields on RestartTask {\n  id\n  runOnWeekday\n  runOnDayofmonth\n  runAtTimeofday\n  runInTimezone\n  schedule\n  data {\n    description\n    args\n    scheduleExtended\n    nextFireTime\n    __typename\n  }\n  __typename\n}\n\nfragment DisplayPortFields on DisplayPorts {\n  rconPort\n  queryPort\n  __typename\n}\n\nfragment SteamWorkshopItemFields on SteamWorkshopItem {\n  id\n  appId\n  itemType\n  name\n  links {\n    websiteUrl\n    __typename\n  }\n  summary\n  logo {\n    url\n    __typename\n  }\n  maps {\n    workshopId\n    mapName\n    __typename\n  }\n  dateCreated\n  dateModified\n  __typename\n}\n\nfragment SevenDaysModFields on SevenDaysMod {\n  id\n  name\n  repoKey\n  active\n  created\n  modified\n  __typename\n}\n\nfragment MapParams on FarmingSimulatorMapParamsObject {\n  serverIp\n  webServerPort\n  webStatsCode\n  token\n  __typename\n}\n\nfragment CtxFields on RootNamespace {\n  sys {\n    game {\n      name\n      key\n      platform\n      forumBoardId\n      supportedPlatforms\n      __typename\n    }\n    extraGameTranslationKeys\n    gameServer {\n      ...GameServerFields\n      __typename\n    }\n    permissionsOwner {\n      ...PermissionFields\n      __typename\n    }\n    permissions {\n      ...PermissionFields\n      __typename\n    }\n    mysqlDb {\n      ...MysqlDbFields\n      __typename\n    }\n    __typename\n  }\n  service {\n    config {\n      rsid {\n        id\n        region\n        __typename\n      }\n      type\n      hwId\n      state\n      ftpUser\n      ftpPort\n      ftpPassword\n      ftpReadOnly\n      ipAddress\n      rconPort\n      queryPort\n      autoBackup\n      dnsNames\n      currentVersion\n      targetVersion\n      __typename\n    }\n    latestRev {\n      id\n      created\n      __typename\n    }\n    maxSlots\n    files\n    memory {\n      base\n      effective\n      __typename\n    }\n    currentState {\n      ...ServiceStateFields\n      __typename\n    }\n    backups {\n      id\n      userSize\n      created\n      isAutoBackup\n      __typename\n    }\n    restartSchedule {\n      ...RestartTaskFields\n      __typename\n    }\n    dnsAvailableTlds\n    __typename\n  }\n  admin {\n    hardwareGuacamoleConnection {\n      url\n      __typename\n    }\n    __typename\n  }\n  profile {\n    __typename\n    ... on ProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      __typename\n    }\n    ... on MinecraftProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        rconPort\n        queryPort\n        additionalPorts\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      worlds\n      addonRam\n      isRamServer\n      ramOrderCreationDate\n      ramStopTimeUtc\n      isConnectedToBungeecord\n      bungeecordServerUrl\n      executables {\n        id\n        name\n        key\n        default\n        __typename\n      }\n      mods {\n        id\n        repoKey\n        name\n        image\n        mindRam\n        projectUrl\n        revisions {\n          id\n          created\n          executableId\n          extraData\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    ... on CsgoProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        rconPort\n        queryPort\n        gotvPort\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      selectedWorkshopItems {\n        ...SteamWorkshopItemFields\n        __typename\n      }\n      installedMaps {\n        name\n        displayName\n        workshopItem {\n          ...SteamWorkshopItemFields\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    ... on ValheimProfileNamespace {\n      name\n      cfgFiles\n      clientLink\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      __typename\n    }\n    ... on HellLetLooseProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        rconPort\n        queryPort\n        statsPort\n        beaconPort\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      __typename\n    }\n    ... on SevenDaysToDieProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        rconPort\n        queryPort\n        telnetPort\n        webDashboardPort\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      availableMods {\n        ...SevenDaysModFields\n        __typename\n      }\n      isModUpdateAvailable\n      __typename\n    }\n    ... on SoulmaskProfileNamespace {\n      name\n      cfgFiles\n      gameUid\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      __typename\n    }\n    ... on VRisingProfileNamespace {\n      name\n      cfgFiles\n      isLaunchServer\n      isOfficialServer\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      __typename\n    }\n    ... on RustConsoleProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      modifyActionHints\n      __typename\n    }\n    ... on FarmingSimulatorProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      wiLink\n      defaultModSpace\n      masterWiLink\n      displayPorts {\n        rconPort\n        queryPort\n        webPort\n        __typename\n      }\n      mapParams {\n        ...MapParams\n        __typename\n      }\n      __typename\n    }\n    ... on BungeecordProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      gpServers\n      accessibleMinecraftServers {\n        ...GameServerFields\n        __typename\n      }\n      __typename\n    }\n  }\n  __typename\n}",
+                }),
+            });
+            if (!response.ok) {
+                this.logError(`Failed to fetch service state: ${response.statusText}`);
+                return null;
+            }
+            const data = await response.json();
+            return data.data.cfgContext.ns.service.currentState.state;
+        }
+        catch (err) {
+            this.logError(`Failed to fetch service state: ${err}`);
+        }
+    }
+    handleServiceState(message, server) {
+        // Possible states: "STOPPING", "MAINTENANCE", "UPDATING", "STOPPED", "STARTING", "RUNNING"
+        const serviceState = message?.payload?.data?.serviceState?.state;
+        if (server.serviceState === serviceState)
+            return;
+        this.servers.set(server.identifier, {
+            ...server,
+            serviceState,
+        });
+        if (serviceState === "RUNNING" && !server.ready) {
+            this.markServerAsReady(server);
+        }
+        if (serviceState === "STOPPED" && server.ready) {
+            this.markServerAsUnready(server);
+        }
+        this.emit(constants_1.RCEEvent.ServiceState, { server, state: serviceState });
+    }
     handleWebsocketMessage(message, server) {
         const logMessages = message?.payload?.data?.consoleMessages?.message
             ?.split("\n")
             .filter((e) => e !== "") || [];
-        if (logMessages.length > 2 && !server.ready) {
-            return this.handleServerReady(server.identifier);
-        }
         logMessages?.forEach((logMessage) => {
             const logMatch = logMessage.match(/(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}):LOG:[^:]+: (.+)$/);
             if (!logMatch)
@@ -561,19 +618,20 @@ class RCEManager extends types_1.RCEEvents {
             return undefined;
         }
     }
+    markServerAsUnready(server) {
+        this.servers.set(server.identifier, {
+            ...server,
+            ready: false,
+        });
+        this.logger.info(`Server "${server.identifier}" is not ready`);
+    }
     markServerAsReady(server) {
         this.servers.set(server.identifier, {
             ...server,
             ready: true,
         });
-        this.logger.info(`Server "${server.identifier}" added successfully`);
+        this.logger.info(`Server "${server.identifier}" is ready`);
         this.processQueue();
-    }
-    handleServerReady(identifier) {
-        const s = this.getServer(identifier);
-        if (s && !s.ready) {
-            this.markServerAsReady(s);
-        }
     }
     async processQueue() {
         this.servers.forEach((server) => {
@@ -734,6 +792,12 @@ class RCEManager extends types_1.RCEEvents {
             this.logError(`Failed to add server "${opts.identifier}": No server ID found`);
             return false;
         }
+        const currentState = await this.fetchServiceState(sid, opts.region);
+        this.logger.debug(`Current state for ${opts.identifier}: ${currentState}`);
+        if (!currentState) {
+            this.logError(`Failed to add server "${opts.identifier}": No current state found`);
+            return false;
+        }
         if (this.socket?.OPEN) {
             this.servers.set(opts.identifier, {
                 identifier: opts.identifier,
@@ -750,8 +814,14 @@ class RCEManager extends types_1.RCEEvents {
                 players: [],
                 added: true,
                 ready: false,
+                serviceState: currentState,
             });
-            const payload = {
+            this.requests.set(opts.identifier, {
+                sid,
+                region: opts.region,
+                identifier: opts.identifier,
+            });
+            this.socket.send(JSON.stringify({
                 type: constants_1.GPORTALWebsocketTypes.Start,
                 payload: {
                     variables: { sid, region: opts.region },
@@ -766,26 +836,32 @@ class RCEManager extends types_1.RCEEvents {
           }`,
                 },
                 id: opts.identifier,
-            };
-            this.requests.set(opts.identifier, {
-                sid,
-                region: opts.region,
-                identifier: opts.identifier,
-            });
-            this.socket.send(JSON.stringify(payload), (err) => {
+            }), (err) => {
                 if (err) {
                     this.logError(`Failed to add server "${opts.identifier}": ${err}`);
                     return false;
                 }
+                this.socket.send(JSON.stringify({
+                    type: constants_1.GPORTALWebsocketTypes.Start,
+                    payload: {
+                        variables: { sid, region: opts.region },
+                        extensions: {},
+                        operationName: "serviceState",
+                        query: "subscription serviceState($sid: Int!, $region: REGION!) {\n  serviceState(rsid: {id: $sid, region: $region}) {\n    ...ServiceStateFields\n    __typename\n  }\n}\n\nfragment ServiceStateFields on ServiceState {\n  state\n  fsmState\n  fsmIsTransitioning\n  fsmIsExclusiveLocked\n  fsmFileAccess\n  fsmLastStateChange\n  fsmStateLiveProgress {\n    ... on InstallProgress {\n      action\n      percentage\n      __typename\n    }\n    ... on BroadcastProgress {\n      nextMessageAt\n      stateExitAt\n      __typename\n    }\n    __typename\n  }\n  __typename\n}",
+                    },
+                    id: opts.identifier,
+                }), (err) => {
+                    if (err) {
+                        this.logError(`Failed to add server "${opts.identifier}": ${err}`);
+                        return false;
+                    }
+                });
                 if (opts.refreshPlayers) {
                     this.refreshPlayers(opts.identifier);
                 }
-                setTimeout(async () => {
-                    const s = this.getServer(opts.identifier);
-                    if (s && !s.ready) {
-                        await this.handleServerReady(opts.identifier);
-                    }
-                }, 20_000);
+                if (currentState === "RUNNING") {
+                    this.markServerAsReady(this.getServer(opts.identifier));
+                }
             });
         }
         else {

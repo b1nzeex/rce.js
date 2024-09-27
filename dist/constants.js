@@ -48,6 +48,7 @@ var RCEEvent;
     RCEEvent["ExecutingCommand"] = "executing_command";
     RCEEvent["Error"] = "error";
     RCEEvent["Log"] = "log";
+    RCEEvent["ServiceState"] = "service_state";
 })(RCEEvent || (exports.RCEEvent = RCEEvent = {}));
 var QuickChat;
 (function (QuickChat) {

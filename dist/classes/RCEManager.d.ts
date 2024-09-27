@@ -23,10 +23,12 @@ export default class RCEManager extends RCEEvents {
     private clean;
     private connectWebsocket;
     private authenticateWebsocket;
+    private fetchServiceState;
+    private handleServiceState;
     private handleWebsocketMessage;
     private resolveServerId;
+    private markServerAsUnready;
     private markServerAsReady;
-    private handleServerReady;
     private processQueue;
     private sendCommandInternal;
     sendCommand(identifier: string, command: string, response?: boolean): Promise<string | undefined | null>;

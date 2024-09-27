@@ -26,6 +26,7 @@ export interface RustServer {
     players: string[];
     added: boolean;
     ready: boolean;
+    serviceState: string;
 }
 export interface ServerOptions {
     identifier: string;
@@ -142,9 +143,11 @@ export interface SpecialEventEndEventPayload extends EventPayload {
 export interface ExecutingCommandEventPayload extends EventPayload {
     command: string;
 }
-export interface RCEErrorPayload {
-    server?: RustServer;
+export interface RCEErrorPayload extends EventPayload {
     error: string;
+}
+export interface ServiceStateEventPayload extends EventPayload {
+    state: "STOPPING" | "MAINTENANCE" | "UPDATING" | "STOPPED" | "STARTING" | "RUNNING";
 }
 export interface RCELogPayload {
     level: LogLevel;
@@ -174,6 +177,7 @@ export interface RCEEventTypes {
     [RCEEvent.ExecutingCommand]: ExecutingCommandEventPayload;
     [RCEEvent.Error]: RCEErrorPayload;
     [RCEEvent.Log]: RCELogPayload;
+    [RCEEvent.ServiceState]: ServiceStateEventPayload;
 }
 export declare class RCEEvents extends EventEmitter {
     emit<K extends keyof RCEEventTypes>(event: K, ...args: RCEEventTypes[K] extends undefined ? [] : [RCEEventTypes[K]]): boolean;

@@ -44,6 +44,7 @@ export enum RCEEvent {
   ExecutingCommand = "executing_command",
   Error = "error",
   Log = "log",
+  ServiceState = "service_state",
 }
 
 export enum QuickChat {

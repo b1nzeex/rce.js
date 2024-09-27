@@ -40,7 +40,8 @@ export declare enum RCEEvent {
     SpecialEventEnd = "special_event_end",
     ExecutingCommand = "executing_command",
     Error = "error",
-    Log = "log"
+    Log = "log",
+    ServiceState = "service_state"
 }
 export declare enum QuickChat {
     COMBAT_WereUnderAttack = "d11_quick_chat_combat_slot_0",
