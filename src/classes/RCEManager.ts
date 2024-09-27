@@ -62,9 +62,7 @@ export default class RCEManager extends RCEEvents {
     * @param {AuthOptions} auth - The authentication options
     * @memberof RCEManager
     * @example
-    * const rce = new RCEManager({ refreshToken: "", servers: [{ identifier: "server1", region: "US", serverId: 12345 }], logLevel: LogLevel.INFO, authMethod: "manual" });
-    * @example
-    * const rce = new RCEManager({ servers: [{ identifier: "server1", region: "US", serverId: 12345 }], logLevel: LogLevel.INFO, authMethod: "file", file: "auth.txt" });
+    * const rce = new RCEManager({ email: "", password: "", servers: [{ identifier: "server1", region: "US", serverId: 12345 }] }, { logLevel: LogLevel.Info });
   */
   public constructor(auth: AuthOptions, logger: LoggerOptions = {}) {
     super();
