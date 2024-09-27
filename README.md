@@ -17,24 +17,28 @@ npm i b1nzeex/rce.js
 ```typescript
 import { RCEManager, LogLevel, RCEEvent } from "rce.js";
 
-const rce = new RCEManager({
-  email: "", // Your GPORTAL email address
-  password: "", // Your GPORTAL password
-  logLevel: LogLevel.Info, // Uses "Info" by default if left blank
-  servers: [
-    {
-      identifier: "server1", // A unique name for your server to be recognised by
-      region: "US", // It's either EU or US
-      serverId: 1487554, // You can find this in the URL on your server page
-      refreshPlayers: 2, // This will fetch the playerlist every 2 minutes, good for displaying player count
-    },
-    {
-      identifier: "server2",
-      region: "EU",
-      serverId: 1487367,
-    }, // As we didn't specify a "refreshPlayers" value, the playerlist won't be fetched
-  ], // An array of servers to listen to
-});
+const rce = new RCEManager(
+  {
+    email: "", // Your GPORTAL email address
+    password: "", // Your GPORTAL password
+    servers: [
+      {
+        identifier: "server1", // A unique name for your server to be recognised by
+        region: "US", // It's either EU or US
+        serverId: 1487554, // You can find this in the URL on your server page
+        refreshPlayers: 2, // This will fetch the playerlist every 2 minutes, good for displaying player count
+      },
+      {
+        identifier: "server2",
+        region: "EU",
+        serverId: 1487367,
+      }, // As we didn't specify a "refreshPlayers" value, the playerlist won't be fetched
+    ], // An array of servers to listen to
+  },
+  {
+    logLevel: LogLevel.Info, // Uses "Info" by default if left blank
+  }
+);
 
 await rce.init(); // This attempts to login to GPORTAL - this is required for everything else to function
 
@@ -59,7 +63,6 @@ const { RCEManager, LogLevel, RCEEvent } = require("rce.js");
 const rce = new RCEManager({
   email: "", // Your GPORTAL email address
   password: "", // Your GPORTAL password
-  logLevel: LogLevel.Info, // Uses "Info" by default if left blank
   servers: [
     {
       identifier: "server1", // A unique name for your server to be recognised by
@@ -73,6 +76,8 @@ const rce = new RCEManager({
       serverId: 1487367,
     }, // As we didn't specify a "refreshPlayers" value, the playerlist won't be fetched
   ], // An array of servers to listen to
+}, {
+  logLevel: LogLevel.Info, // Uses "Info" by default if left blank
 });
 
 await rce.init(); // This attempts to login to GPORTAL - this is required for everything else to function
