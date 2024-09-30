@@ -28,7 +28,7 @@ export declare enum RCEEvent {
     QuickChat = "quick_chat",
     NoteEdit = "note_edit",
     EventStart = "event_start",
-    PlayerlistUpdate = "playerlist_update",
+    PlayerListUpdate = "playerlist_update",
     ItemSpawn = "item_spawn",
     VendingMachineName = "vending_machine_name",
     KitSpawn = "kit_spawn",
@@ -41,7 +41,9 @@ export declare enum RCEEvent {
     ExecutingCommand = "executing_command",
     Error = "error",
     Log = "log",
-    ServiceState = "service_state"
+    ServiceState = "service_state",
+    CustomZoneAdded = "custom_zone_added",
+    CustomZoneRemoved = "custom_zone_removed"
 }
 export declare enum QuickChat {
     COMBAT_WereUnderAttack = "d11_quick_chat_combat_slot_0",

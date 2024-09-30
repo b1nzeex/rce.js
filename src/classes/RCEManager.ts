@@ -106,7 +106,7 @@ export default class RCEManager extends RCEEvents {
 
     const login = await this.login();
     if (!login) {
-      throw new Error("Failed to login");
+      throw new Error("Failed To Login");
     }
 
     await this.authenticate(timeout);
@@ -122,15 +122,15 @@ export default class RCEManager extends RCEEvents {
   */
   public async close() {
     this.clean();
-    this.logger.info("RCEManager closed successfully");
+    this.logger.info("RCEManager Closed Successfully!");
   }
 
   private async authenticate(timeout: number) {
-    this.logger.debug("Attempting to authenticate");
+    this.logger.debug("Attempting To Authenticate...");
 
     const s = await this.refreshToken();
     if (s) {
-      this.logger.info("Authenticated successfully");
+      this.logger.info("Successfully Authenticated!");
       await this.connectWebsocket(timeout);
     } else {
       this.logError("Failed to authenticate");
@@ -147,7 +147,7 @@ export default class RCEManager extends RCEEvents {
     const loginUrl = $("#kc-form-login").attr("action");
 
     if (!loginUrl) {
-      this.logError("Failed to login: No login URL found");
+      this.logError("Failed To Login: No Login URL Found!");
       return false;
     }
 
@@ -165,13 +165,13 @@ export default class RCEManager extends RCEEvents {
     });
 
     if (!postRes.ok) {
-      this.logError(`Failed to login: ${postRes.statusText}`);
+      this.logError(`Failed To Login: ${postRes.statusText}`);
       return false;
     }
 
     const code = new URLSearchParams(new URL(postRes.url).search).get("code");
     if (!code) {
-      this.logError("Failed to login: No code found");
+      this.logError("Failed To Login: No Code Found!");
       return false;
     }
 
@@ -189,7 +189,7 @@ export default class RCEManager extends RCEEvents {
     });
 
     if (!tokenRes.ok) {
-      this.logError(`Failed to login: ${tokenRes.statusText}`);
+      this.logError(`Failed To Login: ${tokenRes.statusText}`);
       return false;
     }
 
@@ -200,10 +200,10 @@ export default class RCEManager extends RCEEvents {
 
   private async refreshToken() {
     this.tokenRefreshing = true;
-    this.logger.debug("Attempting to refresh token");
+    this.logger.debug("Attempting To Refresh Token...");
 
     if (!this.auth?.refresh_token) {
-      this.logError("Failed to refresh token: No refresh token");
+      this.logError("Failed To Refresh Token: No Refresh Token!");
       return false;
     }
 
@@ -223,18 +223,18 @@ export default class RCEManager extends RCEEvents {
       if (!response.ok) {
         this.logger.debug(this.auth);
         this.logger.debug(response.body);
-        this.logError(`Failed to refresh token: ${response.statusText}`);
+        this.logError(`Failed To Refresh Token: ${response.statusText}`);
         return false;
       }
 
       this.auth = await response.json();
       setTimeout(() => this.refreshToken(), this.auth.expires_in * 1000);
 
-      this.logger.debug("Token refreshed successfully");
+      this.logger.debug("Token Successfully Refreshed!");
       this.tokenRefreshing = false;
       return true;
     } catch (err) {
-      this.logError(`Failed to refresh token: ${err}`);
+      this.logError(`Failed To Refresh Token: ${err}`);
       return false;
     }
   }
@@ -247,7 +247,7 @@ export default class RCEManager extends RCEEvents {
   }
 
   private clean() {
-    this.logger.debug("Cleaning up all data");
+    this.logger.debug("Cleaning Up All Data...");
 
     this.servers.forEach((server) => {
       clearInterval(server.refreshPlayersInterval);
@@ -265,11 +265,11 @@ export default class RCEManager extends RCEEvents {
     this.socket = undefined;
     clearInterval(this.kaInterval);
 
-    this.logger.debug("Cleaned up all data successfully");
+    this.logger.debug("Cleaned Up All Data Successfully!");
   }
 
   private async connectWebsocket(timeout: number) {
-    this.logger.debug("Connecting to websocket");
+    this.logger.debug("Connecting To Websocket...");
     this.connectionAttempt++;
 
     this.socket = new WebSocket(GPORTALRoutes.WebSocket, ["graphql-ws"], {
@@ -281,7 +281,7 @@ export default class RCEManager extends RCEEvents {
     });
 
     this.socket.on("open", async () => {
-      this.logger.debug("Websocket connection established");
+      this.logger.debug("Websocket Connection Established!");
       await this.authenticateWebsocket(timeout);
 
       this.servers.forEach(async (server) => {
@@ -290,21 +290,19 @@ export default class RCEManager extends RCEEvents {
     });
 
     this.socket.on("error", (err) => {
-      this.logError(`Websocket error: ${err.message}`);
+      this.logError(`Websocket Error: ${err.message}`);
       this.clean();
 
       if (this.connectionAttempt < 5) {
         this.logger.warn(
-          `Websocket error: Attempting to reconnect in ${
-            (this.connectionAttempt + 1) * 10
-          } seconds (Attempt ${this.connectionAttempt + 1} of 5)`
+          `Websocket Error: Attempting To Reconnect In ${(this.connectionAttempt + 1) * 10} Second(s) (Attempt ${this.connectionAttempt + 1} Of 5)`
         );
         setTimeout(
           () => this.connectWebsocket(timeout),
           this.connectionAttempt * 10_000
         );
       } else {
-        this.logError("Failed to connect to websocket: Too many attempts");
+        this.logError("Failed To Connect To Websocket: Too Many Attempts!");
       }
     });
 
@@ -314,19 +312,17 @@ export default class RCEManager extends RCEEvents {
       if (code !== 1000) {
         if (this.connectionAttempt < 5) {
           this.logger.warn(
-            `Websocket closed: Attempting to reconnect in ${
-              (this.connectionAttempt + 1) * 10
-            } seconds (Attempt ${this.connectionAttempt + 1} of 5)`
+            `Websocket closed: Attempting To Reconnect In ${(this.connectionAttempt + 1) * 10} Second(s) (Attempt ${this.connectionAttempt + 1} Of 5)`
           );
           setTimeout(
             () => this.connectWebsocket(timeout),
             this.connectionAttempt * 10_000
           );
         } else {
-          this.logError("Failed to connect to websocket: Too many attempts");
+          this.logError("Failed To Connect To Websocket: Too Many Attempts!");
         }
       } else {
-        this.logError(`Websocket closed: ${reason}`);
+        this.logError(`Websocket Closed: ${reason}`);
       }
     });
 
@@ -336,15 +332,15 @@ export default class RCEManager extends RCEEvents {
 
         if (message.type === "ka") return;
 
-        this.logger.debug(`Received message: ${JSON.stringify(message)}`);
+        this.logger.debug(`Received Message: ${JSON.stringify(message)}`);
 
         if (message.type === "error") {
-          return this.logError(`Websocket error: ${message?.payload?.message}`);
+          return this.logError(`Websocket Error: ${message?.payload?.message}`);
         }
 
         if (message.type === "connection_ack") {
           this.connectionAttempt = 0;
-          return this.logger.debug("Websocket authenticated successfully");
+          return this.logger.debug("Websocket Authenticated Successfully!");
         }
 
         if (message.type === "data") {
@@ -352,7 +348,7 @@ export default class RCEManager extends RCEEvents {
 
           if (!request) {
             return this.logError(
-              `Failed to handle message: No request found for ID ${message.id}`
+              `Failed To Handle Message: No Request Found For ID ${message.id}!`
             );
           }
 
@@ -360,7 +356,7 @@ export default class RCEManager extends RCEEvents {
 
           if (!server) {
             return this.logError(
-              `Failed to handle message: No server found for ID ${request.identifier}`
+              `Failed To Handle Message: No Server Found For ID ${request.identifier}!`
             );
           }
 
@@ -374,10 +370,10 @@ export default class RCEManager extends RCEEvents {
               // const details = aioRpcErrorMatch[2].trim();
 
               if (status === "StatusCode.UNAVAILABLE") {
-                this.logError("AioRpcError: Server is unavailable", server);
+                this.logError("AioRpcError: Server Is UUnavailable", server);
                 this.clean();
                 this.logger.warn(
-                  "AioRpcError: Will attempt to reconnect in 10 seconds"
+                  "AioRpcError: Will Attempt To Reconnect In 10 Seconds!"
                 );
                 setTimeout(() => {
                   this.connectWebsocket(timeout);
@@ -395,16 +391,18 @@ export default class RCEManager extends RCEEvents {
           }
         }
       } catch (err) {
-        this.logError(`Failed to handle message: ${err}`);
+        this.logError(`Failed To Handle Message: ${err}`);
       }
     });
   }
 
   private async authenticateWebsocket(timeout: number) {
-    this.logger.debug("Attempting to authenticate websocket");
+    this.logger.debug("Attempting To Authenticate Websocket");
 
     if (!this.auth?.access_token) {
-      return this.logError("Failed to authenticate websocket: No access token");
+      return this.logError(
+        "Failed To Authenticate Websocket: No Access Token!"
+      );
     }
 
     if (this.socket?.OPEN) {
@@ -419,13 +417,13 @@ export default class RCEManager extends RCEEvents {
 
       this.kaInterval = setInterval(() => {
         if (this.socket && this.socket.OPEN) {
-          this.logger.debug("Sending keep-alive message");
+          this.logger.debug("Sending keep-alive Message");
           this.socket.send(JSON.stringify({ type: "ka" }));
         }
       }, 30_000);
     } else {
       this.logError(
-        "Failed to authenticate websocket: No websocket connection"
+        "Failed To Authenticate Websocket: No Websocket Connection!"
       );
       this.clean();
       this.connectWebsocket(timeout);
@@ -437,12 +435,12 @@ export default class RCEManager extends RCEEvents {
     region: "US" | "EU"
   ): Promise<string | null> {
     if (!this.auth?.access_token) {
-      this.logError("Failed to fetch service state: No access token");
+      this.logError("Failed To Fetch Service State: No Access Token!");
       return null;
     }
 
     if (this.tokenRefreshing) {
-      this.logger.warn("Token is refreshing, retrying in a few seconds");
+      this.logger.warn("Token Is Refreshing, Retrying In A Few Seconds!");
       await this.sleep(3_000);
       return this.fetchServiceState(sid, region);
     }
@@ -466,14 +464,14 @@ export default class RCEManager extends RCEEvents {
       });
 
       if (!response.ok) {
-        this.logError(`Failed to fetch service state: ${response.statusText}`);
+        this.logError(`Failed To Fetch Service State: ${response.statusText}`);
         return null;
       }
 
       const data = await response.json();
       return data.data.cfgContext.ns.service.currentState.state;
     } catch (err) {
-      this.logError(`Failed to fetch service state: ${err}`);
+      this.logError(`Failed To Fetch Service State: ${err}`);
     }
   }
 
@@ -525,7 +523,7 @@ export default class RCEManager extends RCEEvents {
         /Executing console system command '([^']+)'/
       );
       if (executingMatch) {
-        this.logger.debug(`Executing message found for: ${executingMatch[1]}`);
+        this.logger.debug(`Executing Message Found For: ${executingMatch[1]}`);
         const command = executingMatch[1];
 
         this.emit(RCEEvent.ExecutingCommand, {
@@ -541,14 +539,14 @@ export default class RCEManager extends RCEEvents {
             !req.timestamp
         );
         if (commandRequest) {
-          this.logger.debug(`Command "${command}" found in queue`);
+          this.logger.debug(`Command "${command}" Found In The Queue!`);
           commandRequest.timestamp = logMessageDate;
 
           this.commands = this.commands.map((req) =>
             req.command === command ? commandRequest : req
           );
 
-          this.logger.debug(`Command "${command}" updated with timestamp`);
+          this.logger.debug(`Command "${command}" Updated With Timestamp!`);
 
           return;
         }
@@ -562,7 +560,7 @@ export default class RCEManager extends RCEEvents {
       );
       if (commandRequest && !log.startsWith("[ SAVE ]")) {
         this.logger.debug(
-          `Command response found for: ${commandRequest.command}`
+          `Command Response Found For: ${commandRequest.command}`
         );
 
         commandRequest.resolve(log);
@@ -577,7 +575,7 @@ export default class RCEManager extends RCEEvents {
       }
 
       this.emit(RCEEvent.Message, { server, message: log });
-      this.logger.debug(`Received message: ${log} from ${server.identifier}`);
+      this.logger.debug(`Received Message: ${log} From ${server.identifier}`);
 
       // PLAYER_KILL event
       if (log.includes(" was killed by ")) {
@@ -625,7 +623,7 @@ export default class RCEManager extends RCEEvents {
 
         const type = quickChatTypes[quickChatMatch[1]];
         const ign = quickChatMatch[3];
-        const msg = quickChatMatch[4] as QuickChat;
+        let msg = quickChatMatch[4] as QuickChat;
 
         this.emit(RCEEvent.QuickChat, {
           server,
@@ -633,6 +631,16 @@ export default class RCEManager extends RCEEvents {
           ign,
           message: msg as QuickChat,
         });
+      }
+
+      if (log.includes("was suicide by Suicide")) {
+        const regex = /^([\w\s_-]+) joined \[xboxone\]$/;
+
+        const match = log.match(/^([\w\s_-]+) joined \[xboxone\]$/);
+
+        const ign = log.split(" was suicide by Suicide")[0];
+
+        this.emit(RCEEvent.PlayerSuicide, { server, ign });
       }
 
       // PLAYER_SUICIDE event
@@ -648,6 +656,24 @@ export default class RCEManager extends RCEEvents {
         const platform = log.includes("[xboxone]") ? "XBL" : "PS";
 
         this.emit(RCEEvent.PlayerRespawned, { server, ign, platform });
+      }
+
+      // CUSTOM_ZONE_ADDED event
+      const customZoneAddedMatch = log.match(/Successfully created zone \[([\w\d\s_-]+)\]/);
+
+      if (customZoneAddedMatch && customZoneAddedMatch[1]) {
+        const name = customZoneAddedMatch[1];
+        this.emit(RCEEvent.CustomZoneAdded, { server, name });
+
+      }
+
+      // CUSTOM_ZONE_REMOVED event
+      const customZoneRemovedMatch = log.match(/Successfully removed zone \[([\w\d\s_-]+)\]/);
+
+      if (customZoneRemovedMatch && customZoneRemovedMatch[1]) {
+        const name = customZoneRemovedMatch[1];
+        this.emit(RCEEvent.CustomZoneAdded, { server, name });
+
       }
 
       // PLAYER_ROLE_ADD event
@@ -787,12 +813,12 @@ export default class RCEManager extends RCEEvents {
     serverId: number
   ): Promise<number | undefined> {
     if (!this.auth?.access_token) {
-      this.logError("Failed to resolve server ID: No access token");
+      this.logError("Failed To Resolve Server ID: No Access Token!");
       return undefined;
     }
 
     if (this.tokenRefreshing) {
-      this.logger.warn("Token is refreshing, retrying in a few seconds");
+      this.logger.warn("Token Is Refreshing, Retrying In A Few Seconds!");
       await this.sleep(3_000);
       return this.resolveServerId(region, serverId);
     }
@@ -816,14 +842,14 @@ export default class RCEManager extends RCEEvents {
       });
 
       if (!response.ok) {
-        this.logError(`Failed to resolve server ID: ${response.statusText}`);
+        this.logError(`Failed To Resolve Server ID: ${response.statusText}`);
         return undefined;
       }
 
       const data = await response.json();
       return data?.data?.sid as number;
     } catch (err) {
-      this.logError(`Failed to resolve server ID: ${err}`);
+      this.logError(`Failed To Resolve Server ID: ${err}`);
       return undefined;
     }
   }
@@ -834,7 +860,7 @@ export default class RCEManager extends RCEEvents {
       ready: false,
     });
 
-    this.logger.info(`Server "${server.identifier}" is not ready`);
+    this.logger.info(`Server "${server.identifier}" Is Not Ready!`);
   }
 
   private markServerAsReady(server: RustServer) {
@@ -843,7 +869,7 @@ export default class RCEManager extends RCEEvents {
       ready: true,
     });
 
-    this.logger.info(`Server "${server.identifier}" is ready`);
+    this.logger.info(`Server "${server.identifier}" Is Ready!`);
     this.processQueue();
   }
 
@@ -876,17 +902,17 @@ export default class RCEManager extends RCEEvents {
     response: boolean
   ): Promise<string | undefined | null> {
     if (!this.auth?.access_token) {
-      this.logError("Failed to send command: No access token");
+      this.logError("Failed To Send Command: No Access Token!");
       return null;
     }
 
     if (!this.socket || !this.socket.OPEN) {
-      this.logError("Failed to send command: No websocket connection");
+      this.logError("Failed To Send Command: No Websocket Connection!");
       return null;
     }
 
     if (this.tokenRefreshing) {
-      this.logger.warn("Token is refreshing, retrying in a few seconds");
+      this.logger.warn("Token Is Refreshing, Retrying In A Few Seconds!");
       await this.sleep(3_000);
       return this.sendCommandInternal(server, command, response);
     }
@@ -914,7 +940,7 @@ export default class RCEManager extends RCEEvents {
           timeout: undefined,
         });
 
-        this.logger.debug(`Command "${command}" added to queue`);
+        this.logger.debug(`Command "${command}" Added To Queue!`);
 
         try {
           fetch(GPORTALRoutes.Command, {
@@ -928,14 +954,14 @@ export default class RCEManager extends RCEEvents {
             .then((res) => {
               if (!res.ok) {
                 this.logError(
-                  `Failed to send command: ${res.statusText}`,
+                  `Failed To Send Command: ${res.statusText}`,
                   server
                 );
                 return null;
               }
 
-              this.logger.debug(`Command "${command}" sent successfully`);
-              this.logger.debug(`Starting timeout for command "${command}"`);
+              this.logger.debug(`Command "${command}" Sent Successfully!`);
+              this.logger.debug(`Starting Timeout For Command "${command}"`);
 
               const cmd = this.commands.find(
                 (req) =>
@@ -983,16 +1009,16 @@ export default class RCEManager extends RCEEvents {
 
         if (!response.ok) {
           this.logError(
-            `Failed to send command: ${response.statusText}`,
+            `Failed To Send Command: ${response.statusText}`,
             server
           );
           return null;
         }
 
-        this.logger.debug(`Command "${command}" sent successfully`);
+        this.logger.debug(`Command "${command}" Sent Successfully!`);
         return undefined;
       } catch (err) {
-        this.logError(`Failed to send command: ${err}`, server);
+        this.logError(`Failed To Send Command: ${err}`, server);
         return null;
       }
     }
@@ -1021,21 +1047,21 @@ export default class RCEManager extends RCEEvents {
 
       if (!server) {
         this.logError(
-          `Failed to send command: No server found for ID ${identifier}`
+          `[${identifier}] Failed To Send Command: No Server Found For ID ${identifier}`
         );
         return null;
       }
 
       if (server.ready) {
         this.logger.debug(
-          `Server ${identifier} is ready, sending command immediately`
+          `[${identifier}] The Server Is Ready, Sending Command Immediately`
         );
         this.sendCommandInternal(server, command, response)
           .then(resolve)
           .catch(reject);
       } else {
         this.logger.debug(
-          `Server ${identifier} is not ready, adding command to queue`
+          `[${identifier}] The Server Is Not Ready, Adding Command To Queue`
         );
         this.queue.push({ identifier, command, response, resolve, reject });
       }
@@ -1054,12 +1080,12 @@ export default class RCEManager extends RCEEvents {
     * await rce.addServer({ identifier: "server2", region: "EU", serverId: 54321, refreshPlayers: 5 });
   */
   public async addServer(opts: ServerOptions): Promise<boolean> {
-    this.logger.debug(`Adding server "${opts.identifier}"`);
+    this.logger.debug(`[${opts.identifier}] Adding Server!`);
 
     const sid = await this.resolveServerId(opts.region, opts.serverId);
     if (!sid) {
       this.logError(
-        `Failed to add server "${opts.identifier}": No server ID found`
+        `[${opts.identifier}] Failed To Add Server: No Server ID Found!`
       );
       return false;
     }
@@ -1068,7 +1094,7 @@ export default class RCEManager extends RCEEvents {
     this.logger.debug(`Current state for ${opts.identifier}: ${currentState}`);
     if (!currentState) {
       this.logError(
-        `Failed to add server "${opts.identifier}": No current state found`
+        `[${opts.identifier}] Failed To Add Server: No Current State Found!`
       );
       return false;
     }
@@ -1083,8 +1109,8 @@ export default class RCEManager extends RCEEvents {
         state: opts.state || [],
         refreshPlayersInterval: opts.refreshPlayers
           ? setInterval(() => {
-              this.refreshPlayers(opts.identifier);
-            }, opts.refreshPlayers * 60_000)
+            this.refreshPlayers(opts.identifier);
+          }, opts.refreshPlayers * 60_000)
           : undefined,
         players: [],
         added: true,
@@ -1117,7 +1143,7 @@ export default class RCEManager extends RCEEvents {
         }),
         (err) => {
           if (err) {
-            this.logError(`Failed to add server "${opts.identifier}": ${err}`);
+            this.logError(`[${opts.identifier}] Failed To Add Server: ${err}`);
             return false;
           }
 
@@ -1135,9 +1161,7 @@ export default class RCEManager extends RCEEvents {
             }),
             (err) => {
               if (err) {
-                this.logError(
-                  `Failed to add server "${opts.identifier}": ${err}`
-                );
+                this.logError(`[${opts.identifier}] Failed To Add Server: ${err}`);
                 return false;
               }
             }
@@ -1153,10 +1177,7 @@ export default class RCEManager extends RCEEvents {
         }
       );
     } else {
-      this.logger.warn(
-        `Failed to add server "${opts.identifier}": No websocket connection, retrying in 5 seconds`
-      );
-
+      this.logger.warn(`[${opts.identifier}] Failed To Add Server: No Websocket Connection, Retrying In 5 Seconds!`);
       setTimeout(() => this.addServer(opts), 5_000);
     }
   }
@@ -1180,14 +1201,14 @@ export default class RCEManager extends RCEEvents {
     const server = this.getServer(identifier);
     if (!server) {
       this.logError(
-        `Failed to refresh players: No server found for ID ${identifier}`
+        `[${identifier}] Failed to refresh players: No Server Found For ID ${identifier}`
       );
       return;
     }
 
     const users = await this.sendCommand(identifier, "Users", true);
     if (!users) {
-      this.logger.warn(`Failed to refresh players for ${identifier}`);
+      this.logger.warn(`[${identifier}] Failed To Refresh Players!`);
       return;
     }
 
@@ -1211,9 +1232,9 @@ export default class RCEManager extends RCEEvents {
       players,
     });
 
-    this.emit(RCEEvent.PlayerlistUpdate, { server, players, joined, left });
+    this.emit(RCEEvent.PlayerListUpdate, { server, players, joined, left });
 
-    this.logger.debug(`Players refreshed for ${identifier}`);
+    this.logger.debug(`Players Refreshed For ${identifier}`);
   }
 
   /*
@@ -1246,7 +1267,7 @@ export default class RCEManager extends RCEEvents {
     const request = this.requests.get(identifier);
     if (request) this.requests.delete(request.identifier);
 
-    this.logger.info(`Server "${identifier}" removed successfully`);
+    this.logger.info(`Server "${identifier}" Was Successfully Removed!`);
   }
 
   /*

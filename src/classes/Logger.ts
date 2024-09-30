@@ -6,128 +6,99 @@ import RCEManager from "./RCEManager";
 
 enum ConsoleColor {
   Reset = "\x1b[0m",
-  Bright = "\x1b[1m",
-  Dim = "\x1b[2m",
-  Underscore = "\x1b[4m",
-  Blink = "\x1b[5m",
-  Reverse = "\x1b[7m",
-  Hidden = "\x1b[8m",
-
-  FgBlack = "\x1b[30m",
   FgRed = "\x1b[31m",
   FgGreen = "\x1b[32m",
   FgYellow = "\x1b[33m",
-  FgBlue = "\x1b[34m",
-  FgMagenta = "\x1b[35m",
   FgCyan = "\x1b[36m",
-  FgWhite = "\x1b[37m",
+  FgMagenta = "\x1b[35m",
+}
 
-  BgBlack = "\x1b[40m",
-  BgRed = "\x1b[41m",
-  BgGreen = "\x1b[42m",
-  BgYellow = "\x1b[43m",
-  BgBlue = "\x1b[44m",
-  BgMagenta = "\x1b[45m",
-  BgCyan = "\x1b[46m",
-  BgWhite = "\x1b[47m",
+interface LogType {
+  prefix: string;
+  emoji: string;
+  color: string;
 }
 
 export default class Logger {
   private emitter: RCEManager;
   private level: LogLevel;
-  private file;
+  private file: string | undefined;
 
   public constructor(emitter: RCEManager, opts: LoggerOptions) {
-    this.level = opts.logLevel ?? LogLevel.Info;
+    this.level = opts.logLevel ?? LogLevel.Info; // Default to Info if not specified
     this.file = opts.logFile;
     this.emitter = emitter;
   }
 
-  private logToFile(type: string, content: any) {
+  private logToFile(type: string, content: any): void {
     if (this.file) {
       const stats = fs.statSync(this.file);
       if (stats.size > 300000000) {
         fs.writeFileSync(this.file, "");
       }
 
-      if (typeof content === "string") {
-        fs.appendFileSync(this.file, `[${type}]: ` + content + "\n");
-      } else {
-        fs.appendFileSync(
-          this.file,
-          `[${type}]: ${inspect(content, { depth: 5 }) + "\n"}`
-        );
-      }
+      const logMessage = typeof content === "string"
+        ? `[${type.toUpperCase()}]: ${content}\n`
+        : `[${type.toUpperCase()}]: ${inspect(content, { depth: 5 })}\n`;
+
+      fs.appendFileSync(this.file, logMessage);
     }
   }
 
-  private format(content: any) {
-    return typeof content === "string"
-      ? content
-      : inspect(content, { depth: 5 });
+  private format(content: any): string {
+    return typeof content === "string" ? content : inspect(content, { depth: 5 });
   }
 
-  public error(content: any) {
-    this.logToFile("ERROR", content);
-    this.emitter.emit(RCEEvent.Log, {
-      level: LogLevel.Error,
-      content: this.format(content),
-    });
+  private log(level: LogLevel, type: string, content: any, logType: LogType): void {
+    if (this.level !== LogLevel.None && level <= this.level) {
+      const date = new Date();
+      const timestamp = date.toLocaleTimeString([], { hour12: false });
 
-    if (this.level >= LogLevel.Error) {
-      console.log(
-        `[rce.js] ${ConsoleColor.FgRed}[ERROR]${
-          ConsoleColor.Reset
-        } ${this.format(content)}`
-      );
+      const padding = ' '.repeat(Math.max(0, 15 - logType.prefix.length));
+      const formattedMessage = `\x1b[90m[${timestamp}]\x1b[0m ${logType.color}${logType.prefix}${padding}${logType.emoji}${ConsoleColor.Reset}`;
+
+      // Output to console
+      console.log(formattedMessage, this.format(content));
+
+      // Log to file and emit events
+      this.logToFile(type, content);
+      this.emitter.emit(RCEEvent.Log, { level, content: this.format(content) });
     }
   }
 
-  public warn(content: any) {
-    this.logToFile("WARN", content);
-    this.emitter.emit(RCEEvent.Log, {
-      level: LogLevel.Warn,
-      content: this.format(content),
-    });
-
-    if (this.level >= LogLevel.Warn) {
-      console.log(
-        `[rce.js] ${ConsoleColor.FgYellow}[WARN]${
-          ConsoleColor.Reset
-        } ${this.format(content)}`
-      );
-    }
+  public warn(content: any): void {
+    const logType: LogType = {
+      prefix: "[WARNING]",
+      emoji: "⚠️",
+      color: ConsoleColor.FgYellow,
+    };
+    this.log(LogLevel.Warn, "warn", content, logType);
   }
 
-  public info(content: any) {
-    this.logToFile("INFO", content);
-    this.emitter.emit(RCEEvent.Log, {
-      level: LogLevel.Info,
-      content: this.format(content),
-    });
-
-    if (this.level >= LogLevel.Info) {
-      console.log(
-        `[rce.js] ${ConsoleColor.FgCyan}[INFO]${
-          ConsoleColor.Reset
-        } ${this.format(content)}`
-      );
-    }
+  public info(content: any): void {
+    const logType: LogType = {
+      prefix: "[INFO]",
+      emoji: "💬",
+      color: ConsoleColor.FgCyan,
+    };
+    this.log(LogLevel.Info, "info", content, logType);
   }
 
-  public debug(content: any) {
-    this.logToFile("DEBUG", content);
-    this.emitter.emit(RCEEvent.Log, {
-      level: LogLevel.Debug,
-      content: this.format(content),
-    });
+  public debug(content: any): void {
+    const logType: LogType = {
+      prefix: "[DEBUG]",
+      emoji: "🔧",
+      color: ConsoleColor.FgMagenta,
+    };
+    this.log(LogLevel.Debug, "debug", content, logType);
+  }
 
-    if (this.level >= LogLevel.Debug) {
-      console.log(
-        `[rce.js] ${ConsoleColor.FgGreen}[DEBUG]${
-          ConsoleColor.Reset
-        } ${this.format(content)}`
-      );
-    }
+  public error(content: any): void {
+    const logType: LogType = {
+      prefix: "[ERROR]",
+      emoji: "❌",
+      color: ConsoleColor.FgRed,
+    };
+    this.log(LogLevel.Error, "error", content, logType);
   }
 }
