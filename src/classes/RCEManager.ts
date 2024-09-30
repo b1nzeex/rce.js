@@ -546,7 +546,7 @@ export default class RCEManager extends RCEEvents {
             req.command === command ? commandRequest : req
           );
 
-          this.logger.debug(`Command "${command}" UUpdated With Timestamp!`);
+          this.logger.debug(`Command "${command}" Updated With Timestamp!`);
 
           return;
         }
