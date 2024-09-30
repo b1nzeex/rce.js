@@ -6,36 +6,23 @@ import RCEManager from "./RCEManager";
 
 enum ConsoleColor {
   Reset = "\x1b[0m",
-  Bright = "\x1b[1m",
-  Dim = "\x1b[2m",
-  Underscore = "\x1b[4m",
-  Blink = "\x1b[5m",
-  Reverse = "\x1b[7m",
-  Hidden = "\x1b[8m",
-
-  FgBlack = "\x1b[30m",
   FgRed = "\x1b[31m",
   FgGreen = "\x1b[32m",
   FgYellow = "\x1b[33m",
-  FgBlue = "\x1b[34m",
-  FgMagenta = "\x1b[35m",
   FgCyan = "\x1b[36m",
-  FgWhite = "\x1b[37m",
+  FgMagenta = "\x1b[35m",
+}
 
-  BgBlack = "\x1b[40m",
-  BgRed = "\x1b[41m",
-  BgGreen = "\x1b[42m",
-  BgYellow = "\x1b[43m",
-  BgBlue = "\x1b[44m",
-  BgMagenta = "\x1b[45m",
-  BgCyan = "\x1b[46m",
-  BgWhite = "\x1b[47m",
+interface LogType {
+  prefix: string;
+  emoji: string;
+  color: string;
 }
 
 export default class Logger {
   private emitter: RCEManager;
   private level: LogLevel;
-  private file;
+  private file: string | undefined;
 
   public constructor(emitter: RCEManager, opts: LoggerOptions) {
     this.level = opts.logLevel ?? LogLevel.Info;
@@ -43,134 +30,78 @@ export default class Logger {
     this.emitter = emitter;
   }
 
-  private logToFile(type: string, content: any) {
+  private logToFile(type: string, content: any): void {
     if (this.file) {
       const stats = fs.statSync(this.file);
       if (stats.size > 300000000) {
         fs.writeFileSync(this.file, "");
       }
 
-      if (typeof content === "string") {
-        fs.appendFileSync(this.file, `[${type}]: ` + content + "\n");
-      } else {
-        fs.appendFileSync(
-          this.file,
-          `[${type}]: ${inspect(content, { depth: 5 }) + "\n"}`
-        );
-      }
+      const logMessage = typeof content === "string"
+        ? `[${type.toUpperCase()}]: ${content}\n`
+        : `[${type.toUpperCase()}]: ${inspect(content, { depth: 5 })}\n`;
+
+      fs.appendFileSync(this.file, logMessage);
     }
   }
 
-  private format(content: any) {
-    return typeof content === "string"
-      ? content
-      : inspect(content, { depth: 5 });
+  private format(content: any): string {
+    return typeof content === "string" ? content : inspect(content, { depth: 5 });
   }
 
-  public error(content: any) {
-    this.logToFile("ERROR", content);
-    this.emitter.emit(RCEEvent.Log, {
-      level: LogLevel.Error,
-      content: this.format(content),
-    });
-
-    if (this.level >= LogLevel.Error) {
-      console.log(
-        `[rce.js] ${ConsoleColor.FgRed}[ERROR]${
-          ConsoleColor.Reset
-        } ${this.format(content)}`
-      );
-    }
-  }
   public log(type: "success" | "error" | "warn" | "info" | "debug" | string = "info", ...args: any[]): void {
-    const date: Date = new Date();
-    const timestamp: string = date.toLocaleTimeString([], { hour12: false });
+    const date = new Date();
+    const timestamp = date.toLocaleTimeString([], { hour12: false });
 
-    let prefix: string = "";
-    let emoji: string = "";
-    let color: string = "\x1b[0m"; // Default color reset
-
-    // Define the structure for log types
-    interface LogType {
-      prefix: string;
-      emoji: string;
-      color: string;
-    }
-
-    // Define mappings for log types
-    const log_type: Record<string, LogType> = {
-      "success": { prefix: "[SUCCESS]", emoji: "✅", color: "\x1b[32m" },  // Green color for success
-      "error": { prefix: "[ERROR]", emoji: "❌", color: "\x1b[31m" },    // Red color for errors
-      "warn": { prefix: "[WARNING]", emoji: "⚠️", color: "\x1b[33m" },   // Yellow color for warnings
-      "info": { prefix: "[INFO]", emoji: "💬", color: "\x1b[36m" },       // Cyan color for info
-      "debug": { prefix: "[DEBUG]", emoji: "🔧", color: "\x1b[35m" }    // Purple color for debug logs
+    const logTypes: Record<string, LogType> = {
+      success: { prefix: "[SUCCESS]", emoji: "✅", color: ConsoleColor.FgGreen },
+      error: { prefix: "[ERROR]", emoji: "❌", color: ConsoleColor.FgRed },
+      warn: { prefix: "[WARNING]", emoji: "⚠️", color: ConsoleColor.FgYellow },
+      info: { prefix: "[INFO]", emoji: "💬", color: ConsoleColor.FgCyan },
+      debug: { prefix: "[DEBUG]", emoji: "🔧", color: ConsoleColor.FgMagenta },
     };
 
-    // Check if the provided log type exists in mappings, otherwise use custom type
-    if (log_type[type]) {
-      prefix = log_type[type].prefix;
-      emoji = log_type[type].emoji;
-      color = log_type[type].color; // Update color if specified
-    } else {
-      prefix = `[${type.toUpperCase()}]`;
-      emoji = "🔧";
-    }
+    const logType = logTypes[type] || { prefix: `[${type.toUpperCase()}]`, emoji: "🔧", color: ConsoleColor.FgMagenta };
+    const padding = ' '.repeat(Math.max(0, 15 - logType.prefix.length));
+    const formattedMessage = `\x1b[90m[${timestamp}]\x1b[0m ${logType.color}${logType.prefix}${padding}${logType.emoji}${ConsoleColor.Reset}`;
 
-    // Calculate padding based on the length of the prefix
-    const padding: string = ' '.repeat(Math.max(0, 15 - prefix.length));
-
-    // Create the formatted log message with the timestamp, prefix, emoji, and color
-    const formattedMessage: string = `\x1b[90m[${timestamp}]\x1b[0m ${color}${prefix}${padding}${emoji}\x1b[0m`;
-
-    // Output the formatted log message followed by the additional arguments
+    // Output to console
     console.log(formattedMessage, ...args);
+
+    // Log to file and emit events
+    this.logToFile(type, args.length === 1 ? args[0] : args);
+    this.emitter.emit(RCEEvent.Log, { level: this.getLogLevel(type), content: this.format(args.length === 1 ? args[0] : args) });
   }
 
-  public warn(content: any) {
-    this.logToFile("WARN", content);
-    this.emitter.emit(RCEEvent.Log, {
-      level: LogLevel.Warn,
-      content: this.format(content),
-    });
-
-    if (this.level >= LogLevel.Warn) {
-      console.log(
-        `[rce.js] ${ConsoleColor.FgYellow}[WARN]${
-          ConsoleColor.Reset
-        } ${this.format(content)}`
-      );
+  private getLogLevel(type: string): LogLevel {
+    switch (type) {
+      case "success":
+      case "info":
+        return LogLevel.Info;
+      case "warn":
+        return LogLevel.Warn;
+      case "error":
+        return LogLevel.Error;
+      case "debug":
+        return LogLevel.Debug;
+      default:
+        return LogLevel.Info;
     }
   }
 
-  public info(content: any) {
-    this.logToFile("INFO", content);
-    this.emitter.emit(RCEEvent.Log, {
-      level: LogLevel.Info,
-      content: this.format(content),
-    });
-
-    if (this.level >= LogLevel.Info) {
-      console.log(
-        `[rce.js] ${ConsoleColor.FgCyan}[INFO]${
-          ConsoleColor.Reset
-        } ${this.format(content)}`
-      );
-    }
+  public warn(content: any): void {
+    this.log("warn", content);
   }
 
-  public debug(content: any) {
-    this.logToFile("DEBUG", content);
-    this.emitter.emit(RCEEvent.Log, {
-      level: LogLevel.Debug,
-      content: this.format(content),
-    });
+  public info(content: any): void {
+    this.log("info", content);
+  }
 
-    if (this.level >= LogLevel.Debug) {
-      console.log(
-        `[rce.js] ${ConsoleColor.FgGreen}[DEBUG]${
-          ConsoleColor.Reset
-        } ${this.format(content)}`
-      );
-    }
+  public debug(content: any): void {
+    this.log("debug", content);
+  }
+
+  public error(content: any): void {
+    this.log("error", content);
   }
 }
