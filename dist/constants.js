@@ -35,7 +35,7 @@ var RCEEvent;
     RCEEvent["QuickChat"] = "quick_chat";
     RCEEvent["NoteEdit"] = "note_edit";
     RCEEvent["EventStart"] = "event_start";
-    RCEEvent["PlayerlistUpdate"] = "playerlist_update";
+    RCEEvent["PlayerListUpdate"] = "playerlist_update";
     RCEEvent["ItemSpawn"] = "item_spawn";
     RCEEvent["VendingMachineName"] = "vending_machine_name";
     RCEEvent["KitSpawn"] = "kit_spawn";
@@ -49,6 +49,8 @@ var RCEEvent;
     RCEEvent["Error"] = "error";
     RCEEvent["Log"] = "log";
     RCEEvent["ServiceState"] = "service_state";
+    RCEEvent["CustomZoneAdded"] = "custom_zone_added";
+    RCEEvent["CustomZoneRemoved"] = "custom_zone_removed";
 })(RCEEvent || (exports.RCEEvent = RCEEvent = {}));
 var QuickChat;
 (function (QuickChat) {

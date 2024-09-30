@@ -658,6 +658,24 @@ export default class RCEManager extends RCEEvents {
         this.emit(RCEEvent.PlayerRespawned, { server, ign, platform });
       }
 
+      // CUSTOM_ZONE_ADDED event
+      const customZoneAddedMatch = log.match(/Successfully created zone \[([\w\d\s_-]+)\]/);
+
+      if (customZoneAddedMatch && customZoneAddedMatch[1]) {
+        const name = customZoneAddedMatch[1];
+        this.emit(RCEEvent.CustomZoneAdded, { server, name });
+
+      }
+
+      // CUSTOM_ZONE_REMOVED event
+      const customZoneRemovedMatch = log.match(/Successfully removed zone \[([\w\d\s_-]+)\]/);
+
+      if (customZoneRemovedMatch && customZoneRemovedMatch[1]) {
+        const name = customZoneRemovedMatch[1];
+        this.emit(RCEEvent.CustomZoneAdded, { server, name });
+
+      }
+
       // PLAYER_ROLE_ADD event
       const roleMatch = log.match(
         /\[?SERVER\]?\s*Added\s*\[([^\]]+)\](?::\[([^\]]+)\])?\s*(?:to\s*(?:Group\s*)?)?\[(\w+)\]/i

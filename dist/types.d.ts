@@ -153,9 +153,15 @@ export interface RCELogPayload {
     level: LogLevel;
     content: string;
 }
+export interface CustomZoneAddedEventPayload extends EventPayload {
+    name: string;
+}
+export interface CustomZoneRemovedEventPayload extends EventPayload {
+    name: string;
+}
 export interface RCEEventTypes {
     [RCEEvent.Message]: MessageEventPayload;
-    [RCEEvent.PlayerlistUpdate]: PlayerListUpdateEventPayload;
+    [RCEEvent.PlayerListUpdate]: PlayerListUpdateEventPayload;
     [RCEEvent.QuickChat]: QuickChatEventPayload;
     [RCEEvent.PlayerJoined]: PlayerJoinedEventPayload;
     [RCEEvent.PlayerLeft]: PlayerLeftEventPayload;
@@ -178,6 +184,8 @@ export interface RCEEventTypes {
     [RCEEvent.Error]: RCEErrorPayload;
     [RCEEvent.Log]: RCELogPayload;
     [RCEEvent.ServiceState]: ServiceStateEventPayload;
+    [RCEEvent.CustomZoneAdded]: CustomZoneAddedEventPayload;
+    [RCEEvent.CustomZoneRemoved]: CustomZoneRemovedEventPayload;
 }
 export declare class RCEEvents extends EventEmitter {
     emit<K extends keyof RCEEventTypes>(event: K, ...args: RCEEventTypes[K] extends undefined ? [] : [RCEEventTypes[K]]): boolean;

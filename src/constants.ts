@@ -45,6 +45,8 @@ export enum RCEEvent {
   Error = "error",
   Log = "log",
   ServiceState = "service_state",
+  CustomZoneAdded = "custom_zone_added",
+  CustomZoneRemoved = "custom_zone_removed"
 }
 
 export enum QuickChat {
