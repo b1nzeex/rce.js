@@ -123,7 +123,7 @@ class RCEManager extends types_1.RCEEvents {
             }),
         });
         if (!postRes.ok) {
-            this.logError(`Failed To Togin: ${postRes.statusText}`);
+            this.logError(`Failed To Login: ${postRes.statusText}`);
             return false;
         }
         const code = new URLSearchParams(new URL(postRes.url).search).get("code");
@@ -414,7 +414,7 @@ class RCEManager extends types_1.RCEEvents {
                     this.logger.debug(`Command "${command}" Found In The Queue!`);
                     commandRequest.timestamp = logMessageDate;
                     this.commands = this.commands.map((req) => req.command === command ? commandRequest : req);
-                    this.logger.debug(`Command "${command}" UUpdated With Timestamp!`);
+                    this.logger.debug(`Command "${command}" Updated With Timestamp!`);
                     return;
                 }
             }
@@ -524,12 +524,7 @@ class RCEManager extends types_1.RCEEvents {
             if (noteMatch) {
                 const ign = noteMatch[1].trim();
                 const oldContent = noteMatch[2].trim().split("\\n")[0];
-                // prevent people leaking codes to chat
-                const newContent = noteMatch[3]
-                    .trim()
-                    .split("\\n")[0]
-                    .replace(/\d{4}/g, "[REDACTED]")
-                    .replace("@", "@/");
+                const newContent = noteMatch[3].trim().split("\\n")[0];
                 if (newContent.length > 0 && oldContent !== newContent) {
                     this.emit(constants_1.RCEEvent.NoteEdit, {
                         server,
@@ -603,11 +598,11 @@ class RCEManager extends types_1.RCEEvents {
     }
     async resolveServerId(region, serverId) {
         if (!this.auth?.access_token) {
-            this.logError("Failed to resolve server ID: No access token");
+            this.logError("Failed To Resolve Server ID: No Access Token!");
             return undefined;
         }
         if (this.tokenRefreshing) {
-            this.logger.warn("Token is refreshing, retrying in a few seconds");
+            this.logger.warn("Token Is Refreshing, Retrying In A Few Seconds!");
             await this.sleep(3_000);
             return this.resolveServerId(region, serverId);
         }
@@ -628,14 +623,14 @@ class RCEManager extends types_1.RCEEvents {
                 }),
             });
             if (!response.ok) {
-                this.logError(`Failed to resolve server ID: ${response.statusText}`);
+                this.logError(`Failed To Resolve Server ID: ${response.statusText}`);
                 return undefined;
             }
             const data = await response.json();
             return data?.data?.sid;
         }
         catch (err) {
-            this.logError(`Failed to resolve server ID: ${err}`);
+            this.logError(`Failed To Resolve Server ID: ${err}`);
             return undefined;
         }
     }
@@ -644,14 +639,14 @@ class RCEManager extends types_1.RCEEvents {
             ...server,
             ready: false,
         });
-        this.logger.info(`Server "${server.identifier}" is not ready`);
+        this.logger.info(`Server "${server.identifier}" Is Not Ready!`);
     }
     markServerAsReady(server) {
         this.servers.set(server.identifier, {
             ...server,
             ready: true,
         });
-        this.logger.info(`Server "${server.identifier}" is ready`);
+        this.logger.info(`Server "${server.identifier}" Is Ready!`);
         this.processQueue();
     }
     async processQueue() {
@@ -670,15 +665,15 @@ class RCEManager extends types_1.RCEEvents {
     }
     async sendCommandInternal(server, command, response) {
         if (!this.auth?.access_token) {
-            this.logError("Failed to send command: No access token");
+            this.logError("Failed To Send Command: No Access Token!");
             return null;
         }
         if (!this.socket || !this.socket.OPEN) {
-            this.logError("Failed to send command: No websocket connection");
+            this.logError("Failed To Send Command: No Websocket Connection!");
             return null;
         }
         if (this.tokenRefreshing) {
-            this.logger.warn("Token is refreshing, retrying in a few seconds");
+            this.logger.warn("Token Is Refreshing, Retrying In A Few Seconds!");
             await this.sleep(3_000);
             return this.sendCommandInternal(server, command, response);
         }
@@ -701,7 +696,7 @@ class RCEManager extends types_1.RCEEvents {
                     reject,
                     timeout: undefined,
                 });
-                this.logger.debug(`Command "${command}" added to queue`);
+                this.logger.debug(`Command "${command}" Added To Queue!`);
                 try {
                     fetch(constants_1.GPORTALRoutes.Command, {
                         method: "POST",
