@@ -25,7 +25,7 @@ export default class Logger {
   private file: string | undefined;
 
   public constructor(emitter: RCEManager, opts: LoggerOptions) {
-    this.level = opts.logLevel ?? LogLevel.Info;
+    this.level = opts.logLevel ?? LogLevel.Info; // Default to Info if not specified
     this.file = opts.logFile;
     this.emitter = emitter;
   }
@@ -49,59 +49,56 @@ export default class Logger {
     return typeof content === "string" ? content : inspect(content, { depth: 5 });
   }
 
-  public log(type: "success" | "error" | "warn" | "info" | "debug" | string = "info", ...args: any[]): void {
-    const date = new Date();
-    const timestamp = date.toLocaleTimeString([], { hour12: false });
+  private log(level: LogLevel, type: string, content: any, logType: LogType): void {
+    if (this.level !== LogLevel.None && level <= this.level) {
+      const date = new Date();
+      const timestamp = date.toLocaleTimeString([], { hour12: false });
 
-    const logTypes: Record<string, LogType> = {
-      success: { prefix: "[SUCCESS]", emoji: "✅", color: ConsoleColor.FgGreen },
-      error: { prefix: "[ERROR]", emoji: "❌", color: ConsoleColor.FgRed },
-      warn: { prefix: "[WARNING]", emoji: "⚠️", color: ConsoleColor.FgYellow },
-      info: { prefix: "[INFO]", emoji: "💬", color: ConsoleColor.FgCyan },
-      debug: { prefix: "[DEBUG]", emoji: "🔧", color: ConsoleColor.FgMagenta },
-    };
+      const padding = ' '.repeat(Math.max(0, 15 - logType.prefix.length));
+      const formattedMessage = `\x1b[90m[${timestamp}]\x1b[0m ${logType.color}${logType.prefix}${padding}${logType.emoji}${ConsoleColor.Reset}`;
 
-    const logType = logTypes[type] || { prefix: `[${type.toUpperCase()}]`, emoji: "🔧", color: ConsoleColor.FgMagenta };
-    const padding = ' '.repeat(Math.max(0, 15 - logType.prefix.length));
-    const formattedMessage = `\x1b[90m[${timestamp}]\x1b[0m ${logType.color}${logType.prefix}${padding}${logType.emoji}${ConsoleColor.Reset}`;
+      // Output to console
+      console.log(formattedMessage, this.format(content));
 
-    // Output to console
-    console.log(formattedMessage, ...args);
-
-    // Log to file and emit events
-    this.logToFile(type, args.length === 1 ? args[0] : args);
-    this.emitter.emit(RCEEvent.Log, { level: this.getLogLevel(type), content: this.format(args.length === 1 ? args[0] : args) });
-  }
-
-  private getLogLevel(type: string): LogLevel {
-    switch (type) {
-      case "success":
-      case "info":
-        return LogLevel.Info;
-      case "warn":
-        return LogLevel.Warn;
-      case "error":
-        return LogLevel.Error;
-      case "debug":
-        return LogLevel.Debug;
-      default:
-        return LogLevel.Info;
+      // Log to file and emit events
+      this.logToFile(type, content);
+      this.emitter.emit(RCEEvent.Log, { level, content: this.format(content) });
     }
   }
 
   public warn(content: any): void {
-    this.log("warn", content);
+    const logType: LogType = {
+      prefix: "[WARNING]",
+      emoji: "⚠️",
+      color: ConsoleColor.FgYellow,
+    };
+    this.log(LogLevel.Warn, "warn", content, logType);
   }
 
   public info(content: any): void {
-    this.log("info", content);
+    const logType: LogType = {
+      prefix: "[INFO]",
+      emoji: "💬",
+      color: ConsoleColor.FgCyan,
+    };
+    this.log(LogLevel.Info, "info", content, logType);
   }
 
   public debug(content: any): void {
-    this.log("debug", content);
+    const logType: LogType = {
+      prefix: "[DEBUG]",
+      emoji: "🔧",
+      color: ConsoleColor.FgMagenta,
+    };
+    this.log(LogLevel.Debug, "debug", content, logType);
   }
 
   public error(content: any): void {
-    this.log("error", content);
+    const logType: LogType = {
+      prefix: "[ERROR]",
+      emoji: "❌",
+      color: ConsoleColor.FgRed,
+    };
+    this.log(LogLevel.Error, "error", content, logType);
   }
 }
