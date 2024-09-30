@@ -82,6 +82,49 @@ export default class Logger {
       );
     }
   }
+  public log(type: "success" | "error" | "warn" | "info" | "debug" | string = "info", ...args: any[]): void {
+    const date: Date = new Date();
+    const timestamp: string = date.toLocaleTimeString([], { hour12: false });
+
+    let prefix: string = "";
+    let emoji: string = "";
+    let color: string = "\x1b[0m"; // Default color reset
+
+    // Define the structure for log types
+    interface LogType {
+      prefix: string;
+      emoji: string;
+      color: string;
+    }
+
+    // Define mappings for log types
+    const log_type: Record<string, LogType> = {
+      "success": { prefix: "[SUCCESS]", emoji: "✅", color: "\x1b[32m" },  // Green color for success
+      "error": { prefix: "[ERROR]", emoji: "❌", color: "\x1b[31m" },    // Red color for errors
+      "warn": { prefix: "[WARNING]", emoji: "⚠️", color: "\x1b[33m" },   // Yellow color for warnings
+      "info": { prefix: "[INFO]", emoji: "💬", color: "\x1b[36m" },       // Cyan color for info
+      "debug": { prefix: "[DEBUG]", emoji: "🔧", color: "\x1b[35m" }    // Purple color for debug logs
+    };
+
+    // Check if the provided log type exists in mappings, otherwise use custom type
+    if (log_type[type]) {
+      prefix = log_type[type].prefix;
+      emoji = log_type[type].emoji;
+      color = log_type[type].color; // Update color if specified
+    } else {
+      prefix = `[${type.toUpperCase()}]`;
+      emoji = "🔧";
+    }
+
+    // Calculate padding based on the length of the prefix
+    const padding: string = ' '.repeat(Math.max(0, 15 - prefix.length));
+
+    // Create the formatted log message with the timestamp, prefix, emoji, and color
+    const formattedMessage: string = `\x1b[90m[${timestamp}]\x1b[0m ${color}${prefix}${padding}${emoji}\x1b[0m`;
+
+    // Output the formatted log message followed by the additional arguments
+    console.log(formattedMessage, ...args);
+  }
 
   public warn(content: any) {
     this.logToFile("WARN", content);
