@@ -706,11 +706,7 @@ export default class RCEManager extends RCEEvents {
       if (noteMatch) {
         const ign = noteMatch[1].trim();
         const oldContent = noteMatch[2].trim().split("\\n")[0];
-
-        // prevent people leaking codes to chat
-        const newContent = noteMatch[3]
-          .trim()
-          .split("\\n")[0];
+        const newContent = noteMatch[3].trim().split("\\n")[0];
 
         if (newContent.length > 0 && oldContent !== newContent) {
           this.emit(RCEEvent.NoteEdit, {
