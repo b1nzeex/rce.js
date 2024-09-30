@@ -195,7 +195,7 @@ export interface RCELogPayload {
 
 export interface RCEEventTypes {
   [RCEEvent.Message]: MessageEventPayload;
-  [RCEEvent.PlayerlistUpdate]: PlayerListUpdateEventPayload;
+  [RCEEvent.PlayerListUpdate]: PlayerListUpdateEventPayload;
   [RCEEvent.QuickChat]: QuickChatEventPayload;
   [RCEEvent.PlayerJoined]: PlayerJoinedEventPayload;
   [RCEEvent.PlayerLeft]: PlayerLeftEventPayload;

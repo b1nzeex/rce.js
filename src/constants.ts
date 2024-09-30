@@ -31,7 +31,7 @@ export enum RCEEvent {
   QuickChat = "quick_chat",
   NoteEdit = "note_edit",
   EventStart = "event_start",
-  PlayerlistUpdate = "playerlist_update",
+  PlayerListUpdate = "playerlist_update",
   ItemSpawn = "item_spawn",
   VendingMachineName = "vending_machine_name",
   KitSpawn = "kit_spawn",
