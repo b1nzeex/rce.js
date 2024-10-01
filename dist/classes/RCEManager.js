@@ -370,7 +370,7 @@ class RCEManager extends types_1.RCEEvents {
         }
     }
     handleServiceState(message, server) {
-        // Possible states: "STOPPING", "MAINTENANCE", "UPDATING", "STOPPED", "STARTING", "RUNNING"
+        // Possible states: "STOPPING", "MAINTENANCE", "UPDATING", "STOPPED", "STARTING", "RUNNING", "SUSPENDED"
         const serviceState = message?.payload?.data?.serviceState?.state;
         if (server.serviceState === serviceState)
             return;
@@ -385,6 +385,10 @@ class RCEManager extends types_1.RCEEvents {
             this.markServerAsUnready(server);
         }
         this.emit(constants_1.RCEEvent.ServiceState, { server, state: serviceState });
+        if (serviceState === "SUSPENDED") {
+            this.logger.warn(`Server ${server.identifier} Is Suspended! Removing...`);
+            this.removeServer(server.identifier);
+        }
     }
     handleWebsocketMessage(message, server) {
         const logMessages = message?.payload?.data?.consoleMessages?.message
@@ -818,6 +822,10 @@ class RCEManager extends types_1.RCEEvents {
         this.logger.debug(`Current state for ${opts.identifier}: ${currentState}`);
         if (!currentState) {
             this.logError(`[${opts.identifier}] Failed To Add Server: No Current State Found!`);
+            return false;
+        }
+        if (currentState === "SUSPENDED") {
+            this.logger.warn(`[${opts.identifier}] Server Is Suspended! Skipping!`);
             return false;
         }
         if (this.socket?.OPEN) {

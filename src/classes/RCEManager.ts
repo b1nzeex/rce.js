@@ -482,7 +482,7 @@ export default class RCEManager extends RCEEvents {
   }
 
   private handleServiceState(message: WebsocketMessage, server: RustServer) {
-    // Possible states: "STOPPING", "MAINTENANCE", "UPDATING", "STOPPED", "STARTING", "RUNNING"
+    // Possible states: "STOPPING", "MAINTENANCE", "UPDATING", "STOPPED", "STARTING", "RUNNING", "SUSPENDED"
     const serviceState = message?.payload?.data?.serviceState?.state;
 
     if (server.serviceState === serviceState) return;
@@ -501,6 +501,11 @@ export default class RCEManager extends RCEEvents {
     }
 
     this.emit(RCEEvent.ServiceState, { server, state: serviceState });
+
+    if (serviceState === "SUSPENDED") {
+      this.logger.warn(`Server ${server.identifier} Is Suspended! Removing...`);
+      this.removeServer(server.identifier);
+    }
   }
 
   private handleWebsocketMessage(
@@ -1108,6 +1113,11 @@ export default class RCEManager extends RCEEvents {
       this.logError(
         `[${opts.identifier}] Failed To Add Server: No Current State Found!`
       );
+      return false;
+    }
+
+    if (currentState === "SUSPENDED") {
+      this.logger.warn(`[${opts.identifier}] Server Is Suspended! Skipping!`);
       return false;
     }
 
