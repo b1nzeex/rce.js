@@ -123,6 +123,7 @@ class RCEManager extends types_1.RCEEvents {
             }),
         });
         if (!postRes.ok) {
+            this.logger.debug(`Failed To Login: ${postRes.status}`);
             this.logError(`Failed To Login: ${postRes.statusText}`);
             return false;
         }
@@ -144,6 +145,7 @@ class RCEManager extends types_1.RCEEvents {
             }),
         });
         if (!tokenRes.ok) {
+            this.logger.debug(`Failed To Login: ${tokenRes.status}`);
             this.logError(`Failed To Login: ${tokenRes.statusText}`);
             return false;
         }
@@ -623,6 +625,8 @@ class RCEManager extends types_1.RCEEvents {
                 }),
             });
             if (!response.ok) {
+                this.logger.debug(`Resolve Server ID Status: ${response.status}`);
+                this.logger.debug(response.body);
                 this.logError(`Failed To Resolve Server ID: ${response.statusText}`);
                 return undefined;
             }
@@ -708,6 +712,7 @@ class RCEManager extends types_1.RCEEvents {
                     })
                         .then((res) => {
                         if (!res.ok) {
+                            this.logger.debug(`Send Command Status: ${res.status}`);
                             this.logError(`Failed To Send Command: ${res.statusText}`, server);
                             return null;
                         }
@@ -746,6 +751,7 @@ class RCEManager extends types_1.RCEEvents {
                     body: JSON.stringify(payload),
                 });
                 if (!response.ok) {
+                    this.logger.debug(`Send Command Status: ${response.status}`);
                     this.logError(`Failed To Send Command: ${response.statusText}`, server);
                     return null;
                 }

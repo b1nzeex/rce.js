@@ -165,6 +165,7 @@ export default class RCEManager extends RCEEvents {
     });
 
     if (!postRes.ok) {
+      this.logger.debug(`Failed To Login: ${postRes.status}`);
       this.logError(`Failed To Login: ${postRes.statusText}`);
       return false;
     }
@@ -189,6 +190,7 @@ export default class RCEManager extends RCEEvents {
     });
 
     if (!tokenRes.ok) {
+      this.logger.debug(`Failed To Login: ${tokenRes.status}`);
       this.logError(`Failed To Login: ${tokenRes.statusText}`);
       return false;
     }
@@ -295,7 +297,9 @@ export default class RCEManager extends RCEEvents {
 
       if (this.connectionAttempt < 5) {
         this.logger.warn(
-          `Websocket Error: Attempting To Reconnect In ${(this.connectionAttempt + 1) * 10} Second(s) (Attempt ${this.connectionAttempt + 1} Of 5)`
+          `Websocket Error: Attempting To Reconnect In ${
+            (this.connectionAttempt + 1) * 10
+          } Second(s) (Attempt ${this.connectionAttempt + 1} Of 5)`
         );
         setTimeout(
           () => this.connectWebsocket(timeout),
@@ -312,7 +316,9 @@ export default class RCEManager extends RCEEvents {
       if (code !== 1000) {
         if (this.connectionAttempt < 5) {
           this.logger.warn(
-            `Websocket closed: Attempting To Reconnect In ${(this.connectionAttempt + 1) * 10} Second(s) (Attempt ${this.connectionAttempt + 1} Of 5)`
+            `Websocket closed: Attempting To Reconnect In ${
+              (this.connectionAttempt + 1) * 10
+            } Second(s) (Attempt ${this.connectionAttempt + 1} Of 5)`
           );
           setTimeout(
             () => this.connectWebsocket(timeout),
@@ -659,21 +665,23 @@ export default class RCEManager extends RCEEvents {
       }
 
       // CUSTOM_ZONE_ADDED event
-      const customZoneAddedMatch = log.match(/Successfully created zone \[([\w\d\s_-]+)\]/);
+      const customZoneAddedMatch = log.match(
+        /Successfully created zone \[([\w\d\s_-]+)\]/
+      );
 
       if (customZoneAddedMatch && customZoneAddedMatch[1]) {
         const name = customZoneAddedMatch[1];
         this.emit(RCEEvent.CustomZoneAdded, { server, name });
-
       }
 
       // CUSTOM_ZONE_REMOVED event
-      const customZoneRemovedMatch = log.match(/Successfully removed zone \[([\w\d\s_-]+)\]/);
+      const customZoneRemovedMatch = log.match(
+        /Successfully removed zone \[([\w\d\s_-]+)\]/
+      );
 
       if (customZoneRemovedMatch && customZoneRemovedMatch[1]) {
         const name = customZoneRemovedMatch[1];
         this.emit(RCEEvent.CustomZoneAdded, { server, name });
-
       }
 
       // PLAYER_ROLE_ADD event
@@ -842,6 +850,8 @@ export default class RCEManager extends RCEEvents {
       });
 
       if (!response.ok) {
+        this.logger.debug(`Resolve Server ID Status: ${response.status}`);
+        this.logger.debug(response.body);
         this.logError(`Failed To Resolve Server ID: ${response.statusText}`);
         return undefined;
       }
@@ -953,6 +963,7 @@ export default class RCEManager extends RCEEvents {
           })
             .then((res) => {
               if (!res.ok) {
+                this.logger.debug(`Send Command Status: ${res.status}`);
                 this.logError(
                   `Failed To Send Command: ${res.statusText}`,
                   server
@@ -1008,6 +1019,7 @@ export default class RCEManager extends RCEEvents {
         });
 
         if (!response.ok) {
+          this.logger.debug(`Send Command Status: ${response.status}`);
           this.logError(
             `Failed To Send Command: ${response.statusText}`,
             server
@@ -1109,8 +1121,8 @@ export default class RCEManager extends RCEEvents {
         state: opts.state || [],
         refreshPlayersInterval: opts.refreshPlayers
           ? setInterval(() => {
-            this.refreshPlayers(opts.identifier);
-          }, opts.refreshPlayers * 60_000)
+              this.refreshPlayers(opts.identifier);
+            }, opts.refreshPlayers * 60_000)
           : undefined,
         players: [],
         added: true,
@@ -1161,7 +1173,9 @@ export default class RCEManager extends RCEEvents {
             }),
             (err) => {
               if (err) {
-                this.logError(`[${opts.identifier}] Failed To Add Server: ${err}`);
+                this.logError(
+                  `[${opts.identifier}] Failed To Add Server: ${err}`
+                );
                 return false;
               }
             }
@@ -1177,7 +1191,9 @@ export default class RCEManager extends RCEEvents {
         }
       );
     } else {
-      this.logger.warn(`[${opts.identifier}] Failed To Add Server: No Websocket Connection, Retrying In 5 Seconds!`);
+      this.logger.warn(
+        `[${opts.identifier}] Failed To Add Server: No Websocket Connection, Retrying In 5 Seconds!`
+      );
       setTimeout(() => this.addServer(opts), 5_000);
     }
   }
