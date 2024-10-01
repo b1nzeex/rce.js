@@ -20,7 +20,7 @@ class Logger {
     level;
     file;
     constructor(emitter, opts) {
-        this.level = opts.logLevel ?? constants_1.LogLevel.Info; // Default to Info if not specified
+        this.level = opts.logLevel ?? constants_1.LogLevel.Info;
         this.file = opts.logFile;
         this.emitter = emitter;
     }
@@ -37,25 +37,25 @@ class Logger {
         }
     }
     format(content) {
-        return typeof content === "string" ? content : (0, util_1.inspect)(content, { depth: 5 });
+        return typeof content === "string"
+            ? content
+            : (0, util_1.inspect)(content, { depth: 5 });
     }
     log(level, type, content, logType) {
+        this.logToFile(type, content);
         if (this.level !== constants_1.LogLevel.None && level <= this.level) {
             const date = new Date();
             const timestamp = date.toLocaleTimeString([], { hour12: false });
-            const padding = ' '.repeat(Math.max(0, 15 - logType.prefix.length));
+            const padding = " ".repeat(Math.max(0, 15 - logType.prefix.length));
             const formattedMessage = `\x1b[90m[${timestamp}]\x1b[0m ${logType.color}${logType.prefix}${padding}${logType.emoji}${ConsoleColor.Reset}`;
-            // Output to console
             console.log(formattedMessage, this.format(content));
-            // Log to file and emit events
-            this.logToFile(type, content);
             this.emitter.emit(constants_1.RCEEvent.Log, { level, content: this.format(content) });
         }
     }
     warn(content) {
         const logType = {
             prefix: "[WARNING]",
-            emoji: "⚠️",
+            emoji: "⚠️ ",
             color: ConsoleColor.FgYellow,
         };
         this.log(constants_1.LogLevel.Warn, "warn", content, logType);

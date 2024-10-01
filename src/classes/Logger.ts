@@ -25,7 +25,7 @@ export default class Logger {
   private file: string | undefined;
 
   public constructor(emitter: RCEManager, opts: LoggerOptions) {
-    this.level = opts.logLevel ?? LogLevel.Info; // Default to Info if not specified
+    this.level = opts.logLevel ?? LogLevel.Info;
     this.file = opts.logFile;
     this.emitter = emitter;
   }
@@ -37,31 +37,38 @@ export default class Logger {
         fs.writeFileSync(this.file, "");
       }
 
-      const logMessage = typeof content === "string"
-        ? `[${type.toUpperCase()}]: ${content}\n`
-        : `[${type.toUpperCase()}]: ${inspect(content, { depth: 5 })}\n`;
+      const logMessage =
+        typeof content === "string"
+          ? `[${type.toUpperCase()}]: ${content}\n`
+          : `[${type.toUpperCase()}]: ${inspect(content, { depth: 5 })}\n`;
 
       fs.appendFileSync(this.file, logMessage);
     }
   }
 
   private format(content: any): string {
-    return typeof content === "string" ? content : inspect(content, { depth: 5 });
+    return typeof content === "string"
+      ? content
+      : inspect(content, { depth: 5 });
   }
 
-  private log(level: LogLevel, type: string, content: any, logType: LogType): void {
+  private log(
+    level: LogLevel,
+    type: string,
+    content: any,
+    logType: LogType
+  ): void {
+    this.logToFile(type, content);
+
     if (this.level !== LogLevel.None && level <= this.level) {
       const date = new Date();
       const timestamp = date.toLocaleTimeString([], { hour12: false });
 
-      const padding = ' '.repeat(Math.max(0, 15 - logType.prefix.length));
+      const padding = " ".repeat(Math.max(0, 15 - logType.prefix.length));
       const formattedMessage = `\x1b[90m[${timestamp}]\x1b[0m ${logType.color}${logType.prefix}${padding}${logType.emoji}${ConsoleColor.Reset}`;
 
-      // Output to console
       console.log(formattedMessage, this.format(content));
 
-      // Log to file and emit events
-      this.logToFile(type, content);
       this.emitter.emit(RCEEvent.Log, { level, content: this.format(content) });
     }
   }
@@ -69,7 +76,7 @@ export default class Logger {
   public warn(content: any): void {
     const logType: LogType = {
       prefix: "[WARNING]",
-      emoji: "⚠️",
+      emoji: "⚠️ ",
       color: ConsoleColor.FgYellow,
     };
     this.log(LogLevel.Warn, "warn", content, logType);

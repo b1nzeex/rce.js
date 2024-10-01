@@ -191,7 +191,6 @@ class RCEManager extends types_1.RCEEvents {
     }
     logError(message, server) {
         this.emit(constants_1.RCEEvent.Error, { server, error: message });
-        this.logger.error(`${server ? `[${server.identifier}]: ${message}` : message}`);
     }
     clean() {
         this.logger.debug("Cleaning Up All Data...");
@@ -602,7 +601,7 @@ class RCEManager extends types_1.RCEEvents {
             }
         });
     }
-    async resolveServerId(region, serverId) {
+    async resolveServerId(region, serverId, identifier) {
         if (!this.auth?.access_token) {
             this.logError("Failed To Resolve Server ID: No Access Token!");
             return undefined;
@@ -610,7 +609,7 @@ class RCEManager extends types_1.RCEEvents {
         if (this.tokenRefreshing) {
             this.logger.warn("Token Is Refreshing, Retrying In A Few Seconds!");
             await this.sleep(3_000);
-            return this.resolveServerId(region, serverId);
+            return this.resolveServerId(region, serverId, identifier);
         }
         try {
             const response = await fetch(constants_1.GPORTALRoutes.Command, {
@@ -631,14 +630,23 @@ class RCEManager extends types_1.RCEEvents {
             if (!response.ok) {
                 this.logger.debug(`Resolve Server ID Status: ${response.status}`);
                 this.logger.debug(response.body);
-                this.logError(`Failed To Resolve Server ID: ${response.statusText}`);
+                this.logError(`[${identifier}] Failed To Resolve Server ID: ${response.statusText}`);
                 return undefined;
             }
             const data = await response.json();
-            return data?.data?.sid;
+            if (data?.errors?.length) {
+                this.logger.warn(`[${identifier}] Resolve Server ID Error: ${data.errors[0].message}`);
+                return undefined;
+            }
+            const sid = data?.data?.sid;
+            if (!sid) {
+                this.logger.warn(`[${identifier}] Invalid Server ID!`);
+                return undefined;
+            }
+            return sid;
         }
         catch (err) {
-            this.logError(`Failed To Resolve Server ID: ${err}`);
+            this.logError(`[${identifier}] Failed To Resolve Server ID: ${err}`);
             return undefined;
         }
     }
@@ -654,7 +662,7 @@ class RCEManager extends types_1.RCEEvents {
             ...server,
             ready: true,
         });
-        this.logger.info(`Server "${server.identifier}" Is Ready!`);
+        this.logger.info(`[${server.identifier}] Server Is Ready!`);
         this.processQueue();
     }
     async processQueue() {
@@ -813,7 +821,7 @@ class RCEManager extends types_1.RCEEvents {
     */
     async addServer(opts) {
         this.logger.debug(`[${opts.identifier}] Adding Server!`);
-        const sid = await this.resolveServerId(opts.region, opts.serverId);
+        const sid = await this.resolveServerId(opts.region, opts.serverId, opts.identifier);
         if (!sid) {
             this.logError(`[${opts.identifier}] Failed To Add Server: No Server ID Found!`);
             return false;
