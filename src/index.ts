@@ -23,6 +23,8 @@ import {
   KillPlayerType,
   RCELogPayload,
   ServiceStateEventPayload,
+  CustomZoneAddedEventPayload,
+  CustomZoneRemovedEventPayload,
 } from "./types";
 import { killData } from "./classes/Helper";
 
@@ -54,4 +56,6 @@ export {
   killData,
   RCELogPayload,
   ServiceStateEventPayload,
+  CustomZoneAddedEventPayload,
+  CustomZoneRemovedEventPayload,
 };
