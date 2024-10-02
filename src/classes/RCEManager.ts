@@ -514,6 +514,8 @@ export default class RCEManager extends RCEEvents {
         ?.split("\n")
         .filter((e) => e !== "") || [];
 
+    if (logMessages?.length > 3) return;
+
     logMessages?.forEach((logMessage) => {
       const logMatch = logMessage.match(
         /(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}):LOG:[^:]+: (.+)$/
@@ -642,10 +644,6 @@ export default class RCEManager extends RCEEvents {
       }
 
       if (log.includes("was suicide by Suicide")) {
-        const regex = /^([\w\s_-]+) joined \[xboxone\]$/;
-
-        const match = log.match(/^([\w\s_-]+) joined \[xboxone\]$/);
-
         const ign = log.split(" was suicide by Suicide")[0];
 
         this.emit(RCEEvent.PlayerSuicide, { server, ign });
