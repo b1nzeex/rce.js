@@ -517,7 +517,7 @@ class RCEManager extends types_1.RCEEvents {
                 this.emit(constants_1.RCEEvent.PlayerRoleAdd, { server, ign, role });
             }
             // ITEM_SPAWN event
-            const itemSpawnMatch = log.match(/\bgiving ([\w\s_-]+) ([\d.]+) x ([\w\s.]+)\b/);
+            const itemSpawnMatch = log.match(/\bgiving ([\w\s_-]+) ([\d.]+) x ([\w\s-]+(?: [\w\s-]+)*)\b/);
             if (itemSpawnMatch) {
                 const ign = itemSpawnMatch[1];
                 const quantity = Number(itemSpawnMatch[2]);
