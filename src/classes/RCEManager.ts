@@ -79,6 +79,7 @@ export default class RCEManager extends RCEEvents {
         serverId: server.serverId,
         region: server.region,
         refreshPlayers: server.refreshPlayers || 0,
+        rfBroadcasting: server.rfBroadcasting || 0,
         state: server.state || [],
         players: [],
         added: false,
@@ -250,6 +251,7 @@ export default class RCEManager extends RCEEvents {
 
     this.servers.forEach((server) => {
       clearInterval(server.refreshPlayersInterval);
+      clearInterval(server.rfBroadcastingInterval);
       server.players = [];
       server.added = false;
       server.ready = false;
@@ -294,8 +296,7 @@ export default class RCEManager extends RCEEvents {
 
       if (this.connectionAttempt < 5) {
         this.logger.warn(
-          `Websocket Error: Attempting To Reconnect In ${
-            (this.connectionAttempt + 1) * 10
+          `Websocket Error: Attempting To Reconnect In ${(this.connectionAttempt + 1) * 10
           } Second(s) (Attempt ${this.connectionAttempt + 1} Of 5)`
         );
         setTimeout(
@@ -313,8 +314,7 @@ export default class RCEManager extends RCEEvents {
       if (code !== 1000) {
         if (this.connectionAttempt < 5) {
           this.logger.warn(
-            `Websocket closed: Attempting To Reconnect In ${
-              (this.connectionAttempt + 1) * 10
+            `Websocket closed: Attempting To Reconnect In ${(this.connectionAttempt + 1) * 10
             } Second(s) (Attempt ${this.connectionAttempt + 1} Of 5)`
           );
           setTimeout(
@@ -696,7 +696,9 @@ export default class RCEManager extends RCEEvents {
       }
 
       // ITEM_SPAWN event
-      const itemSpawnMatch = log.match(/\bgiving ([\w\s_-]+) ([\d.]+) x ([\w\s-]+(?: [\w\s-]+)*)\b/);
+      const itemSpawnMatch = log.match(
+        /\bgiving ([\w\s_-]+) ([\d.]+) x ([\w\s-]+(?: [\w\s-]+)*)\b/
+      );
       if (itemSpawnMatch) {
         const ign = itemSpawnMatch[1];
         const quantity = Number(itemSpawnMatch[2]);
@@ -1145,8 +1147,14 @@ export default class RCEManager extends RCEEvents {
         state: opts.state || [],
         refreshPlayersInterval: opts.refreshPlayers
           ? setInterval(() => {
-              this.refreshPlayers(opts.identifier);
-            }, opts.refreshPlayers * 60_000)
+            this.refreshPlayers(opts.identifier);
+          }, opts.refreshPlayers * 60_000)
+          : undefined,
+        rfBroadcasting: opts.rfBroadcasting || 0,
+        rfBroadcastingInterval: opts.rfBroadcasting
+          ? setInterval(() => {
+            this.refreshBroadcasters(opts.identifier);
+          }, opts.rfBroadcasting * 30_000)
           : undefined,
         players: [],
         added: true,
@@ -1209,6 +1217,10 @@ export default class RCEManager extends RCEEvents {
             this.refreshPlayers(opts.identifier);
           }
 
+          if (opts.rfBroadcasting) {
+            this.refreshBroadcasters(opts.identifier);
+          }
+
           if (currentState === "RUNNING") {
             this.markServerAsReady(this.getServer(opts.identifier));
           }
@@ -1236,12 +1248,12 @@ export default class RCEManager extends RCEEvents {
   }
 
   private async refreshPlayers(identifier: string) {
-    this.logger.debug(`Refreshing players for ${identifier}`);
+    this.logger.debug(`Refreshing Players For ${identifier}`);
 
     const server = this.getServer(identifier);
     if (!server) {
       this.logError(
-        `[${identifier}] Failed to refresh players: No Server Found For ID ${identifier}`
+        `[${identifier}] Failed To Refresh Players: No Server Found For ID ${identifier}`
       );
       return;
     }
@@ -1277,6 +1289,61 @@ export default class RCEManager extends RCEEvents {
     this.logger.debug(`Players Refreshed For ${identifier}`);
   }
 
+  
+  private async refreshBroadcasters(identifier: string) {
+    this.logger.debug(`Refreshing Broadcasters For ${identifier}`);
+
+    const server = this.getServer(identifier);
+    if (!server) {
+      this.logError(
+        `[${identifier}] Failed To Refresh Broadcasters: No Server Found For ID ${identifier}`
+      );
+      return;
+    }
+
+    const broadcasters = await this.sendCommand(
+      identifier,
+      "rf.listboardcaster",
+      true
+    );
+
+    if (!broadcasters) {
+      this.logger.warn(`[${identifier}] Failed To Refresh Broadcasters!`);
+      return;
+    }
+
+    const regex =
+      /\[(\d+) MHz\] Position: \(([\d.-]+), ([\d.-]+), ([\d.-]+)\), Range: (\d+)/g;
+
+    // Create a Map to store frequency data
+    const frequencyMap = new Map<string, { coords: number[]; range: number }>();
+
+    if (typeof broadcasters === "string") {
+      const matches: RegExpMatchArray[] = [...broadcasters.matchAll(regex)];
+
+      matches.forEach((match) => {
+        const frequency = match[1];
+        const coords = [
+          parseFloat(match[2]),
+          parseFloat(match[3]),
+          parseFloat(match[4]),
+        ];
+        const range = parseInt(match[5], 10);
+
+        // Store the frequency details in the Map
+        frequencyMap.set(frequency, { coords, range });
+      });
+
+      // Emit events for each frequency from the Map
+      frequencyMap.forEach(({ coords, range }, frequency) => {
+        this.emit(RCEEvent.FrequencyReceived, { server, frequency, coords, range });
+      });
+    }
+
+    this.logger.debug(`Broadcasters Refreshed For ${identifier}`);
+  }
+
+
   /*
     * Get a Rust server from the manager
 
@@ -1302,6 +1369,7 @@ export default class RCEManager extends RCEEvents {
   */
   public removeServer(identifier: string) {
     clearInterval(this.getServer(identifier)?.refreshPlayersInterval);
+    clearInterval(this.getServer(identifier)?.rfBroadcastingInterval);
     this.servers.delete(identifier);
 
     const request = this.requests.get(identifier);

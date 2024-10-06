@@ -25,6 +25,7 @@ import {
   ServiceStateEventPayload,
   CustomZoneAddedEventPayload,
   CustomZoneRemovedEventPayload,
+  FrequencyReceivedEventPayload
 } from "./types";
 import { killData } from "./classes/Helper";
 
@@ -58,4 +59,5 @@ export {
   ServiceStateEventPayload,
   CustomZoneAddedEventPayload,
   CustomZoneRemovedEventPayload,
+  FrequencyReceivedEventPayload
 };
