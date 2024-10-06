@@ -47,6 +47,7 @@ class RCEManager extends types_1.RCEEvents {
                 serverId: server.serverId,
                 region: server.region,
                 refreshPlayers: server.refreshPlayers || 0,
+                rfBroadcasting: server.rfBroadcasting || 0,
                 state: server.state || [],
                 players: [],
                 added: false,
@@ -196,6 +197,7 @@ class RCEManager extends types_1.RCEEvents {
         this.logger.debug("Cleaning Up All Data...");
         this.servers.forEach((server) => {
             clearInterval(server.refreshPlayersInterval);
+            clearInterval(server.rfBroadcastingInterval);
             server.players = [];
             server.added = false;
             server.ready = false;
@@ -849,6 +851,12 @@ class RCEManager extends types_1.RCEEvents {
                         this.refreshPlayers(opts.identifier);
                     }, opts.refreshPlayers * 60_000)
                     : undefined,
+                rfBroadcasting: opts.rfBroadcasting || 0,
+                rfBroadcastingInterval: opts.rfBroadcasting
+                    ? setInterval(() => {
+                        this.refreshBroadcasters(opts.identifier);
+                    }, opts.rfBroadcasting * 30_000)
+                    : undefined,
                 players: [],
                 added: true,
                 ready: false,
@@ -897,6 +905,9 @@ class RCEManager extends types_1.RCEEvents {
                 if (opts.refreshPlayers) {
                     this.refreshPlayers(opts.identifier);
                 }
+                if (opts.rfBroadcasting) {
+                    this.refreshBroadcasters(opts.identifier);
+                }
                 if (currentState === "RUNNING") {
                     this.markServerAsReady(this.getServer(opts.identifier));
                 }
@@ -913,10 +924,10 @@ class RCEManager extends types_1.RCEEvents {
         return { joined, left };
     }
     async refreshPlayers(identifier) {
-        this.logger.debug(`Refreshing players for ${identifier}`);
+        this.logger.debug(`Refreshing Players For ${identifier}`);
         const server = this.getServer(identifier);
         if (!server) {
-            this.logError(`[${identifier}] Failed to refresh players: No Server Found For ID ${identifier}`);
+            this.logError(`[${identifier}] Failed To Refresh Players: No Server Found For ID ${identifier}`);
             return;
         }
         const users = await this.sendCommand(identifier, "Users", true);
@@ -940,6 +951,41 @@ class RCEManager extends types_1.RCEEvents {
         });
         this.emit(constants_1.RCEEvent.PlayerListUpdate, { server, players, joined, left });
         this.logger.debug(`Players Refreshed For ${identifier}`);
+    }
+    async refreshBroadcasters(identifier) {
+        this.logger.debug(`Refreshing Broadcasters For ${identifier}`);
+        const server = this.getServer(identifier);
+        if (!server) {
+            this.logError(`[${identifier}] Failed To Refresh Broadcasters: No Server Found For ID ${identifier}`);
+            return;
+        }
+        const broadcasters = await this.sendCommand(identifier, "rf.listboardcaster", true);
+        if (!broadcasters) {
+            this.logger.warn(`[${identifier}] Failed To Refresh Broadcasters!`);
+            return;
+        }
+        const regex = /\[(\d+) MHz\] Position: \(([\d.-]+), ([\d.-]+), ([\d.-]+)\), Range: (\d+)/g;
+        // Create a Map to store frequency data
+        const frequencyMap = new Map();
+        if (typeof broadcasters === "string") {
+            const matches = [...broadcasters.matchAll(regex)];
+            matches.forEach((match) => {
+                const frequency = match[1];
+                const coords = [
+                    parseFloat(match[2]),
+                    parseFloat(match[3]),
+                    parseFloat(match[4]),
+                ];
+                const range = parseInt(match[5], 10);
+                // Store the frequency details in the Map
+                frequencyMap.set(frequency, { coords, range });
+            });
+            // Emit events for each frequency from the Map
+            frequencyMap.forEach(({ coords, range }, frequency) => {
+                this.emit(constants_1.RCEEvent.FrequencyReceived, { server, frequency, coords, range });
+            });
+        }
+        this.logger.debug(`Broadcasters Refreshed For ${identifier}`);
     }
     /*
       * Get a Rust server from the manager
@@ -965,6 +1011,7 @@ class RCEManager extends types_1.RCEEvents {
     */
     removeServer(identifier) {
         clearInterval(this.getServer(identifier)?.refreshPlayersInterval);
+        clearInterval(this.getServer(identifier)?.rfBroadcastingInterval);
         this.servers.delete(identifier);
         const request = this.requests.get(identifier);
         if (request)

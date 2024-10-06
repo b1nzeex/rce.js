@@ -51,6 +51,7 @@ var RCEEvent;
     RCEEvent["ServiceState"] = "service_state";
     RCEEvent["CustomZoneAdded"] = "custom_zone_added";
     RCEEvent["CustomZoneRemoved"] = "custom_zone_removed";
+    RCEEvent["FrequencyReceived"] = "frequency_received";
 })(RCEEvent || (exports.RCEEvent = RCEEvent = {}));
 var QuickChat;
 (function (QuickChat) {
