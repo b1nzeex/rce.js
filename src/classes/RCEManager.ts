@@ -1352,7 +1352,7 @@ export default class RCEManager extends RCEEvents {
   }
 
   private async refreshBradFeeds(identifier: string) {
-    this.logger.debug(`Refreshing Bradley APC Feeds For ${identifier}`);
+    this.logger.info(`Refreshing Bradley APC Feeds For ${identifier}`);
 
     const server = this.getServer(identifier);
     if (!server) {
@@ -1372,18 +1372,17 @@ export default class RCEManager extends RCEEvents {
       this.logger.warn(`[${identifier}] Failed To Refresh Bradley APC Feeds!`);
       return;
     }
-
-    if (gibs.includes('servergibs_bradley')) {
-      await this.sendCommand(identifier, "entity.deleteentity servergibs_bradley 0");
-
+    if (/servergibs_bradley/.test(gibs)) {
       this.emit(RCEEvent.BradDowned, { server });
+      await this.sendCommand(identifier, "entity.deleteentity servergibs_bradley 0");
+    } else {
+      this.logger.debug(`[${identifier}] No Patrol Helicopter Gibs Found!`);
     }
-
-    this.logger.debug(`Bradley APC Feeds Refreshed For ${identifier}`);
   }
 
+
   private async refreshHeliFeeds(identifier: string) {
-    this.logger.debug(`Refreshing Patrol Helicopter Feeds For ${identifier}`);
+    this.logger.info(`Refreshing Patrol Helicopter Feeds For ${identifier}`);
 
     const server = this.getServer(identifier);
     if (!server) {
@@ -1404,13 +1403,14 @@ export default class RCEManager extends RCEEvents {
       return;
     }
 
-    if (gibs.includes('servergibs_patrolhelicopter')) {
-      await this.sendCommand(identifier, "entity.deleteentity servergibs_patrolhelicopter 0");
+    if (/servergibs_patrolhelicopter/.test(gibs)) {
       this.emit(RCEEvent.HeliDowned, { server });
+      await this.sendCommand(identifier, "entity.deleteentity servergibs_patrolhelicopter 0");
+    } else {
+      this.logger.debug(`[${identifier}] No Patrol Helicopter Gibs Found!`);
     }
-
-    this.logger.debug(`Patrol Helicopter Feeds Refreshed For ${identifier}`);
   }
+
 
   /*
     * Get a Rust server from the manager
