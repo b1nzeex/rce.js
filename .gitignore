@@ -4,3 +4,4 @@ tests
 auth.txt
 rce.log
 .vscode/settings.json
+/dist
