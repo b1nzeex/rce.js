@@ -28,6 +28,10 @@ export interface RustServer {
   refreshPlayersInterval?: NodeJS.Timeout;
   rfBroadcasting?: number;
   rfBroadcastingInterval?: NodeJS.Timeout;
+  heliFeeds?: number;
+  heliFeedsInterval?: NodeJS.Timeout;
+  bradFeeds?: number;
+  bradFeedsInterval?: NodeJS.Timeout;
   state?: string | string[];
   players: string[];
   added: boolean;
@@ -41,6 +45,8 @@ export interface ServerOptions {
   region: "US" | "EU";
   refreshPlayers?: number;
   rfBroadcasting?: number;
+  heliFeeds?: number;
+  bradFeeds?: number;
   state?: string | string[];
 }
 
@@ -238,6 +244,8 @@ export interface RCEEventTypes {
   [RCEEvent.CustomZoneAdded]: CustomZoneAddedEventPayload;
   [RCEEvent.CustomZoneRemoved]: CustomZoneRemovedEventPayload;
   [RCEEvent.FrequencyReceived]: FrequencyReceivedEventPayload;
+  [RCEEvent.BradDowned]: EventPayload;
+  [RCEEvent.HeliDowned]: EventPayload;
 }
 
 export class RCEEvents extends EventEmitter {

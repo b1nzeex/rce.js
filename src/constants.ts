@@ -47,7 +47,9 @@ export enum RCEEvent {
   ServiceState = "service_state",
   CustomZoneAdded = "custom_zone_added",
   CustomZoneRemoved = "custom_zone_removed",
-  FrequencyReceived = "frequency_received"
+  FrequencyReceived = "frequency_received",
+  BradDowned = "brad_downed",
+  HeliDowned = "heli_downed"
 }
 
 export enum QuickChat {
