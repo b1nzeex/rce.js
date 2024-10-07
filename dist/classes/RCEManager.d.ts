@@ -35,6 +35,7 @@ export default class RCEManager extends RCEEvents {
     addServer(opts: ServerOptions): Promise<boolean>;
     private comparePopulation;
     private refreshPlayers;
+    private refreshBroadcasters;
     getServer(identifier: string): RustServer;
     removeServer(identifier: string): void;
     getServers(): Map<string, RustServer>;
