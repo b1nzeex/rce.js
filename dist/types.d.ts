@@ -22,13 +22,15 @@ export interface RustServer {
     region: "US" | "EU";
     refreshPlayers?: number;
     refreshPlayersInterval?: NodeJS.Timeout;
-    rfBroadcasting?: number;
+    rfBroadcasting?: boolean;
     rfBroadcastingInterval?: NodeJS.Timeout;
-    heliFeeds?: number;
+    currentRfBroadcasts: number[];
+    heliFeeds?: boolean;
     heliFeedsInterval?: NodeJS.Timeout;
-    bradFeeds?: number;
+    bradFeeds?: boolean;
     bradFeedsInterval?: NodeJS.Timeout;
     state?: string | string[];
+    eventFlags: string[];
     players: string[];
     added: boolean;
     ready: boolean;
@@ -39,9 +41,9 @@ export interface ServerOptions {
     serverId: number;
     region: "US" | "EU";
     refreshPlayers?: number;
-    rfBroadcasting?: number;
-    heliFeeds?: number;
-    bradFeeds?: number;
+    rfBroadcasting?: boolean;
+    heliFeeds?: boolean;
+    bradFeeds?: boolean;
     state?: string | string[];
 }
 export interface WebsocketRequest {
@@ -104,7 +106,7 @@ export interface NoteEditEventPayload extends EventPayload {
     newContent: string;
 }
 export interface EventStartEventPayload extends EventPayload {
-    event: "Airdrop" | "Cargo Ship" | "Chinook" | "Patrol Helicopter" | "Halloween" | "Christmas" | "Easter" | "Patrol Helicopter Debris" | "Bradley APC Debris";
+    event: "Airdrop" | "Cargo Ship" | "Chinook" | "Patrol Helicopter" | "Halloween" | "Christmas" | "Easter" | "Patrol Helicopter Debris" | "Bradley APC Debris" | "Oil Rig" | "Small Oil Rig";
     special: boolean;
 }
 export interface PlayerKillEventPayload extends EventPayload {
@@ -169,9 +171,12 @@ export interface CustomZoneRemovedEventPayload extends EventPayload {
     name: string;
 }
 export interface FrequencyReceivedEventPayload extends EventPayload {
-    frequency: string;
-    coords: number[];
+    frequency: number;
+    coordinates: number[];
     range: number;
+}
+export interface FrequencyLostEventPayload extends EventPayload {
+    frequency: number;
 }
 export interface RCEEventTypes {
     [RCEEvent.Message]: MessageEventPayload;
@@ -201,6 +206,7 @@ export interface RCEEventTypes {
     [RCEEvent.CustomZoneAdded]: CustomZoneAddedEventPayload;
     [RCEEvent.CustomZoneRemoved]: CustomZoneRemovedEventPayload;
     [RCEEvent.FrequencyReceived]: FrequencyReceivedEventPayload;
+    [RCEEvent.FrequencyLost]: FrequencyLostEventPayload;
 }
 export declare class RCEEvents extends EventEmitter {
     emit<K extends keyof RCEEventTypes>(event: K, ...args: RCEEventTypes[K] extends undefined ? [] : [RCEEventTypes[K]]): boolean;

@@ -52,6 +52,7 @@ var RCEEvent;
     RCEEvent["CustomZoneAdded"] = "custom_zone_added";
     RCEEvent["CustomZoneRemoved"] = "custom_zone_removed";
     RCEEvent["FrequencyReceived"] = "frequency_received";
+    RCEEvent["FrequencyLost"] = "frequency_lost";
 })(RCEEvent || (exports.RCEEvent = RCEEvent = {}));
 var QuickChat;
 (function (QuickChat) {

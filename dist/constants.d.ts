@@ -44,7 +44,8 @@ export declare enum RCEEvent {
     ServiceState = "service_state",
     CustomZoneAdded = "custom_zone_added",
     CustomZoneRemoved = "custom_zone_removed",
-    FrequencyReceived = "frequency_received"
+    FrequencyReceived = "frequency_received",
+    FrequencyLost = "frequency_lost"
 }
 export declare enum QuickChat {
     COMBAT_WereUnderAttack = "d11_quick_chat_combat_slot_0",

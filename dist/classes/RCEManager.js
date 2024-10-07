@@ -47,10 +47,12 @@ class RCEManager extends types_1.RCEEvents {
                 serverId: server.serverId,
                 region: server.region,
                 refreshPlayers: server.refreshPlayers || 0,
-                rfBroadcasting: server.rfBroadcasting || 0,
-                heliFeeds: server.heliFeeds || 0,
-                bradFeeds: server.bradFeeds || 0,
+                rfBroadcasting: server.rfBroadcasting || false,
+                currentRfBroadcasts: [],
+                heliFeeds: server.heliFeeds || false,
+                bradFeeds: server.bradFeeds || false,
                 state: server.state || [],
+                eventFlags: [],
                 players: [],
                 added: false,
                 ready: false,
@@ -410,6 +412,134 @@ class RCEManager extends types_1.RCEEvents {
             const log = logMessageContent.trim();
             if (!log)
                 return;
+            /*
+              The following events are "refreshing" events
+            */
+            // EVENT_START - Bradley APC Debris
+            if (log.includes("servergibs_bradley") &&
+                log.startsWith("realm ;entity ;group ;parent ;name") &&
+                !server.eventFlags.includes("bradley")) {
+                server.eventFlags.push("bradley");
+                this.servers.set(server.identifier, {
+                    ...server,
+                    eventFlags: server.eventFlags,
+                });
+                setTimeout(() => {
+                    server.eventFlags = server.eventFlags.filter((f) => f !== "bradley");
+                    this.servers.set(server.identifier, {
+                        ...server,
+                        eventFlags: server.eventFlags,
+                    });
+                }, 360_000);
+                return this.emit(constants_1.RCEEvent.EventStart, {
+                    server,
+                    event: "Bradley APC Debris",
+                    special: true,
+                });
+            }
+            // EVENT_START - Patrol Helicopter Debris
+            if (log.includes("servergibs_patrolhelicopter") &&
+                log.startsWith("realm ;entity ;group ;parent ;name") &&
+                !server.eventFlags.includes("heli")) {
+                server.eventFlags.push("heli");
+                this.servers.set(server.identifier, {
+                    ...server,
+                    eventFlags: server.eventFlags,
+                });
+                setTimeout(() => {
+                    server.eventFlags = server.eventFlags.filter((f) => f !== "heli");
+                    this.servers.set(server.identifier, {
+                        ...server,
+                        eventFlags: server.eventFlags,
+                    });
+                }, 360_000);
+                return this.emit(constants_1.RCEEvent.EventStart, {
+                    server,
+                    event: "Patrol Helicopter Debris",
+                    special: true,
+                });
+            }
+            // USERS
+            const usersMatch = log.match(/"(.*?)"/g);
+            if (usersMatch) {
+                const players = usersMatch.map((plr) => plr.replace(/"/g, ""));
+                players.shift();
+                const s = this.getServer(server.identifier);
+                const { joined, left } = this.comparePopulation(s.players, players);
+                joined.forEach((ign) => {
+                    this.emit(constants_1.RCEEvent.PlayerJoined, { server, ign });
+                });
+                left.forEach((ign) => {
+                    this.emit(constants_1.RCEEvent.PlayerLeft, { server, ign });
+                });
+                this.servers.set(server.identifier, {
+                    ...s,
+                    players,
+                });
+                this.emit(constants_1.RCEEvent.PlayerListUpdate, {
+                    server,
+                    players,
+                    joined,
+                    left,
+                });
+                this.logger.debug(`Refreshed Players For ${server.identifier}`);
+            }
+            // BROADCAST_RECEIVED
+            const broadcastMatch = [
+                ...log.matchAll(/\[(\d+)\sMHz\]\sPosition:\s\(([-\d.]+),\s([-\d.]+),\s([-\d.]+)\),\sRange:\s(\d+)/g),
+            ];
+            if (broadcastMatch?.length) {
+                const broadcasts = [];
+                for (const match of broadcastMatch) {
+                    broadcasts.push({
+                        frequency: parseInt(match[1], 10),
+                        coordinates: [
+                            parseFloat(match[2]),
+                            parseFloat(match[3]),
+                            parseFloat(match[4]),
+                        ],
+                        range: parseInt(match[5], 10),
+                    });
+                }
+                server.currentRfBroadcasts.forEach((frequency) => {
+                    if (!broadcasts.find((b) => parseInt(b.frequency) === frequency)) {
+                        this.emit(constants_1.RCEEvent.FrequencyLost, {
+                            server,
+                            frequency,
+                        });
+                        server.currentRfBroadcasts = server.currentRfBroadcasts.filter((f) => f !== frequency);
+                    }
+                });
+                broadcasts.forEach((broadcast) => {
+                    if (server.currentRfBroadcasts.includes(broadcast.frequency))
+                        return;
+                    server.currentRfBroadcasts.push(broadcast.frequency);
+                    if (broadcast.frequency === 4765) {
+                        this.emit(constants_1.RCEEvent.EventStart, {
+                            server,
+                            event: "Small Oil Rig",
+                            special: false,
+                        });
+                    }
+                    else if (broadcast.frequency === 4768) {
+                        this.emit(constants_1.RCEEvent.EventStart, {
+                            server,
+                            event: "Oil Rig",
+                            special: false,
+                        });
+                    }
+                    this.emit(constants_1.RCEEvent.FrequencyReceived, {
+                        server,
+                        frequency: broadcast.frequency,
+                        coordinates: broadcast.coordinates,
+                        range: broadcast.range,
+                    });
+                });
+                return this.servers.set(server.identifier, {
+                    ...server,
+                    currentRfBroadcasts: server.currentRfBroadcasts,
+                });
+            }
             // Check for a command being executed
             const executingMatch = log.match(/Executing console system command '([^']+)'/);
             if (executingMatch) {
@@ -850,28 +980,30 @@ class RCEManager extends types_1.RCEEvents {
                 region: opts.region,
                 refreshPlayers: opts.refreshPlayers || 0,
                 state: opts.state || [],
+                eventFlags: [],
                 refreshPlayersInterval: opts.refreshPlayers
                     ? setInterval(() => {
-                        this.refreshPlayers(opts.identifier);
-                    }, opts.refreshPlayers * 30_000)
+                        this.sendCommand(opts.identifier, "Users");
+                    }, opts.refreshPlayers * 60_000)
                     : undefined,
-                rfBroadcasting: opts.rfBroadcasting || 0,
+                rfBroadcasting: opts.rfBroadcasting || false,
                 rfBroadcastingInterval: opts.rfBroadcasting
                     ? setInterval(() => {
-                        this.refreshBroadcasters(opts.identifier);
-                    }, opts.rfBroadcasting * 30_000)
+                        this.sendCommand(opts.identifier, "rf.listboardcaster");
+                    }, 30_000)
                     : undefined,
-                heliFeeds: opts.heliFeeds || 0,
+                currentRfBroadcasts: [],
+                heliFeeds: opts.heliFeeds || false,
                 heliFeedsInterval: opts.heliFeeds
                     ? setInterval(() => {
-                        this.refreshHeliFeeds(opts.identifier);
-                    }, opts.heliFeeds * 30_000)
+                        this.sendCommand(opts.identifier, "find_entity servergibs_patrolhelicopter");
+                    }, 60_000)
                     : undefined,
-                bradFeeds: opts.bradFeeds || 0,
+                bradFeeds: opts.bradFeeds || false,
                 bradFeedsInterval: opts.bradFeeds
                     ? setInterval(() => {
-                        this.refreshBradFeeds(opts.identifier);
-                    }, opts.bradFeeds * 30_000)
+                        this.sendCommand(opts.identifier, "find_entity servergibs_bradley");
+                    }, 60_000)
                     : undefined,
                 players: [],
                 added: true,
@@ -919,16 +1051,7 @@ class RCEManager extends types_1.RCEEvents {
                     }
                 });
                 if (opts.refreshPlayers) {
-                    this.refreshPlayers(opts.identifier);
-                }
-                if (opts.heliFeeds) {
-                    this.refreshHeliFeeds(opts.identifier);
-                }
-                if (opts.bradFeeds) {
-                    this.refreshBradFeeds(opts.identifier);
-                }
-                if (opts.rfBroadcasting) {
-                    this.refreshBroadcasters(opts.identifier);
+                    this.sendCommand(opts.identifier, "Users");
                 }
                 if (currentState === "RUNNING") {
                     this.markServerAsReady(this.getServer(opts.identifier));
@@ -944,121 +1067,6 @@ class RCEManager extends types_1.RCEEvents {
         const joined = newList.filter((ign) => !oldList.includes(ign));
         const left = oldList.filter((ign) => !newList.includes(ign));
         return { joined, left };
-    }
-    async refreshPlayers(identifier) {
-        this.logger.debug(`Refreshing Players For ${identifier}`);
-        const server = this.getServer(identifier);
-        if (!server) {
-            this.logError(`[${identifier}] Failed To Refresh Players: No Server Found For ID ${identifier}`);
-            return;
-        }
-        const users = await this.sendCommand(identifier, "Users", true);
-        if (!users) {
-            this.logger.warn(`[${identifier}] Failed To Refresh Players!`);
-            return;
-        }
-        const players = users.match(/"(.*?)"/g).map((ign) => ign.replace(/"/g, ""));
-        players.shift();
-        const s = this.getServer(identifier);
-        const { joined, left } = this.comparePopulation(s.players, players);
-        joined.forEach((ign) => {
-            this.emit(constants_1.RCEEvent.PlayerJoined, { server, ign });
-        });
-        left.forEach((ign) => {
-            this.emit(constants_1.RCEEvent.PlayerLeft, { server, ign });
-        });
-        this.servers.set(identifier, {
-            ...s,
-            players,
-        });
-        this.emit(constants_1.RCEEvent.PlayerListUpdate, { server, players, joined, left });
-        this.logger.debug(`Players Refreshed For ${identifier}`);
-    }
-    async refreshBroadcasters(identifier) {
-        this.logger.debug(`Refreshing Broadcasters For ${identifier}`);
-        const server = this.getServer(identifier);
-        if (!server) {
-            this.logError(`[${identifier}] Failed To Refresh Broadcasters: No Server Found For ID ${identifier}`);
-            return;
-        }
-        const broadcasters = await this.sendCommand(identifier, "rf.listboardcaster", true);
-        if (!broadcasters) {
-            this.logger.warn(`[${identifier}] Failed To Refresh Broadcasters!`);
-            return;
-        }
-        const regex = /\[(\d+) MHz\] Position: \(([\d.-]+), ([\d.-]+), ([\d.-]+)\), Range: (\d+)/g;
-        // Create a Map to store frequency data
-        const frequencyMap = new Map();
-        if (typeof broadcasters === "string") {
-            const matches = [...broadcasters.matchAll(regex)];
-            matches.forEach((match) => {
-                const frequency = match[1];
-                const coords = [
-                    parseFloat(match[2]),
-                    parseFloat(match[3]),
-                    parseFloat(match[4]),
-                ];
-                const range = parseInt(match[5], 10);
-                // Store the frequency details in the Map
-                frequencyMap.set(frequency, { coords, range });
-            });
-            // Emit events for each frequency from the Map
-            frequencyMap.forEach(({ coords, range }, frequency) => {
-                this.emit(constants_1.RCEEvent.FrequencyReceived, {
-                    server,
-                    frequency,
-                    coords,
-                    range,
-                });
-            });
-        }
-        this.logger.debug(`Broadcasters Refreshed For ${identifier}`);
-    }
-    async refreshBradFeeds(identifier) {
-        this.logger.debug(`Refreshing Bradley APC Feeds For ${identifier}`);
-        const server = this.getServer(identifier);
-        if (!server) {
-            this.logError(`[${identifier}] Failed To Refresh Bradley APC Feeds: No Server Found For ID ${identifier}`);
-            return;
-        }
-        const gibs = await this.sendCommand(identifier, "find_entity servergibs_bradley", true);
-        if (!gibs) {
-            this.logger.warn(`[${identifier}] Failed To Refresh Bradley APC Feeds!`);
-            return;
-        }
-        if (/servergibs_bradley/.test(gibs)) {
-            this.emit(constants_1.RCEEvent.EventStart, {
-                server,
-                event: "Bradley APC Debris",
-                special: false,
-            });
-        }
-        else {
-            this.logger.debug(`[${identifier}] No Bradley APC Gibs Found!`);
-        }
-    }
-    async refreshHeliFeeds(identifier) {
-        this.logger.debug(`Refreshing Patrol Helicopter Feeds For ${identifier}`);
-        const server = this.getServer(identifier);
-        if (!server) {
-            this.logError(`[${identifier}] Failed To Refresh Patrol Helicopter Feeds: No Server Found For ID ${identifier}`);
-            return;
-        }
-        const gibs = await this.sendCommand(identifier, "find_entity servergibs_patrolhelicopter", true);
-        if (!gibs) {
-            this.logger.warn(`[${identifier}] Failed To Refresh Patrol Helicopter Feeds!`);
-            return;
-        }
-        if (/servergibs_patrolhelicopter/.test(gibs)) {
-            this.emit(constants_1.RCEEvent.EventStart, {
-                server,
-                event: "Patrol Helicopter Debris",
-                special: false,
-            });
-        }
-        else {
-            this.logger.debug(`[${identifier}] No Patrol Helicopter Gibs Found!`);
-        }
     }
     /*
       * Get a Rust server from the manager
