@@ -1,5 +1,5 @@
 export declare enum GPORTALRoutes {
-    Command = "https://www.g-portal.com/ngpapi/",
+    Api = "https://www.g-portal.com/ngpapi/",
     Token = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/token",
     WebSocket = "wss://www.g-portal.com/ngpapi/",
     Origin = "https://www.g-portal.com",

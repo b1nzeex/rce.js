@@ -348,7 +348,7 @@ class RCEManager extends types_1.RCEEvents {
             return this.fetchServiceState(sid, region);
         }
         try {
-            const response = await fetch(constants_1.GPORTALRoutes.Command, {
+            const response = await fetch(constants_1.GPORTALRoutes.Api, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -618,7 +618,7 @@ class RCEManager extends types_1.RCEEvents {
             return this.resolveServerId(region, serverId, identifier);
         }
         try {
-            const response = await fetch(constants_1.GPORTALRoutes.Command, {
+            const response = await fetch(constants_1.GPORTALRoutes.Api, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -720,7 +720,7 @@ class RCEManager extends types_1.RCEEvents {
                 });
                 this.logger.debug(`Command "${command}" Added To Queue!`);
                 try {
-                    fetch(constants_1.GPORTALRoutes.Command, {
+                    fetch(constants_1.GPORTALRoutes.Api, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -760,7 +760,7 @@ class RCEManager extends types_1.RCEEvents {
         }
         else {
             try {
-                const response = await fetch(constants_1.GPORTALRoutes.Command, {
+                const response = await fetch(constants_1.GPORTALRoutes.Api, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -850,13 +850,29 @@ class RCEManager extends types_1.RCEEvents {
                 region: opts.region,
                 refreshPlayers: opts.refreshPlayers || 0,
                 state: opts.state || [],
-                refreshPlayersInterval: opts.refreshPlayers ? setInterval(() => { this.refreshPlayers(opts.identifier); }, opts.refreshPlayers * 30_000) : undefined,
+                refreshPlayersInterval: opts.refreshPlayers
+                    ? setInterval(() => {
+                        this.refreshPlayers(opts.identifier);
+                    }, opts.refreshPlayers * 30_000)
+                    : undefined,
                 rfBroadcasting: opts.rfBroadcasting || 0,
-                rfBroadcastingInterval: opts.rfBroadcasting ? setInterval(() => { this.refreshBroadcasters(opts.identifier); }, opts.rfBroadcasting * 30_000) : undefined,
+                rfBroadcastingInterval: opts.rfBroadcasting
+                    ? setInterval(() => {
+                        this.refreshBroadcasters(opts.identifier);
+                    }, opts.rfBroadcasting * 30_000)
+                    : undefined,
                 heliFeeds: opts.heliFeeds || 0,
-                heliFeedsInterval: opts.heliFeeds ? setInterval(() => { this.refreshHeliFeeds(opts.identifier); }, opts.heliFeeds * 30_000) : undefined,
+                heliFeedsInterval: opts.heliFeeds
+                    ? setInterval(() => {
+                        this.refreshHeliFeeds(opts.identifier);
+                    }, opts.heliFeeds * 30_000)
+                    : undefined,
                 bradFeeds: opts.bradFeeds || 0,
-                bradFeedsInterval: opts.bradFeeds ? setInterval(() => { this.refreshBradFeeds(opts.identifier); }, opts.bradFeeds * 30_000) : undefined,
+                bradFeedsInterval: opts.bradFeeds
+                    ? setInterval(() => {
+                        this.refreshBradFeeds(opts.identifier);
+                    }, opts.bradFeeds * 30_000)
+                    : undefined,
                 players: [],
                 added: true,
                 ready: false,
@@ -988,7 +1004,12 @@ class RCEManager extends types_1.RCEEvents {
             });
             // Emit events for each frequency from the Map
             frequencyMap.forEach(({ coords, range }, frequency) => {
-                this.emit(constants_1.RCEEvent.FrequencyReceived, { server, frequency, coords, range });
+                this.emit(constants_1.RCEEvent.FrequencyReceived, {
+                    server,
+                    frequency,
+                    coords,
+                    range,
+                });
             });
         }
         this.logger.debug(`Broadcasters Refreshed For ${identifier}`);
@@ -1008,13 +1029,12 @@ class RCEManager extends types_1.RCEEvents {
         if (/servergibs_bradley/.test(gibs)) {
             this.emit(constants_1.RCEEvent.EventStart, {
                 server,
-                event: "Bradley APC",
-                special: false
+                event: "Bradley APC Debris",
+                special: false,
             });
-            await this.sendCommand(identifier, "entity.deleteentity servergibs_bradley 0");
         }
         else {
-            this.logger.debug(`[${identifier}] No Patrol Helicopter Gibs Found!`);
+            this.logger.debug(`[${identifier}] No Bradley APC Gibs Found!`);
         }
     }
     async refreshHeliFeeds(identifier) {
@@ -1032,10 +1052,9 @@ class RCEManager extends types_1.RCEEvents {
         if (/servergibs_patrolhelicopter/.test(gibs)) {
             this.emit(constants_1.RCEEvent.EventStart, {
                 server,
-                event: "Patrol Helicopter",
-                special: false
+                event: "Patrol Helicopter Debris",
+                special: false,
             });
-            await this.sendCommand(identifier, "entity.deleteentity servergibs_patrolhelicopter 0");
         }
         else {
             this.logger.debug(`[${identifier}] No Patrol Helicopter Gibs Found!`);

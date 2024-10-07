@@ -104,7 +104,7 @@ export interface NoteEditEventPayload extends EventPayload {
     newContent: string;
 }
 export interface EventStartEventPayload extends EventPayload {
-    event: string;
+    event: "Airdrop" | "Cargo Ship" | "Chinook" | "Patrol Helicopter" | "Halloween" | "Christmas" | "Easter" | "Patrol Helicopter Debris" | "Bradley APC Debris";
     special: boolean;
 }
 export interface PlayerKillEventPayload extends EventPayload {

@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EVENTS = exports.QuickChat = exports.RCEEvent = exports.LogLevel = exports.GPORTALWebsocketTypes = exports.GPORTALRoutes = void 0;
 var GPORTALRoutes;
 (function (GPORTALRoutes) {
-    GPORTALRoutes["Command"] = "https://www.g-portal.com/ngpapi/";
+    GPORTALRoutes["Api"] = "https://www.g-portal.com/ngpapi/";
     GPORTALRoutes["Token"] = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/token";
     GPORTALRoutes["WebSocket"] = "wss://www.g-portal.com/ngpapi/";
     GPORTALRoutes["Origin"] = "https://www.g-portal.com";
