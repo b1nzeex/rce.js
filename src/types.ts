@@ -244,8 +244,6 @@ export interface RCEEventTypes {
   [RCEEvent.CustomZoneAdded]: CustomZoneAddedEventPayload;
   [RCEEvent.CustomZoneRemoved]: CustomZoneRemovedEventPayload;
   [RCEEvent.FrequencyReceived]: FrequencyReceivedEventPayload;
-  [RCEEvent.BradDowned]: EventPayload;
-  [RCEEvent.HeliDowned]: EventPayload;
 }
 
 export class RCEEvents extends EventEmitter {

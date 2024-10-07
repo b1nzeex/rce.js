@@ -1373,7 +1373,11 @@ export default class RCEManager extends RCEEvents {
       return;
     }
     if (/servergibs_bradley/.test(gibs)) {
-      this.emit(RCEEvent.BradDowned, { server });
+      this.emit(RCEEvent.EventStart, {
+        server,
+        event: "Bradley APC",
+        special: false
+      })
       await this.sendCommand(identifier, "entity.deleteentity servergibs_bradley 0");
     } else {
       this.logger.debug(`[${identifier}] No Patrol Helicopter Gibs Found!`);
@@ -1404,7 +1408,11 @@ export default class RCEManager extends RCEEvents {
     }
 
     if (/servergibs_patrolhelicopter/.test(gibs)) {
-      this.emit(RCEEvent.HeliDowned, { server });
+      this.emit(RCEEvent.EventStart, {
+        server,
+        event: "Patrol Helicopter",
+        special: false
+      })
       await this.sendCommand(identifier, "entity.deleteentity servergibs_patrolhelicopter 0");
     } else {
       this.logger.debug(`[${identifier}] No Patrol Helicopter Gibs Found!`);
