@@ -48,6 +48,8 @@ class RCEManager extends types_1.RCEEvents {
                 region: server.region,
                 refreshPlayers: server.refreshPlayers || 0,
                 rfBroadcasting: server.rfBroadcasting || 0,
+                heliFeeds: server.heliFeeds || 0,
+                bradFeeds: server.bradFeeds || 0,
                 state: server.state || [],
                 players: [],
                 added: false,
@@ -198,6 +200,8 @@ class RCEManager extends types_1.RCEEvents {
         this.servers.forEach((server) => {
             clearInterval(server.refreshPlayersInterval);
             clearInterval(server.rfBroadcastingInterval);
+            clearInterval(server.bradFeedsInterval);
+            clearInterval(server.heliFeedsInterval);
             server.players = [];
             server.added = false;
             server.ready = false;
@@ -846,17 +850,13 @@ class RCEManager extends types_1.RCEEvents {
                 region: opts.region,
                 refreshPlayers: opts.refreshPlayers || 0,
                 state: opts.state || [],
-                refreshPlayersInterval: opts.refreshPlayers
-                    ? setInterval(() => {
-                        this.refreshPlayers(opts.identifier);
-                    }, opts.refreshPlayers * 60_000)
-                    : undefined,
+                refreshPlayersInterval: opts.refreshPlayers ? setInterval(() => { this.refreshPlayers(opts.identifier); }, opts.refreshPlayers * 30_000) : undefined,
                 rfBroadcasting: opts.rfBroadcasting || 0,
-                rfBroadcastingInterval: opts.rfBroadcasting
-                    ? setInterval(() => {
-                        this.refreshBroadcasters(opts.identifier);
-                    }, opts.rfBroadcasting * 30_000)
-                    : undefined,
+                rfBroadcastingInterval: opts.rfBroadcasting ? setInterval(() => { this.refreshBroadcasters(opts.identifier); }, opts.rfBroadcasting * 30_000) : undefined,
+                heliFeeds: opts.heliFeeds || 0,
+                heliFeedsInterval: opts.heliFeeds ? setInterval(() => { this.refreshHeliFeeds(opts.identifier); }, opts.heliFeeds * 30_000) : undefined,
+                bradFeeds: opts.bradFeeds || 0,
+                bradFeedsInterval: opts.bradFeeds ? setInterval(() => { this.refreshBradFeeds(opts.identifier); }, opts.bradFeeds * 30_000) : undefined,
                 players: [],
                 added: true,
                 ready: false,
@@ -904,6 +904,12 @@ class RCEManager extends types_1.RCEEvents {
                 });
                 if (opts.refreshPlayers) {
                     this.refreshPlayers(opts.identifier);
+                }
+                if (opts.heliFeeds) {
+                    this.refreshHeliFeeds(opts.identifier);
+                }
+                if (opts.bradFeeds) {
+                    this.refreshBradFeeds(opts.identifier);
                 }
                 if (opts.rfBroadcasting) {
                     this.refreshBroadcasters(opts.identifier);
@@ -987,6 +993,54 @@ class RCEManager extends types_1.RCEEvents {
         }
         this.logger.debug(`Broadcasters Refreshed For ${identifier}`);
     }
+    async refreshBradFeeds(identifier) {
+        this.logger.debug(`Refreshing Bradley APC Feeds For ${identifier}`);
+        const server = this.getServer(identifier);
+        if (!server) {
+            this.logError(`[${identifier}] Failed To Refresh Bradley APC Feeds: No Server Found For ID ${identifier}`);
+            return;
+        }
+        const gibs = await this.sendCommand(identifier, "find_entity servergibs_bradley", true);
+        if (!gibs) {
+            this.logger.warn(`[${identifier}] Failed To Refresh Bradley APC Feeds!`);
+            return;
+        }
+        if (/servergibs_bradley/.test(gibs)) {
+            this.emit(constants_1.RCEEvent.EventStart, {
+                server,
+                event: "Bradley APC",
+                special: false
+            });
+            await this.sendCommand(identifier, "entity.deleteentity servergibs_bradley 0");
+        }
+        else {
+            this.logger.debug(`[${identifier}] No Patrol Helicopter Gibs Found!`);
+        }
+    }
+    async refreshHeliFeeds(identifier) {
+        this.logger.debug(`Refreshing Patrol Helicopter Feeds For ${identifier}`);
+        const server = this.getServer(identifier);
+        if (!server) {
+            this.logError(`[${identifier}] Failed To Refresh Patrol Helicopter Feeds: No Server Found For ID ${identifier}`);
+            return;
+        }
+        const gibs = await this.sendCommand(identifier, "find_entity servergibs_patrolhelicopter", true);
+        if (!gibs) {
+            this.logger.warn(`[${identifier}] Failed To Refresh Patrol Helicopter Feeds!`);
+            return;
+        }
+        if (/servergibs_patrolhelicopter/.test(gibs)) {
+            this.emit(constants_1.RCEEvent.EventStart, {
+                server,
+                event: "Patrol Helicopter",
+                special: false
+            });
+            await this.sendCommand(identifier, "entity.deleteentity servergibs_patrolhelicopter 0");
+        }
+        else {
+            this.logger.debug(`[${identifier}] No Patrol Helicopter Gibs Found!`);
+        }
+    }
     /*
       * Get a Rust server from the manager
   
@@ -1012,6 +1066,8 @@ class RCEManager extends types_1.RCEEvents {
     removeServer(identifier) {
         clearInterval(this.getServer(identifier)?.refreshPlayersInterval);
         clearInterval(this.getServer(identifier)?.rfBroadcastingInterval);
+        clearInterval(this.getServer(identifier)?.bradFeedsInterval);
+        clearInterval(this.getServer(identifier)?.heliFeedsInterval);
         this.servers.delete(identifier);
         const request = this.requests.get(identifier);
         if (request)

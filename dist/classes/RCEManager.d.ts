@@ -36,6 +36,8 @@ export default class RCEManager extends RCEEvents {
     private comparePopulation;
     private refreshPlayers;
     private refreshBroadcasters;
+    private refreshBradFeeds;
+    private refreshHeliFeeds;
     getServer(identifier: string): RustServer;
     removeServer(identifier: string): void;
     getServers(): Map<string, RustServer>;
