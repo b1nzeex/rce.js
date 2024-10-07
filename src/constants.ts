@@ -1,5 +1,5 @@
 export enum GPORTALRoutes {
-  Command = "https://www.g-portal.com/ngpapi/",
+  Api = "https://www.g-portal.com/ngpapi/",
   Token = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/token",
   WebSocket = "wss://www.g-portal.com/ngpapi/",
   Origin = "https://www.g-portal.com",
@@ -47,7 +47,7 @@ export enum RCEEvent {
   ServiceState = "service_state",
   CustomZoneAdded = "custom_zone_added",
   CustomZoneRemoved = "custom_zone_removed",
-  FrequencyReceived = "frequency_received"
+  FrequencyReceived = "frequency_received",
 }
 
 export enum QuickChat {

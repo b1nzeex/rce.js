@@ -124,7 +124,16 @@ export interface NoteEditEventPayload extends EventPayload {
 }
 
 export interface EventStartEventPayload extends EventPayload {
-  event: string;
+  event:
+    | "Airdrop"
+    | "Cargo Ship"
+    | "Chinook"
+    | "Patrol Helicopter"
+    | "Halloween"
+    | "Christmas"
+    | "Easter"
+    | "Patrol Helicopter Debris"
+    | "Bradley APC Debris";
   special: boolean;
 }
 

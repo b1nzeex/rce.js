@@ -300,7 +300,8 @@ export default class RCEManager extends RCEEvents {
 
       if (this.connectionAttempt < 5) {
         this.logger.warn(
-          `Websocket Error: Attempting To Reconnect In ${(this.connectionAttempt + 1) * 10
+          `Websocket Error: Attempting To Reconnect In ${
+            (this.connectionAttempt + 1) * 10
           } Second(s) (Attempt ${this.connectionAttempt + 1} Of 5)`
         );
         setTimeout(
@@ -318,7 +319,8 @@ export default class RCEManager extends RCEEvents {
       if (code !== 1000) {
         if (this.connectionAttempt < 5) {
           this.logger.warn(
-            `Websocket closed: Attempting To Reconnect In ${(this.connectionAttempt + 1) * 10
+            `Websocket closed: Attempting To Reconnect In ${
+              (this.connectionAttempt + 1) * 10
             } Second(s) (Attempt ${this.connectionAttempt + 1} Of 5)`
           );
           setTimeout(
@@ -453,7 +455,7 @@ export default class RCEManager extends RCEEvents {
     }
 
     try {
-      const response = await fetch(GPORTALRoutes.Command, {
+      const response = await fetch(GPORTALRoutes.Api, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -811,7 +813,7 @@ export default class RCEManager extends RCEEvents {
           if (log.includes(key)) {
             this.emit(RCEEvent.EventStart, {
               server,
-              event: options.name,
+              event: options.name as any,
               special: options.special,
             });
           }
@@ -837,7 +839,7 @@ export default class RCEManager extends RCEEvents {
     }
 
     try {
-      const response = await fetch(GPORTALRoutes.Command, {
+      const response = await fetch(GPORTALRoutes.Api, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -974,7 +976,7 @@ export default class RCEManager extends RCEEvents {
         this.logger.debug(`Command "${command}" Added To Queue!`);
 
         try {
-          fetch(GPORTALRoutes.Command, {
+          fetch(GPORTALRoutes.Api, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -1030,7 +1032,7 @@ export default class RCEManager extends RCEEvents {
       });
     } else {
       try {
-        const response = await fetch(GPORTALRoutes.Command, {
+        const response = await fetch(GPORTALRoutes.Api, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1149,13 +1151,29 @@ export default class RCEManager extends RCEEvents {
         region: opts.region,
         refreshPlayers: opts.refreshPlayers || 0,
         state: opts.state || [],
-        refreshPlayersInterval: opts.refreshPlayers ? setInterval(() => { this.refreshPlayers(opts.identifier); }, opts.refreshPlayers * 30_000) : undefined,
+        refreshPlayersInterval: opts.refreshPlayers
+          ? setInterval(() => {
+              this.refreshPlayers(opts.identifier);
+            }, opts.refreshPlayers * 30_000)
+          : undefined,
         rfBroadcasting: opts.rfBroadcasting || 0,
-        rfBroadcastingInterval: opts.rfBroadcasting ? setInterval(() => { this.refreshBroadcasters(opts.identifier); }, opts.rfBroadcasting * 30_000) : undefined,
+        rfBroadcastingInterval: opts.rfBroadcasting
+          ? setInterval(() => {
+              this.refreshBroadcasters(opts.identifier);
+            }, opts.rfBroadcasting * 30_000)
+          : undefined,
         heliFeeds: opts.heliFeeds || 0,
-        heliFeedsInterval: opts.heliFeeds ? setInterval(() => { this.refreshHeliFeeds(opts.identifier); }, opts.heliFeeds * 30_000) : undefined,
+        heliFeedsInterval: opts.heliFeeds
+          ? setInterval(() => {
+              this.refreshHeliFeeds(opts.identifier);
+            }, opts.heliFeeds * 30_000)
+          : undefined,
         bradFeeds: opts.bradFeeds || 0,
-        bradFeedsInterval: opts.bradFeeds ? setInterval(() => { this.refreshBradFeeds(opts.identifier); }, opts.bradFeeds * 30_000) : undefined,
+        bradFeedsInterval: opts.bradFeeds
+          ? setInterval(() => {
+              this.refreshBradFeeds(opts.identifier);
+            }, opts.bradFeeds * 30_000)
+          : undefined,
         players: [],
         added: true,
         ready: false,
@@ -1297,7 +1315,6 @@ export default class RCEManager extends RCEEvents {
     this.logger.debug(`Players Refreshed For ${identifier}`);
   }
 
-
   private async refreshBroadcasters(identifier: string) {
     this.logger.debug(`Refreshing Broadcasters For ${identifier}`);
 
@@ -1344,7 +1361,12 @@ export default class RCEManager extends RCEEvents {
 
       // Emit events for each frequency from the Map
       frequencyMap.forEach(({ coords, range }, frequency) => {
-        this.emit(RCEEvent.FrequencyReceived, { server, frequency, coords, range });
+        this.emit(RCEEvent.FrequencyReceived, {
+          server,
+          frequency,
+          coords,
+          range,
+        });
       });
     }
 
@@ -1375,15 +1397,13 @@ export default class RCEManager extends RCEEvents {
     if (/servergibs_bradley/.test(gibs)) {
       this.emit(RCEEvent.EventStart, {
         server,
-        event: "Bradley APC",
-        special: false
-      })
-      await this.sendCommand(identifier, "entity.deleteentity servergibs_bradley 0");
+        event: "Bradley APC Debris",
+        special: false,
+      });
     } else {
-      this.logger.debug(`[${identifier}] No Patrol Helicopter Gibs Found!`);
+      this.logger.debug(`[${identifier}] No Bradley APC Gibs Found!`);
     }
   }
-
 
   private async refreshHeliFeeds(identifier: string) {
     this.logger.debug(`Refreshing Patrol Helicopter Feeds For ${identifier}`);
@@ -1403,22 +1423,22 @@ export default class RCEManager extends RCEEvents {
     );
 
     if (!gibs) {
-      this.logger.warn(`[${identifier}] Failed To Refresh Patrol Helicopter Feeds!`);
+      this.logger.warn(
+        `[${identifier}] Failed To Refresh Patrol Helicopter Feeds!`
+      );
       return;
     }
 
     if (/servergibs_patrolhelicopter/.test(gibs)) {
       this.emit(RCEEvent.EventStart, {
         server,
-        event: "Patrol Helicopter",
-        special: false
-      })
-      await this.sendCommand(identifier, "entity.deleteentity servergibs_patrolhelicopter 0");
+        event: "Patrol Helicopter Debris",
+        special: false,
+      });
     } else {
       this.logger.debug(`[${identifier}] No Patrol Helicopter Gibs Found!`);
     }
   }
-
 
   /*
     * Get a Rust server from the manager
