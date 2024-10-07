@@ -1352,7 +1352,7 @@ export default class RCEManager extends RCEEvents {
   }
 
   private async refreshBradFeeds(identifier: string) {
-    this.logger.info(`Refreshing Bradley APC Feeds For ${identifier}`);
+    this.logger.debug(`Refreshing Bradley APC Feeds For ${identifier}`);
 
     const server = this.getServer(identifier);
     if (!server) {
@@ -1382,7 +1382,7 @@ export default class RCEManager extends RCEEvents {
 
 
   private async refreshHeliFeeds(identifier: string) {
-    this.logger.info(`Refreshing Patrol Helicopter Feeds For ${identifier}`);
+    this.logger.debug(`Refreshing Patrol Helicopter Feeds For ${identifier}`);
 
     const server = this.getServer(identifier);
     if (!server) {
