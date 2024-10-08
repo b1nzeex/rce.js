@@ -568,9 +568,9 @@ class RCEManager extends types_1.RCEEvents {
                 this.logger.debug(`Command Response Found For: ${commandRequest.command}`);
                 commandRequest.resolve(log);
                 clearTimeout(commandRequest.timeout);
-                this.commands = this.commands.filter((req) => req.command !== commandRequest.command &&
-                    req.identifier !== commandRequest.identifier &&
-                    req.timestamp !== commandRequest.timestamp);
+                this.commands = this.commands.filter((req) => !(req.command === commandRequest.command &&
+                    req.identifier === commandRequest.identifier &&
+                    req.timestamp === commandRequest.timestamp));
             }
             this.emit(constants_1.RCEEvent.Message, { server, message: log });
             this.logger.debug(`Received Message: ${log} From ${server.identifier}`);
