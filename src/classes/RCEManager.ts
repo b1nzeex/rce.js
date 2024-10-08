@@ -743,9 +743,11 @@ export default class RCEManager extends RCEEvents {
 
         this.commands = this.commands.filter(
           (req) =>
-            req.command !== commandRequest.command &&
-            req.identifier !== commandRequest.identifier &&
-            req.timestamp !== commandRequest.timestamp
+          !(
+            req.command === commandRequest.command &&
+            req.identifier === commandRequest.identifier &&
+            req.timestamp === commandRequest.timestamp
+          )
         );
       }
 
