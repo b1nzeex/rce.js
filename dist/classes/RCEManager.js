@@ -461,7 +461,9 @@ class RCEManager extends types_1.RCEEvents {
             }
             // USERS
             const usersMatch = log.match(/"(.*?)"/g);
-            if (usersMatch) {
+            if (usersMatch &&
+                log.startsWith('<slot:"name">\n') &&
+                log.endsWith("users\n")) {
                 const players = usersMatch.map((plr) => plr.replace(/"/g, ""));
                 players.shift();
                 const s = this.getServer(server.identifier);
