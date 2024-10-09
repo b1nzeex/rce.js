@@ -52,7 +52,7 @@ class RCEManager extends types_1.RCEEvents {
                 heliFeeds: server.heliFeeds || false,
                 bradFeeds: server.bradFeeds || false,
                 state: server.state || [],
-                eventFlags: [],
+                flags: [],
                 players: [],
                 added: false,
                 ready: false,
@@ -418,17 +418,17 @@ class RCEManager extends types_1.RCEEvents {
             // EVENT_START - Bradley APC Debris
             if (log.includes("servergibs_bradley") &&
                 log.startsWith("realm ;entity ;group ;parent ;name") &&
-                !server.eventFlags.includes("bradley")) {
-                server.eventFlags.push("bradley");
+                !server.flags.includes("bradley")) {
+                server.flags.push("bradley");
                 this.servers.set(server.identifier, {
                     ...server,
-                    eventFlags: server.eventFlags,
+                    flags: server.flags,
                 });
                 setTimeout(() => {
-                    server.eventFlags = server.eventFlags.filter((f) => f !== "bradley");
+                    server.flags = server.flags.filter((f) => f !== "bradley");
                     this.servers.set(server.identifier, {
                         ...server,
-                        eventFlags: server.eventFlags,
+                        flags: server.flags,
                     });
                 }, 360_000);
                 return this.emit(constants_1.RCEEvent.EventStart, {
@@ -440,17 +440,17 @@ class RCEManager extends types_1.RCEEvents {
             // EVENT_START - Patrol Helicopter Debris
             if (log.includes("servergibs_patrolhelicopter") &&
                 log.startsWith("realm ;entity ;group ;parent ;name") &&
-                !server.eventFlags.includes("heli")) {
-                server.eventFlags.push("heli");
+                !server.flags.includes("heli")) {
+                server.flags.push("heli");
                 this.servers.set(server.identifier, {
                     ...server,
-                    eventFlags: server.eventFlags,
+                    flags: server.flags,
                 });
                 setTimeout(() => {
-                    server.eventFlags = server.eventFlags.filter((f) => f !== "heli");
+                    server.flags = server.flags.filter((f) => f !== "heli");
                     this.servers.set(server.identifier, {
                         ...server,
-                        eventFlags: server.eventFlags,
+                        flags: server.flags,
                     });
                 }, 360_000);
                 return this.emit(constants_1.RCEEvent.EventStart, {
@@ -461,19 +461,22 @@ class RCEManager extends types_1.RCEEvents {
             }
             // USERS
             const usersMatch = log.match(/"(.*?)"/g);
-            if (usersMatch &&
-                log.startsWith('<slot:"name">\n') &&
-                log.endsWith("users\n")) {
+            if (usersMatch && log.startsWith('<slot:"name">')) {
                 const players = usersMatch.map((plr) => plr.replace(/"/g, ""));
                 players.shift();
                 const s = this.getServer(server.identifier);
                 const { joined, left } = this.comparePopulation(s.players, players);
-                joined.forEach((ign) => {
-                    this.emit(constants_1.RCEEvent.PlayerJoined, { server, ign });
-                });
-                left.forEach((ign) => {
-                    this.emit(constants_1.RCEEvent.PlayerLeft, { server, ign });
-                });
+                if (s.flags.includes("init-refresh")) {
+                    joined.forEach((ign) => {
+                        this.emit(constants_1.RCEEvent.PlayerJoined, { server, ign });
+                    });
+                    left.forEach((ign) => {
+                        this.emit(constants_1.RCEEvent.PlayerLeft, { server, ign });
+                    });
+                }
+                if (!s.flags.includes("init-refresh")) {
+                    s.flags.push("init-refresh");
+                }
                 this.servers.set(server.identifier, {
                     ...s,
                     players,
@@ -982,7 +985,7 @@ class RCEManager extends types_1.RCEEvents {
                 region: opts.region,
                 refreshPlayers: opts.refreshPlayers || 0,
                 state: opts.state || [],
-                eventFlags: [],
+                flags: [],
                 refreshPlayersInterval: opts.refreshPlayers
                     ? setInterval(() => {
                         this.sendCommand(opts.identifier, "Users");

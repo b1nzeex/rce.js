@@ -30,7 +30,7 @@ export interface RustServer {
     bradFeeds?: boolean;
     bradFeedsInterval?: NodeJS.Timeout;
     state?: string | string[];
-    eventFlags: string[];
+    flags: string[];
     players: string[];
     added: boolean;
     ready: boolean;
