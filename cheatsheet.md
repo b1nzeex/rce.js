@@ -1,4 +1,4 @@
-# # Rust Console Edition Markdown Cheat Sheet
+# Rust Console Edition Markdown Cheat Sheet
 
 This is the cheat sheet for your Rust Console Edition markdown used for styling text in the "say" command!
 
