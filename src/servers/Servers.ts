@@ -1,0 +1,640 @@
+import type GPortalAuth from "../auth/Auth";
+import type GPortalSocket from "../socket/Socket";
+import type RCEManager from "../Manager";
+import { GPortalRoutes, RCEEvent } from "../constants";
+import type {
+  ServerOptions,
+  RustServer,
+  CommandResponse,
+  RustServerInformation,
+} from "./interfaces";
+import ServerUtils from "../util/ServerUtils";
+import CommandHandler from "./CommandHandler";
+import Helper from "../helper";
+
+export default class ServerManager {
+  private _manager: RCEManager;
+  private _auth: GPortalAuth;
+  private _socket: GPortalSocket;
+  private _servers: Map<string, RustServer> = new Map();
+
+  public constructor(
+    manager: RCEManager,
+    auth: GPortalAuth,
+    socket: GPortalSocket
+  ) {
+    this._manager = manager;
+    this._auth = auth;
+    this._socket = socket;
+  }
+
+  public async addMany(opts: ServerOptions[]) {
+    await Promise.all(opts.map((opt) => this.add(opt)));
+  }
+
+  public async add(opts: ServerOptions) {
+    this._manager.logger.debug(`Adding Server: ${opts.identifier}`);
+
+    if (!Array.isArray(opts.serverId) || !opts.serverId[1]) {
+      opts.serverId = [
+        Array.isArray(opts.serverId) ? opts.serverId[0] : opts.serverId,
+      ];
+
+      const sid = await this.fetchId(
+        opts.identifier,
+        opts.serverId[0],
+        opts.region
+      );
+
+      if (sid) {
+        opts.serverId.push(sid);
+      }
+    }
+
+    if (!opts.serverId[1]) {
+      this._manager.logger.error(
+        `[${opts.identifier}] Failed To Add Server: Invalid SID`
+      );
+      return;
+    }
+
+    const status = await this.fetchStatus(
+      opts.identifier,
+      opts.serverId[1],
+      opts.region
+    );
+    if (!status) {
+      this._manager.logger.error(
+        `[${opts.identifier}] Failed To Add Server: No Status Information`
+      );
+      return;
+    }
+
+    if (status === "SUSPENDED") {
+      this._manager.logger.error(
+        `[${opts.identifier}] Failed To Add Server: Suspended`
+      );
+      return;
+    }
+
+    this._servers.set(opts.identifier, {
+      identifier: opts.identifier,
+      serverId: opts.serverId,
+      region: opts.region,
+      intervals: {
+        playerRefreshing: {
+          enabled: opts.playerRefreshing ?? false,
+          interval: opts.playerRefreshing
+            ? setInterval(() => {
+                this.updatePlayers(opts.identifier);
+              }, 60_000)
+            : undefined,
+        },
+        radioRefreshing: {
+          enabled: opts.radioRefreshing ?? false,
+          interval: opts.radioRefreshing
+            ? setInterval(() => {
+                this.updateBroadcasters(opts.identifier);
+              }, 30_000)
+            : undefined,
+        },
+        extendedEventRefreshing: {
+          enabled: opts.extendedEventRefreshing ?? false,
+          interval: opts.extendedEventRefreshing
+            ? setInterval(() => {
+                this.fetchGibs(opts.identifier);
+              }, 60_000)
+            : undefined,
+        },
+      },
+      flags: [],
+      state: opts.state ?? [],
+      status: status as RustServer["status"],
+      players: [],
+      frequencies: [],
+      intents: opts.intents,
+    });
+
+    const server = this._servers.get(opts.identifier);
+    this._socket.addServer(server);
+
+    this._manager.logger.debug(
+      `[${server.identifier}] Server Status: ${status}`
+    );
+
+    if (status === "RUNNING") {
+      await ServerUtils.setReady(this._manager, server, true);
+
+      if (opts.playerRefreshing) {
+        await this.updatePlayers(opts.identifier);
+      }
+
+      if (opts.radioRefreshing) {
+        await this.updateBroadcasters(opts.identifier);
+      }
+
+      if (opts.extendedEventRefreshing) {
+        await this.fetchGibs(opts.identifier);
+      }
+    }
+  }
+
+  public update(server: RustServer) {
+    this._manager.logger.debug(`[${server.identifier}] Updating Server`);
+
+    this._servers.set(server.identifier, server);
+  }
+
+  public removeAll() {
+    this._servers.forEach((server) => this.remove(server));
+  }
+
+  public remove(server: RustServer) {
+    this._manager.logger.debug(`[${server.identifier}] Removing Server`);
+
+    clearInterval(server.intervals.playerRefreshing.interval);
+    clearInterval(server.intervals.radioRefreshing.interval);
+    clearInterval(server.intervals.extendedEventRefreshing.interval);
+    this._socket.removeServer(server);
+    this._servers.delete(server.identifier);
+
+    this._manager.logger.info(`[${server.identifier}] Server Removed`);
+  }
+
+  public get(identifier: string) {
+    return this._servers.get(identifier);
+  }
+
+  public async info(identifier: string) {
+    const server = this.get(identifier);
+    if (!server) {
+      this._manager.logger.error(`[${identifier}] Invalid Server`);
+      return null;
+    }
+
+    const info = await this.command(server.identifier, "serverinfo", true);
+    if (!info?.response) {
+      this._manager.logger.error(`[${identifier}] Failed To Fetch Server Info`);
+      return null;
+    }
+
+    const data: RustServerInformation = Helper.cleanOutput(info.response, true);
+    return data;
+  }
+
+  public async command(
+    identifier: string,
+    command: string,
+    response: boolean = false
+  ): Promise<CommandResponse> {
+    const token = this._auth?.accessToken;
+    if (!token) {
+      this._manager.logger.error(
+        `[${identifier}] Failed To Send Command: No Access Token`
+      );
+      return { ok: false, error: "No Access Token" };
+    }
+
+    const server = this._servers.get(identifier);
+    if (!server) {
+      this._manager.logger.error(
+        `[${identifier}] Failed To Send Command: Invalid Server`
+      );
+      return { ok: false, error: "Invalid Server" };
+    }
+
+    if (server.status !== "RUNNING") {
+      this._manager.logger.warn(
+        `[${identifier}] Failed To Send Command: Server Not Running`
+      );
+      return { ok: false, error: "Server Not Running" };
+    }
+
+    this._manager.logger.debug(`[${identifier}] Sending Command: ${command}`);
+
+    const payload = {
+      operationName: "sendConsoleMessage",
+      variables: {
+        sid: server.serverId[1],
+        region: server.region,
+        message: command,
+      },
+      query:
+        "mutation sendConsoleMessage($sid: Int!, $region: REGION!, $message: String!) {\n  sendConsoleMessage(rsid: {id: $sid, region: $region}, message: $message) {\n    ok\n    __typename\n  }\n}",
+    };
+
+    if (response) {
+      return new Promise(async (resolve, reject) => {
+        CommandHandler.add({
+          identifier,
+          command,
+          resolve,
+          reject,
+        });
+
+        try {
+          const response = await fetch(GPortalRoutes.Api, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            this._manager.logger.error(
+              `[${identifier}] Failed To Send Command: HTTP ${response.status} ${response.statusText}`
+            );
+            CommandHandler.remove(CommandHandler.get(identifier, command));
+            resolve({
+              ok: false,
+              error: `HTTP ${response.status} ${response.statusText}`,
+            });
+          }
+
+          const data = await response.json();
+          if (!data?.data?.sendConsoleMessage?.ok) {
+            this._manager.logger.error(
+              `[${identifier}] Failed To Send Command: AioRpcError`
+            );
+            CommandHandler.remove(CommandHandler.get(identifier, command));
+            resolve({
+              ok: false,
+              error: "AioRpcError",
+            });
+          }
+
+          const cmd = CommandHandler.get(identifier, command);
+          if (cmd) {
+            cmd.timeout = setTimeout(() => {
+              CommandHandler.remove(CommandHandler.get(identifier, command));
+              resolve({
+                ok: true,
+                response: undefined,
+              });
+            }, 3_000);
+          }
+        } catch (error) {
+          CommandHandler.remove(CommandHandler.get(identifier, command));
+          resolve({
+            ok: false,
+            error: error.message,
+          });
+        }
+      });
+    } else {
+      try {
+        const response = await fetch(GPortalRoutes.Api, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          this._manager.logger.error(
+            `[${identifier}] Failed To Send Command: HTTP ${response.status} ${response.statusText}`
+          );
+          return {
+            ok: false,
+            error: `HTTP ${response.status} ${response.statusText}`,
+          };
+        }
+
+        return undefined;
+      } catch (error) {
+        this._manager.logger.error(
+          `[${identifier}] Failed To Send Command: ${error}`
+        );
+        return {
+          ok: false,
+          error: error.message,
+        };
+      }
+    }
+  }
+
+  private async updateBroadcasters(identifier) {
+    const server = this.get(identifier);
+    if (!server) {
+      return this._manager.logger.warn(
+        `[${identifier}] Failed To Update Broadcasters: Invalid Server`
+      );
+    }
+
+    this._manager.logger.debug(`[${server.identifier}] Updating Broadcasters`);
+
+    const broadcasters = await this.command(
+      server.identifier,
+      "rf.listboardcaster",
+      true
+    );
+    if (!broadcasters?.response) {
+      return this._manager.logger.warn(
+        `[${server.identifier}] Failed To Update Broadcasters`
+      );
+    }
+
+    const broadcasts = [];
+
+    const regex =
+      /\[(\d+) MHz\] Position: \(([\d.-]+), ([\d.-]+), ([\d.-]+)\), Range: (\d+)/g;
+    let match;
+
+    while ((match = regex.exec(broadcasters.response)) !== null) {
+      const frequency = parseInt(match[1], 10);
+      const coordinates = [
+        parseFloat(match[2]),
+        parseFloat(match[3]),
+        parseFloat(match[4]),
+      ];
+      const range = parseInt(match[5], 10);
+
+      broadcasts.push({ frequency, coordinates, range });
+    }
+
+    server.frequencies.forEach((freq) => {
+      if (!broadcasts.find((b) => parseInt(b.frequency) === freq)) {
+        this._manager.events.emit(RCEEvent.FrequencyLost, {
+          server,
+          frequency: freq,
+        });
+
+        server.frequencies = server.frequencies.filter((f) => f !== freq);
+      }
+    });
+
+    broadcasts.forEach((broadcast) => {
+      if (server.frequencies.includes(broadcast.frequency)) return;
+      server.frequencies.push(broadcast.frequency);
+
+      if (broadcast.frequency === 4765) {
+        this._manager.events.emit(RCEEvent.EventStart, {
+          server,
+          event: "Small Oil Rig",
+          special: false,
+        });
+      } else if (broadcast.frequency === 4768) {
+        this._manager.events.emit(RCEEvent.EventStart, {
+          server,
+          event: "Oil Rig",
+          special: false,
+        });
+      }
+
+      this._manager.events.emit(RCEEvent.FrequencyGained, {
+        server,
+        frequency: broadcast.frequency,
+        coordinates: broadcast.coordinates,
+        range: broadcast.range,
+      });
+    });
+
+    this.update(server);
+
+    this._manager.logger.debug(`[${server.identifier}] Broadcasters Updated`);
+  }
+
+  private async fetchGibs(identifier: string) {
+    const server = this.get(identifier);
+    if (!server) {
+      return this._manager.logger.warn(
+        `[${identifier}] Failed To Fetch Gibs: Invalid Server`
+      );
+    }
+
+    this._manager.logger.debug(`[${server.identifier}] Fetching Gibs`);
+
+    const bradley = await this.command(
+      server.identifier,
+      "find_entity servergibs_bradley",
+      true
+    );
+    const heli = await this.command(
+      server.identifier,
+      "find_entity servergibs_patrolhelicopter",
+      true
+    );
+
+    if (!bradley?.response || !heli?.response) {
+      return this._manager.logger.warn(
+        `[${server.identifier}] Failed To Fetch Gibs`
+      );
+    }
+
+    if (
+      bradley.response.includes("servergibs_bradley") &&
+      !server.flags.includes("BRADLEY")
+    ) {
+      server.flags.push("BRADLEY");
+
+      setTimeout(() => {
+        const s = this.get(server.identifier);
+        if (s) {
+          s.flags = s.flags.filter((f) => f !== "BRADLEY");
+          this.update(s);
+        }
+      }, 60_000 * 6);
+
+      this._manager.events.emit(RCEEvent.EventStart, {
+        server,
+        event: "Bradley APC Debris",
+        special: false,
+      });
+    }
+
+    if (
+      heli.response.includes("servergibs_patrolhelicopter") &&
+      !server.flags.includes("HELICOPTER")
+    ) {
+      server.flags.push("HELICOPTER");
+
+      setTimeout(() => {
+        const s = this.get(server.identifier);
+        if (s) {
+          s.flags = s.flags.filter((f) => f !== "HELICOPTER");
+          this.update(s);
+        }
+      }, 60_000 * 6);
+
+      this._manager.events.emit(RCEEvent.EventStart, {
+        server,
+        event: "Patrol Helicopter Debris",
+        special: false,
+      });
+    }
+
+    this.update(server);
+
+    this._manager.logger.debug(`[${server.identifier}] Gibs Fetched`);
+  }
+
+  private async updatePlayers(identifier: string) {
+    const server = this.get(identifier);
+    if (!server) {
+      return this._manager.logger.warn(
+        `[${identifier}] Failed To Update Players: Invalid Server`
+      );
+    }
+
+    this._manager.logger.debug(`[${server.identifier}] Updating Players`);
+
+    const players = await this.command(server.identifier, "Users", true);
+    if (!players?.response) {
+      return this._manager.logger.warn(
+        `[${server.identifier}] Failed To Update Players`
+      );
+    }
+
+    const playerlist = players.response
+      .match(/"(.*?)"/g)
+      .map((ign) => ign.replace(/"/g, ""));
+    playerlist.shift();
+
+    const { joined, left } = Helper.comparePopulation(
+      server.players,
+      playerlist
+    );
+
+    joined.forEach((player) => {
+      this._manager.events.emit(RCEEvent.PlayerJoined, {
+        server,
+        ign: player,
+      });
+    });
+
+    left.forEach((player) => {
+      this._manager.events.emit(RCEEvent.PlayerLeft, {
+        server,
+        ign: player,
+      });
+    });
+
+    server.players = playerlist;
+    this.update(server);
+
+    this._manager.events.emit(RCEEvent.PlayerListUpdated, {
+      server,
+      players: playerlist,
+      joined,
+      left,
+    });
+
+    this._manager.logger.debug(`[${server.identifier}] Players Updated`);
+  }
+
+  private async fetchStatus(
+    identifier: string,
+    sid: number,
+    region: "EU" | "US"
+  ) {
+    const token = this._auth?.accessToken;
+    if (!token) {
+      console.error(
+        `[${identifier}] Failed To Fetch Server Status: No Access Token`
+      );
+      return null;
+    }
+
+    this._manager.logger.debug(`[${identifier}] Fetching Server Status`);
+
+    try {
+      const response = await fetch(GPortalRoutes.Api, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          operationName: "ctx",
+          variables: {
+            sid,
+            region,
+          },
+          query:
+            "query ctx($sid: Int!, $region: REGION!) {\n  cfgContext(rsid: {id: $sid, region: $region}) {\n    ns {\n      ...CtxFields\n      __typename\n    }\n    errors {\n      mutator\n      affectedPaths\n      error {\n        class_\n        args\n        __typename\n      }\n      scope\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment GameServerFields on GameServer {\n  id\n  serverName\n  serverPort\n  serverIp\n  __typename\n}\n\nfragment PermissionFields on Permission {\n  userName\n  created\n  __typename\n}\n\nfragment MysqlDbFields on CustomerMysqlDb {\n  httpUrl\n  host\n  port\n  database\n  username\n  password\n  __typename\n}\n\nfragment ServiceStateFields on ServiceState {\n  state\n  fsmState\n  fsmIsTransitioning\n  fsmIsExclusiveLocked\n  fsmFileAccess\n  fsmLastStateChange\n  fsmStateLiveProgress {\n    ... on InstallProgress {\n      action\n      percentage\n      __typename\n    }\n    ... on BroadcastProgress {\n      nextMessageAt\n      stateExitAt\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment RestartTaskFields on RestartTask {\n  id\n  runOnWeekday\n  runOnDayofmonth\n  runAtTimeofday\n  runInTimezone\n  schedule\n  data {\n    description\n    args\n    scheduleExtended\n    nextFireTime\n    __typename\n  }\n  __typename\n}\n\nfragment DisplayPortFields on DisplayPorts {\n  rconPort\n  queryPort\n  __typename\n}\n\nfragment SteamWorkshopItemFields on SteamWorkshopItem {\n  id\n  appId\n  itemType\n  name\n  links {\n    websiteUrl\n    __typename\n  }\n  summary\n  logo {\n    url\n    __typename\n  }\n  maps {\n    workshopId\n    mapName\n    __typename\n  }\n  dateCreated\n  dateModified\n  __typename\n}\n\nfragment SevenDaysModFields on SevenDaysMod {\n  id\n  name\n  repoKey\n  active\n  created\n  modified\n  __typename\n}\n\nfragment MapParams on FarmingSimulatorMapParamsObject {\n  serverIp\n  webServerPort\n  webStatsCode\n  token\n  __typename\n}\n\nfragment CtxFields on RootNamespace {\n  sys {\n    game {\n      name\n      key\n      platform\n      forumBoardId\n      supportedPlatforms\n      __typename\n    }\n    extraGameTranslationKeys\n    gameServer {\n      ...GameServerFields\n      __typename\n    }\n    permissionsOwner {\n      ...PermissionFields\n      __typename\n    }\n    permissions {\n      ...PermissionFields\n      __typename\n    }\n    mysqlDb {\n      ...MysqlDbFields\n      __typename\n    }\n    __typename\n  }\n  service {\n    config {\n      rsid {\n        id\n        region\n        __typename\n      }\n      type\n      hwId\n      state\n      ftpUser\n      ftpPort\n      ftpPassword\n      ftpReadOnly\n      ipAddress\n      rconPort\n      queryPort\n      autoBackup\n      dnsNames\n      currentVersion\n      targetVersion\n      __typename\n    }\n    latestRev {\n      id\n      created\n      __typename\n    }\n    maxSlots\n    files\n    memory {\n      base\n      effective\n      __typename\n    }\n    currentState {\n      ...ServiceStateFields\n      __typename\n    }\n    backups {\n      id\n      userSize\n      created\n      isAutoBackup\n      __typename\n    }\n    restartSchedule {\n      ...RestartTaskFields\n      __typename\n    }\n    dnsAvailableTlds\n    __typename\n  }\n  admin {\n    hardwareGuacamoleConnection {\n      url\n      __typename\n    }\n    __typename\n  }\n  profile {\n    __typename\n    ... on ProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      __typename\n    }\n    ... on MinecraftProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        rconPort\n        queryPort\n        additionalPorts\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      worlds\n      addonRam\n      isRamServer\n      ramOrderCreationDate\n      ramStopTimeUtc\n      isConnectedToBungeecord\n      bungeecordServerUrl\n      executables {\n        id\n        name\n        key\n        default\n        __typename\n      }\n      mods {\n        id\n        repoKey\n        name\n        image\n        mindRam\n        projectUrl\n        revisions {\n          id\n          created\n          executableId\n          extraData\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    ... on CsgoProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        rconPort\n        queryPort\n        gotvPort\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      selectedWorkshopItems {\n        ...SteamWorkshopItemFields\n        __typename\n      }\n      installedMaps {\n        name\n        displayName\n        workshopItem {\n          ...SteamWorkshopItemFields\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    ... on ValheimProfileNamespace {\n      name\n      cfgFiles\n      clientLink\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      __typename\n    }\n    ... on HellLetLooseProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        rconPort\n        queryPort\n        statsPort\n        beaconPort\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      __typename\n    }\n    ... on SevenDaysToDieProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        rconPort\n        queryPort\n        telnetPort\n        webDashboardPort\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      availableMods {\n        ...SevenDaysModFields\n        __typename\n      }\n      isModUpdateAvailable\n      __typename\n    }\n    ... on SoulmaskProfileNamespace {\n      name\n      cfgFiles\n      gameUid\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      __typename\n    }\n    ... on VRisingProfileNamespace {\n      name\n      cfgFiles\n      isLaunchServer\n      isOfficialServer\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      __typename\n    }\n    ... on RustConsoleProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      modifyActionHints\n      __typename\n    }\n    ... on FarmingSimulatorProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      wiLink\n      defaultModSpace\n      masterWiLink\n      displayPorts {\n        rconPort\n        queryPort\n        webPort\n        __typename\n      }\n      mapParams {\n        ...MapParams\n        __typename\n      }\n      __typename\n    }\n    ... on BungeecordProfileNamespace {\n      name\n      cfgFiles\n      logFiles\n      publicConfigs\n      configDefinition\n      displayPorts {\n        ...DisplayPortFields\n        __typename\n      }\n      enableCustomerDb\n      enableCustomHostnames\n      gpServers\n      accessibleMinecraftServers {\n        ...GameServerFields\n        __typename\n      }\n      __typename\n    }\n  }\n  __typename\n}",
+        }),
+      });
+
+      if (!response.ok) {
+        this._manager.logger.error(
+          `[${identifier}] Failed To Fetch Server Status: ${response.status} ${response.statusText}`
+        );
+        return null;
+      }
+
+      const data = await response.json();
+      return data?.data?.cfgContext?.ns?.service?.currentState
+        ?.state as RustServer["status"];
+    } catch (error) {
+      this._manager.logger.error(
+        `[${identifier}] Failed To Fetch Server Status: ${error.message}`
+      );
+      return null;
+    }
+  }
+
+  private async fetchId(identifier: string, sid: number, region: "EU" | "US") {
+    const token = this._auth?.accessToken;
+    if (!token) {
+      this._manager.logger.error(
+        `[${identifier}] Failed To Fetch Server ID: No Access Token`
+      );
+      return null;
+    }
+
+    this._manager.logger.debug(`[${identifier}] Fetching Server ID`);
+
+    try {
+      const response = await fetch(GPortalRoutes.Api, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          operationName: "sid",
+          variables: {
+            gameserverId: sid,
+            region,
+          },
+          query:
+            "query sid($gameserverId: Int!, $region: REGION!) {\n  sid(gameserverId: $gameserverId, region: $region)\n}",
+        }),
+      });
+
+      if (!response.ok) {
+        this._manager.logger.error(
+          `[${identifier}] Failed To Fetch Server ID: ${response.status} ${response.statusText}`
+        );
+        return null;
+      }
+
+      const data = await response.json();
+      if (data?.errors?.length) {
+        this._manager.logger.warn(
+          `[${identifier}] Failed To Fetch Server ID: ${data.errors[0].message}`
+        );
+        return null;
+      }
+
+      const serverId = data?.data?.sid as number;
+      if (!serverId) {
+        this._manager.logger.error(
+          `[${identifier}] Failed To Fetch Server ID: Invalid SID`
+        );
+        return null;
+      }
+
+      return serverId;
+    } catch (error) {
+      this._manager.logger.error(
+        `[${identifier}] Failed To Fetch Server ID: ${error.message}`
+      );
+      return null;
+    }
+  }
+}

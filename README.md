@@ -15,72 +15,27 @@ npm i b1nzeex/rce.js
 ## Example Usage - TypeScript
 
 ```typescript
-import { RCEManager, LogLevel, RCEEvent } from "rce.js";
+import { RCEManager, LogLevel, RCEEvent, RCEIntent } from "rce.js";
 
-const rce = new RCEManager(
+const rce = new RCEManager();
+await rce.init({ username: "", password: "" }, { level: LogLevel.Info });
+
+await rce.servers.addMany([
   {
-    email: "", // Your GPORTAL email address
-    password: "", // Your GPORTAL password
-    servers: [
-      {
-        identifier: "server1", // A unique name for your server to be recognised by
-        region: "US", // It's either EU or US
-        serverId: 1487554, // You can find this in the URL on your server page
-        refreshPlayers: 2, // This will fetch the playerlist every 2 minutes, good for displaying player count
-      },
-      {
-        identifier: "server2",
-        region: "EU",
-        serverId: 1487367,
-      }, // As we didn't specify a "refreshPlayers" value, the playerlist won't be fetched
-    ], // An array of servers to listen to
+    identifier: "server1", // A Unique Name For your Server To Be Recognised By
+    region: "US", // It's Either EU or US
+    serverId: 1387554, // Find This In The URL On Your Server Page
+    intents: [RCEIntent.ConsoleMessages], // Specify Which WebSocket Subscriptions To Use
+    playerRefreshing: true, // Enable Playerlist Caching
+    radioRefreshing: true, // Enable RF Events
+    extendedEventRefreshing: true, // Enable Bradley / Heli Events
   },
   {
-    logLevel: LogLevel.Info, // Uses "Info" by default if left blank
-  }
-);
-
-await rce.init(); // This attempts to login to GPORTAL - this is required for everything else to function
-
-rce.on(RCEEvent.PlayerKill, (data) => {
-  console.log(
-    `[${data.server.identifier}] ${data.killer.name} killed ${data.victim.name}`
-  );
-
-  // Send an in-game command to the Rust server by the unique identifier (kill-feed!)
-  await rce.sendCommand(
-    data.server.identifier,
-    `say <color=red>${data.killer.name}</color> killed <color=red>${data.victim.name}</color>`
-  );
-});
-```
-
-## Example Usage - JavaScript (ES5)
-
-```javascript
-const { RCEManager, LogLevel, RCEEvent } = require("rce.js");
-
-const rce = new RCEManager({
-  email: "", // Your GPORTAL email address
-  password: "", // Your GPORTAL password
-  servers: [
-    {
-      identifier: "server1", // A unique name for your server to be recognised by
-      region: "US", // It's either EU or US
-      serverId: 1487554, // You can find this in the URL on your server page
-      refreshPlayers: 2, // This will fetch the playerlist every 2 minutes, good for displaying player count
-    },
-    {
-      identifier: "server2",
-      region: "EU",
-      serverId: 1487367,
-    }, // As we didn't specify a "refreshPlayers" value, the playerlist won't be fetched
-  ], // An array of servers to listen to
-}, {
-  logLevel: LogLevel.Info, // Uses "Info" by default if left blank
-});
-
-await rce.init(); // This attempts to login to GPORTAL - this is required for everything else to function
+    identifier: "server2",
+    region: "EU",
+    serverId: 1487367,
+  },
+]);
 
 rce.on(RCEEvent.PlayerKill, (data) => {
   console.log(
@@ -93,4 +48,14 @@ rce.on(RCEEvent.PlayerKill, (data) => {
     `say <color=red>${data.killer.name}</color> killed <color=red>${data.victim.name}</color>`
   );
 });
+
+// Optional Methods
+await rce.servers.add(SERVER_INFO); // Add A Single Server
+await rce.servers.addMany([SERVER_INFO]); // Add Multiple Servers
+rce.servers.remove("identifier"); // Remove A Server
+rce.servers.removeAll(); // Remove All Servers
+rce.servers.get("identifier"); // Get Server
+await rce.servers.info("identifier"); // Get "serverinfo" Command Details
+await rce.servers.command("identifier", "say Hello World"); // Send Command
+rce.destroy(); // Gracefully Close RCE.JS
 ```

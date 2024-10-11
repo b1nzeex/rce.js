@@ -1,54 +1,330 @@
-export enum GPORTALRoutes {
+export enum GPortalRoutes {
   Api = "https://www.g-portal.com/ngpapi/",
   Token = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/token",
-  WebSocket = "wss://www.g-portal.com/ngpapi/",
+  WS = "wss://www.g-portal.com/ngpapi/",
   Origin = "https://www.g-portal.com",
   Home = "https://www.g-portal.com/en",
-  Login = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/auth?client_id=website&redirect_uri=https%3A%2F%2Fwww.g-portal.com%2Fen&response_mode=query&response_type=code&scope=openid%20email%20profile%20gportal",
+  Auth = "https://auth.g-portal.com/auth/realms/master/protocol/openid-connect/auth",
 }
 
-export enum GPORTALWebsocketTypes {
-  Init = "connection_init",
-  Start = "start",
+export enum PlayerKillType {
+  Natural = "Natural",
+  Entity = "Entity",
+  Player = "Player",
+  Npc = "Npc",
 }
 
-export enum LogLevel {
-  None = 0,
-  Error = 1,
-  Warn = 2,
-  Info = 3,
-  Debug = 4,
-}
+export const playerKillData = [
+  {
+    id: "thirst",
+    name: "Thirst",
+    type: PlayerKillType.Natural,
+  },
+  {
+    id: "hunger",
+    name: "Hunger",
+    type: PlayerKillType.Natural,
+  },
+  {
+    id: "guntrap.deployed",
+    name: "Shotgun Trap",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "pee pee 9000",
+    name: "Pee Pee 9000",
+    type: PlayerKillType.Natural,
+  },
+  {
+    id: "barricade.wood",
+    name: "Wooden Barricade",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "wall.external.high.stone",
+    name: "High External Stone Wall",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "wall.external.high",
+    name: "High External Wooden Wall",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "gates.external.high.wood",
+    name: "High External Wooden Gate",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "gates.external.high.stone",
+    name: "High External Stone Gate",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "gates.external.high.wood (entity)",
+    name: "High External Wooden Gate",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "gates.external.high.stone (entity)",
+    name: "High External Stone Gate",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "bear",
+    name: "Bear",
+    type: PlayerKillType.Npc,
+  },
+  {
+    id: "autoturret_deployed",
+    name: "Auto Turret",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "cold",
+    name: "Cold",
+    type: PlayerKillType.Natural,
+  },
+  {
+    id: "bleeding",
+    name: "Bleeding",
+    type: PlayerKillType.Natural,
+  },
+  {
+    id: "boar",
+    name: "Boar",
+    type: PlayerKillType.Npc,
+  },
+  {
+    id: "wolf",
+    name: "Wolf",
+    type: PlayerKillType.Npc,
+  },
+  {
+    id: "fall",
+    name: "Fall",
+    type: PlayerKillType.Natural,
+  },
+  {
+    id: "drowned",
+    name: "Drowned",
+    type: PlayerKillType.Natural,
+  },
+  {
+    id: "radiation",
+    name: "Radiation",
+    type: PlayerKillType.Natural,
+  },
+  {
+    id: "autoturret_deployed (entity)",
+    name: "Auto Turret",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "bear (bear)",
+    name: "Bear",
+    type: PlayerKillType.Npc,
+  },
+  {
+    id: "boar (boar)",
+    name: "Boar",
+    type: PlayerKillType.Npc,
+  },
+  {
+    id: "wolf (wolf)",
+    name: "Wolf",
+    type: PlayerKillType.Npc,
+  },
+  {
+    id: "guntrap.deployed (entity)",
+    name: "Shotgun Trap",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "fall!",
+    name: "Fall",
+    type: PlayerKillType.Natural,
+  },
+  {
+    id: "lock.code (entity)",
+    name: "Code Lock",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "bradleyapc (entity)",
+    name: "Bradley APC",
+    type: PlayerKillType.Npc,
+  },
+  {
+    id: "wall.external.high.stone (entity)",
+    name: "High External Stone Wall",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "wall.external.high (entity)",
+    name: "High External Wooden Wall",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "barricade.metal (entity)",
+    name: "Metal Barricade",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "spikes.floor (entity)",
+    name: "Floor Spikes",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "sentry.bandit.static (entity)",
+    name: "Bandit Sentry",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "cactus-1 (entity)",
+    name: "Cactus",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "cactus-2 (entity)",
+    name: "Cactus",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "cactus-3 (entity)",
+    name: "Cactus",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "cactus-4 (entity)",
+    name: "Cactus",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "cactus-5 (entity)",
+    name: "Cactus",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "cactus-6 (entity)",
+    name: "Cactus",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "cactus-7 (entity)",
+    name: "Cactus",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "landmine (entity)",
+    name: "Landmine",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "sentry.scientist.static (entity)",
+    name: "Scientist Sentry",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "patrolhelicopter (entity)",
+    name: "Patrol Helicopter",
+    type: PlayerKillType.Npc,
+  },
+  {
+    id: "flameturret.deployed (entity)",
+    name: "Flame Turret",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "oilfireballsmall (entity)",
+    name: "Small Oil Fire",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "napalm (entity)",
+    name: "Napalm",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "cargoshipdynamic2 (entity)",
+    name: "Cargo Ship",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "cargoshipdynamic1 (entity)",
+    name: "Cargo Ship",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "barricade.wood (entity)",
+    name: "Wooden Barricade",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "beartrap (entity)",
+    name: "Bear Trap",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "barricade.woodwire (entity)",
+    name: "Wooden Barricade",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "campfire (entity)",
+    name: "Campfire",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "rocket_crane_lift_trigger (entity)",
+    name: "Crane Lift",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "rowboat (entity)",
+    name: "Rowboat",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "fireball (entity)",
+    name: "Fireball",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "teslacoil.deployed (entity)",
+    name: "Tesla Coil",
+    type: PlayerKillType.Entity,
+  },
+];
 
 export enum RCEEvent {
-  Message = "message",
-  PlayerKill = "player_kill",
-  PlayerJoined = "player_joined",
-  PlayerLeft = "player_left",
-  PlayerRespawned = "player_respawned",
-  PlayerSuicide = "player_suicide",
-  PlayerRoleAdd = "player_role_add",
-  QuickChat = "quick_chat",
-  NoteEdit = "note_edit",
-  EventStart = "event_start",
-  PlayerListUpdate = "playerlist_update",
-  ItemSpawn = "item_spawn",
-  VendingMachineName = "vending_machine_name",
-  KitSpawn = "kit_spawn",
-  KitGive = "kit_give",
-  TeamCreate = "team_create",
-  TeamJoin = "team_join",
-  TeamLeave = "team_leave",
-  SpecialEventStart = "special_event_start",
-  SpecialEventEnd = "special_event_end",
-  ExecutingCommand = "executing_command",
-  Error = "error",
-  Log = "log",
-  ServiceState = "service_state",
-  CustomZoneAdded = "custom_zone_added",
-  CustomZoneRemoved = "custom_zone_removed",
-  FrequencyReceived = "frequency_received",
-  FrequencyLost = "frequency_lost",
+  Message = "MESSAGE",
+  ServerReady = "SERVER_READY",
+  ServiceStatus = "SERVICE_STATUS",
+  ServiceSensor = "SERVICE_SENSOR",
+  ExecutingCommand = "EXECUTING_COMMAND",
+  VendingMachineName = "VENDING_MACHINE_NAME",
+  QuickChat = "QUICK_CHAT",
+  PlayerSuicide = "PLAYER_SUICIDE",
+  PlayerRespawned = "PLAYER_RESPAWNED",
+  CustomZoneCreated = "CUSTOM_ZONE_CREATED",
+  CustomZoneRemoved = "CUSTOM_ZONE_REMOVED",
+  PlayerRoleAdd = "PLAYER_ROLE_ADD",
+  ItemSpawn = "ITEM_SPAWN",
+  NoteEdit = "NOTE_EDIT",
+  TeamCreate = "TEAM_CREATE",
+  TeamJoin = "TEAM_JOIN",
+  TeamLeave = "TEAM_LEAVE",
+  KitSpawn = "KIT_SPAWN",
+  KitGive = "KIT_GIVE",
+  SpecialEventSet = "SPECIAL_EVENT_SET",
+  EventStart = "EVENT_START",
+  PlayerKill = "PLAYER_KILL",
+  PlayerJoined = "PLAYER_JOINED",
+  PlayerLeft = "PLAYER_LEFT",
+  PlayerListUpdated = "PLAYER_LIST_UPDATED",
+  FrequencyGained = "FREQUENCY_GAINED",
+  FrequencyLost = "FREQUENCY_LOST",
 }
 
 export enum QuickChat {
@@ -126,33 +402,50 @@ export enum QuickChat {
   HAVE_HighQualityMetal = "d11_quick_chat_i_have_phrase_format metal.refined",
 }
 
-export const EVENTS = {
-  event_airdrop: {
-    name: "Airdrop",
-    special: false,
-  },
-  event_cargoship: {
-    name: "Cargo Ship",
-    special: false,
-  },
-  event_cargoheli: {
-    name: "Chinook",
-    special: false,
-  },
-  event_helicopter: {
-    name: "Patrol Helicopter",
-    special: false,
-  },
-  event_halloween: {
-    name: "Halloween",
-    special: true,
-  },
-  event_xmas: {
-    name: "Christmas",
-    special: true,
-  },
-  event_easter: {
-    name: "Easter",
-    special: true,
-  },
+export enum RCEIntent {
+  All = "ALL",
+  ConsoleMessages = "CONSOLE_MESSAGES",
+  ServiceState = "SERVICE_STATE",
+  ServiceSensors = "SERVICE_SENSORS",
+}
+
+export enum LogLevel {
+  None = 0,
+  Error = 1,
+  Warn = 2,
+  Info = 3,
+  Debug = 4,
+}
+
+export const RegularExpressions: { [key: string]: RegExp } = {
+  AIO_RPC_Error: new RegExp(/status\s*=\s*([^\n]+)\s+details\s*=\s*"([^"]+)"/),
+  Log: new RegExp(/(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}):LOG:[^:]+: (.+)$/),
+  CommandExecuting: new RegExp(/Executing console system command '([^']+)'/),
+  VendingMachineName: new RegExp(
+    /\[VENDING MACHINE\] Player \[ ([^\]]+) \] changed name from \[ ([^\]]+) \] to \[ ([^\]]+) \]/
+  ),
+  QuickChat: new RegExp(/(\[CHAT (TEAM|SERVER|LOCAL)\]) ([\w\s\-_]+) : (.+)/),
+  CustomZoneCreated: new RegExp(/Successfully created zone \[([\w\d\s_-]+)\]/),
+  CustomZoneRemoved: new RegExp(/Successfully removed zone \[([\w\d\s_-]+)\]/),
+  PlayerRoleAdd: new RegExp(
+    /\[?SERVER\]?\s*Added\s*\[([^\]]+)\](?::\[([^\]]+)\])?\s*(?:to\s*(?:Group\s*)?)?\[(\w+)\]/i
+  ),
+  ItemSpawn: new RegExp(
+    /\bgiving ([\w\s_-]+) ([\d.]+) x ([\w\s-]+(?: [\w\s-]+)*)\b/
+  ),
+  NoteEdit: new RegExp(
+    /\[NOTE PANEL\] Player \[ ([^\]]+) \] changed name from \[\s*([\s\S]*?)\s*\] to \[\s*([\s\S]*?)\s*\]/
+  ),
+  TeamCreate: new RegExp(/\[([^\]]+)\] created a new team, ID: (\d+)/),
+  TeamJoin: new RegExp(
+    /\[([^\]]+)\] has joined \[([^\]]+)]s team, ID: \[(\d+)\]/
+  ),
+  TeamLeave: new RegExp(
+    /\[([^\]]+)\] has left \[([^\]]+)]s team, ID: \[(\d+)\]/
+  ),
+  KitSpawn: new RegExp(/SERVER giving (.+?) kit (\w+)/),
+  KitGive: new RegExp(
+    /\[ServerVar\] ([\w\s_-]+) giving ([\w\s_-]+) kit ([\w\s_-]+)/
+  ),
+  SpecialEventSet: new RegExp(/Setting event as :(\w+)/),
 };
