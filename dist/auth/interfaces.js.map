@@ -1,0 +1,1 @@
+{"version":3,"file":"interfaces.js","sourceRoot":"","sources":["../../src/auth/interfaces.ts"],"names":[],"mappings":"","sourcesContent":["export interface GPortalAuthData {\r\n  access_token: string;\r\n  refresh_token: string;\r\n  token_type: \"Bearer\";\r\n  expires_in: number;\r\n}\r\n"]}
