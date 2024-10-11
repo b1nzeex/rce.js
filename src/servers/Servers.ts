@@ -165,6 +165,10 @@ export default class ServerManager {
     return this._servers.get(identifier);
   }
 
+  public getAll() {
+    return this._servers;
+  }
+
   public async info(identifier: string) {
     const server = this.get(identifier);
     if (!server) {
