@@ -1,4 +1,4 @@
-import { LogLevel, RCEEvent } from "./constants";
+import { LogLevel, QuickChat, RCEEvent } from "./constants";
 import { ILogger } from "./logger/interfaces";
 import type { RustServer } from "./servers/interfaces";
 import { PlayerKillData } from "./socket/interfaces";
@@ -38,7 +38,7 @@ export interface VendingMachineNameEventPayload extends EventPayload {
 export interface QuickChatEventPayload extends EventPayload {
     type: "team" | "server" | "local";
     ign: string;
-    message: string;
+    message: QuickChat;
 }
 export interface PlayerSuicideEventPayload extends EventPayload {
     ign: string;

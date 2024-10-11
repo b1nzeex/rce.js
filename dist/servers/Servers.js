@@ -116,6 +116,9 @@ class ServerManager {
     get(identifier) {
         return this._servers.get(identifier);
     }
+    getAll() {
+        return this._servers;
+    }
     async info(identifier) {
         const server = this.get(identifier);
         if (!server) {

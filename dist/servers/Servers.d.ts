@@ -14,6 +14,7 @@ export default class ServerManager {
     removeAll(): void;
     remove(server: RustServer): void;
     get(identifier: string): RustServer;
+    getAll(): Map<string, RustServer>;
     info(identifier: string): Promise<RustServerInformation>;
     command(identifier: string, command: string, response?: boolean): Promise<CommandResponse>;
     private updateBroadcasters;
