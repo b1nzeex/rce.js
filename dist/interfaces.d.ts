@@ -7,7 +7,7 @@ export interface AuthOptions {
     password: string;
 }
 export interface LoggerOptions {
-    level: LogLevel;
+    level?: LogLevel;
     file?: string;
     instance?: ILogger;
 }

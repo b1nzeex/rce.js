@@ -3,7 +3,7 @@ import type { ILogger } from "./interfaces";
 export default class RCELogger implements ILogger {
     private logLevel;
     private file?;
-    constructor(logLevel: LogLevel, file?: string);
+    constructor(logLevel?: LogLevel, file?: string);
     private format;
     private logToFile;
     private log;

@@ -14,7 +14,7 @@ var ConsoleColor;
 class RCELogger {
     logLevel = constants_1.LogLevel.Info;
     file;
-    constructor(logLevel, file) {
+    constructor(logLevel = constants_1.LogLevel.Info, file) {
         this.logLevel = logLevel;
         this.file = file;
     }

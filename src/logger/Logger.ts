@@ -15,7 +15,7 @@ export default class RCELogger implements ILogger {
   private logLevel: LogLevel = LogLevel.Info;
   private file?: string;
 
-  constructor(logLevel: LogLevel, file?: string) {
+  constructor(logLevel: LogLevel = LogLevel.Info, file?: string) {
     this.logLevel = logLevel;
     this.file = file;
   }

@@ -9,7 +9,7 @@ export interface AuthOptions {
 }
 
 export interface LoggerOptions {
-  level: LogLevel;
+  level?: LogLevel;
   file?: string;
   instance?: ILogger;
 }
