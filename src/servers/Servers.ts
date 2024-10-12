@@ -86,7 +86,10 @@ export default class ServerManager {
           enabled: opts.playerRefreshing ?? false,
           interval: opts.playerRefreshing
             ? setInterval(() => {
-                this.updatePlayers(opts.identifier);
+                const s = this.get(opts.identifier);
+                if (s?.status === "RUNNING") {
+                  this.updatePlayers(opts.identifier);
+                }
               }, 60_000)
             : undefined,
         },
@@ -94,7 +97,10 @@ export default class ServerManager {
           enabled: opts.radioRefreshing ?? false,
           interval: opts.radioRefreshing
             ? setInterval(() => {
-                this.updateBroadcasters(opts.identifier);
+                const s = this.get(opts.identifier);
+                if (s?.status === "RUNNING") {
+                  this.updateBroadcasters(opts.identifier);
+                }
               }, 30_000)
             : undefined,
         },
@@ -102,7 +108,10 @@ export default class ServerManager {
           enabled: opts.extendedEventRefreshing ?? false,
           interval: opts.extendedEventRefreshing
             ? setInterval(() => {
-                this.fetchGibs(opts.identifier);
+                const s = this.get(opts.identifier);
+                if (s?.status === "RUNNING") {
+                  this.fetchGibs(opts.identifier);
+                }
               }, 60_000)
             : undefined,
         },
@@ -147,6 +156,15 @@ export default class ServerManager {
 
   public removeAll() {
     this._servers.forEach((server) => this.remove(server));
+  }
+
+  public removeMany(identifiers: string[]) {
+    identifiers.forEach((identifier) => {
+      const server = this.get(identifier);
+      if (server) {
+        this.remove(server);
+      }
+    });
   }
 
   public remove(server: RustServer) {
