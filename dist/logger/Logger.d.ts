@@ -7,7 +7,6 @@ export default class RCELogger implements ILogger {
     private format;
     private logToFile;
     private log;
-    updateLogLevel(level: LogLevel): void;
     debug(message: string): void;
     error(message: string): void;
     info(message: string): void;

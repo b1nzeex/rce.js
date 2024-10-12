@@ -61,9 +61,6 @@ class RCELogger {
             console.log(formattedMessage, this.format(message));
         }
     }
-    updateLogLevel(level) {
-        this.logLevel = level;
-    }
     debug(message) {
         const logType = {
             prefix: "[DEBUG]",

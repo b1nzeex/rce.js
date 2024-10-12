@@ -453,7 +453,7 @@ class ServerManager {
                 body: JSON.stringify({
                     operationName: "sid",
                     variables: {
-                        gameserverId: sid,
+                        gameserverId: Number(sid),
                         region,
                     },
                     query: "query sid($gameserverId: Int!, $region: REGION!) {\n  sid(gameserverId: $gameserverId, region: $region)\n}",

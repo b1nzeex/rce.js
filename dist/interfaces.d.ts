@@ -8,8 +8,8 @@ export interface AuthOptions {
 }
 export interface LoggerOptions {
     level: LogLevel;
-    file: string;
-    instance: ILogger;
+    file?: string;
+    instance?: ILogger;
 }
 interface EventPayload {
     server: RustServer;

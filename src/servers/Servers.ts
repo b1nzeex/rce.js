@@ -640,7 +640,7 @@ export default class ServerManager {
         body: JSON.stringify({
           operationName: "sid",
           variables: {
-            gameserverId: sid,
+            gameserverId: Number(sid),
             region,
           },
           query:

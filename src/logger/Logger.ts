@@ -72,10 +72,6 @@ export default class RCELogger implements ILogger {
     }
   }
 
-  updateLogLevel(level: LogLevel) {
-    this.logLevel = level;
-  }
-
   debug(message: string) {
     const logType: LogType = {
       prefix: "[DEBUG]",
