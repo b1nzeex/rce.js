@@ -12,7 +12,9 @@ export default class CommandHandler {
   }
 
   public static remove(command: CommandRequest) {
-    this.commands.delete(`${command.identifier}:${command.command}`);
+    if (command) {
+      this.commands.delete(`${command.identifier}:${command.command}`);
+    }
   }
 
   public static get(identifier: string, command: string) {

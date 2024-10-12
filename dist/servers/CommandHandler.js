@@ -9,7 +9,9 @@ class CommandHandler {
         this.commands.set(`${command.identifier}:${command.command}`, command);
     }
     static remove(command) {
-        this.commands.delete(`${command.identifier}:${command.command}`);
+        if (command) {
+            this.commands.delete(`${command.identifier}:${command.command}`);
+        }
     }
     static get(identifier, command) {
         return this.commands.get(`${identifier}:${command}`);

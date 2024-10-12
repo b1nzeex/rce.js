@@ -7,11 +7,13 @@ class Helper {
         const left = oldList.filter((ign) => !newList.includes(ign));
         return { joined, left };
     }
-    static cleanOutput(output, json) {
+    static cleanOutput(output, json, rawHostname) {
         if (!output)
             return null;
         let cleanOutput = output.replace(/\\n/g, "").trim();
-        cleanOutput = cleanOutput.replace(/<color=[^>]+>|<\/color>/g, "");
+        if (!rawHostname) {
+            cleanOutput = cleanOutput.replace(/<color=[^>]+>|<\/color>/g, "");
+        }
         try {
             const jsonObject = JSON.parse(cleanOutput);
             return json ? jsonObject : (0, util_1.inspect)(jsonObject, { depth: 3 });

@@ -90,7 +90,7 @@ export default class GPortalAuth {
 
       this._refreshTimeout = setTimeout(
         () => this.refresh(),
-        this._authData.expires_in * 1_000
+        (this._authData.expires_in - 60_000) * 1_000
       );
     } catch (error) {
       throw new Error(`Failed to login: ${error.message}`);
@@ -130,7 +130,7 @@ export default class GPortalAuth {
 
       this._refreshTimeout = setTimeout(
         () => this.refresh(),
-        this._authData.expires_in * 1_000
+        (this._authData.expires_in - 60_000) * 1_000
       );
 
       this._manager.logger.debug("Token Refreshed");

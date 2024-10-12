@@ -3,5 +3,5 @@ export default class Helper {
         joined: string[];
         left: string[];
     };
-    static cleanOutput(output: string, json?: boolean): any;
+    static cleanOutput(output: string, json?: boolean, rawHostname?: boolean): any;
 }

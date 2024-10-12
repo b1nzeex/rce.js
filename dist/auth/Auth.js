@@ -72,7 +72,7 @@ class GPortalAuth {
                 throw new Error("Failed to fetch the authentication token");
             }
             this._authData = await tokenResponse.json();
-            this._refreshTimeout = setTimeout(() => this.refresh(), this._authData.expires_in * 1_000);
+            this._refreshTimeout = setTimeout(() => this.refresh(), (this._authData.expires_in - 60_000) * 1_000);
         }
         catch (error) {
             throw new Error(`Failed to login: ${error.message}`);
@@ -104,7 +104,7 @@ class GPortalAuth {
                 throw new Error("Failed to fetch the authentication token");
             }
             this._authData = await tokenResponse.json();
-            this._refreshTimeout = setTimeout(() => this.refresh(), this._authData.expires_in * 1_000);
+            this._refreshTimeout = setTimeout(() => this.refresh(), (this._authData.expires_in - 60_000) * 1_000);
             this._manager.logger.debug("Token Refreshed");
         }
         catch (error) {

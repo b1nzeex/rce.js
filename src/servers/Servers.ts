@@ -190,7 +190,7 @@ export default class ServerManager {
     return this._servers;
   }
 
-  public async info(identifier: string) {
+  public async info(identifier: string, rawHostname: boolean = false) {
     const server = this.get(identifier);
     if (!server) {
       ServerUtils.error(this._manager, `[${identifier}] Invalid Server`);
@@ -203,7 +203,11 @@ export default class ServerManager {
       return null;
     }
 
-    const data: RustServerInformation = Helper.cleanOutput(info.response, true);
+    const data: RustServerInformation = Helper.cleanOutput(
+      info.response,
+      true,
+      rawHostname
+    );
     return data;
   }
 
@@ -472,7 +476,7 @@ export default class ServerManager {
           s.flags = s.flags.filter((f) => f !== "BRADLEY");
           this.update(s);
         }
-      }, 60_000 * 6);
+      }, 60_000 * 10);
 
       this._manager.events.emit(RCEEvent.EventStart, {
         server,
@@ -493,7 +497,7 @@ export default class ServerManager {
           s.flags = s.flags.filter((f) => f !== "HELICOPTER");
           this.update(s);
         }
-      }, 60_000 * 6);
+      }, 60_000 * 10);
 
       this._manager.events.emit(RCEEvent.EventStart, {
         server,

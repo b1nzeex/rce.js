@@ -136,7 +136,7 @@ class ServerManager {
     getAll() {
         return this._servers;
     }
-    async info(identifier) {
+    async info(identifier, rawHostname = false) {
         const server = this.get(identifier);
         if (!server) {
             ServerUtils_1.default.error(this._manager, `[${identifier}] Invalid Server`);
@@ -147,7 +147,7 @@ class ServerManager {
             ServerUtils_1.default.error(this._manager, "Failed To Fetch Server Info", server);
             return null;
         }
-        const data = helper_1.default.cleanOutput(info.response, true);
+        const data = helper_1.default.cleanOutput(info.response, true, rawHostname);
         return data;
     }
     async command(identifier, command, response = false) {
@@ -337,7 +337,7 @@ class ServerManager {
                     s.flags = s.flags.filter((f) => f !== "BRADLEY");
                     this.update(s);
                 }
-            }, 60_000 * 6);
+            }, 60_000 * 10);
             this._manager.events.emit(constants_1.RCEEvent.EventStart, {
                 server,
                 event: "Bradley APC Debris",
@@ -353,7 +353,7 @@ class ServerManager {
                     s.flags = s.flags.filter((f) => f !== "HELICOPTER");
                     this.update(s);
                 }
-            }, 60_000 * 6);
+            }, 60_000 * 10);
             this._manager.events.emit(constants_1.RCEEvent.EventStart, {
                 server,
                 event: "Patrol Helicopter Debris",

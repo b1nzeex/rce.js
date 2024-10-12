@@ -11,11 +11,18 @@ export default class Helper {
     return { joined, left };
   }
 
-  public static cleanOutput(output: string, json?: boolean): any {
+  public static cleanOutput(
+    output: string,
+    json?: boolean,
+    rawHostname?: boolean
+  ): any {
     if (!output) return null;
 
     let cleanOutput = output.replace(/\\n/g, "").trim();
-    cleanOutput = cleanOutput.replace(/<color=[^>]+>|<\/color>/g, "");
+
+    if (!rawHostname) {
+      cleanOutput = cleanOutput.replace(/<color=[^>]+>|<\/color>/g, "");
+    }
 
     try {
       const jsonObject = JSON.parse(cleanOutput);
