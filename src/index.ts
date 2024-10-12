@@ -29,6 +29,7 @@ import {
   CustomZoneCreatedEventPayload,
   CustomZoneRemovedEventPayload,
   VendingMachineNameEventPayload,
+  ErrorEventPayload,
 } from "./interfaces";
 
 export {
@@ -65,4 +66,5 @@ export {
   CustomZoneRemovedEventPayload,
   VendingMachineNameEventPayload,
   QuickChat,
+  ErrorEventPayload,
 };
