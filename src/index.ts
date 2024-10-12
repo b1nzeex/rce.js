@@ -1,5 +1,11 @@
 import RCEManager from "./Manager";
-import { RCEEvent, RCEIntent, LogLevel, QuickChat } from "./constants";
+import {
+  RCEEvent,
+  RCEIntent,
+  LogLevel,
+  QuickChat,
+  PlayerKillType,
+} from "./constants";
 import { ILogger } from "./logger/interfaces";
 import {
   KitGiveEventPayload,
@@ -67,4 +73,5 @@ export {
   VendingMachineNameEventPayload,
   QuickChat,
   ErrorEventPayload,
+  PlayerKillType,
 };
