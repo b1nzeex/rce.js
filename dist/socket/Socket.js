@@ -8,6 +8,7 @@ const constants_1 = require("../constants");
 const ServiceState_1 = __importDefault(require("./ServiceState"));
 const ConsoleMessages_1 = __importDefault(require("./ConsoleMessages"));
 const ServiceSensors_1 = __importDefault(require("./ServiceSensors"));
+const ServerUtils_1 = __importDefault(require("../util/ServerUtils"));
 class GPortalSocket {
     _manager;
     _auth;
@@ -32,7 +33,7 @@ class GPortalSocket {
         this._socket = null;
         this._manager.logger.debug("WebSocket Connection Closed");
     }
-    connect() {
+    connect(resubsctibe = false) {
         this._manager.logger.debug("Connecting to WebSocket Server");
         this._connectionAttempts++;
         this._socket = new ws_1.WebSocket(constants_1.GPortalRoutes.WS, ["graphql-ws"], {
@@ -45,7 +46,7 @@ class GPortalSocket {
         this._socket.on("open", () => {
             this._manager.logger.debug("WebSocket Connection Established");
             this._connectionAttempts = 0;
-            this.authenticate();
+            this.authenticate(resubsctibe);
             this._heartbeatInterval = setInterval(() => {
                 if (this._socket?.OPEN) {
                     this._manager.logger.debug("Sending WebSocket Heartbeat");
@@ -58,8 +59,8 @@ class GPortalSocket {
             this.close();
             if (code !== 1000) {
                 if (this._connectionAttempts < 5) {
-                    this._manager.logger.warn(`WebSocket Connection Closed - Reconnecting in 10 Seconds (Attempt ${this._connectionAttempts})`);
-                    setTimeout(() => this.connect(), this._connectionAttempts * 10_000);
+                    this._manager.logger.warn(`WebSocket Connection Closed - Reconnecting in 10 Seconds (Attempt ${this._connectionAttempts + 1})`);
+                    setTimeout(() => this.connect(true), (this._connectionAttempts + 1) * 10_000);
                 }
                 else {
                     throw new Error("Failed to reconnect to the WS server after 5 attempts");
@@ -76,7 +77,7 @@ class GPortalSocket {
                 if (data.type === "ka")
                     return;
                 if (data.type === "error") {
-                    return this._manager.logger.error(`WebSocket Error: ${data.payload?.message}`);
+                    return ServerUtils_1.default.error(this._manager, `WebSocket Error: ${data.payload?.message}`);
                 }
                 if (data.type === "connection_ack") {
                     return this._manager.logger.info("RCE.JS - Authenticated");
@@ -84,11 +85,11 @@ class GPortalSocket {
                 if (data.type === "data") {
                     const request = this._requests.get(data.id);
                     if (!request) {
-                        return this._manager.logger.error(`Unknown Request ID: ${data.id}`);
+                        return ServerUtils_1.default.error(this._manager, `Unknown Request ID: ${data.id}`);
                     }
                     const server = this._manager.servers.get(request.identifier);
                     if (!server) {
-                        return this._manager.logger.error(`[${server.identifier}] Unknown Server ID`);
+                        return ServerUtils_1.default.error(this._manager, `[${server.identifier}] Unknown Server ID`);
                     }
                     if (data.payload?.errors?.length) {
                         const error = data.payload.errors[0].message;
@@ -111,7 +112,7 @@ class GPortalSocket {
                             }
                             return;
                         }
-                        return this._manager.logger.error(`[${server.identifier}] Error: ${error}`);
+                        return ServerUtils_1.default.error(this._manager, `Error: ${error}`, server);
                     }
                     if (data.payload?.data?.serviceState) {
                         ServiceState_1.default.handle(this._manager, data, server);
@@ -206,7 +207,7 @@ class GPortalSocket {
             this._manager.logger.debug(`[${server.identifier}] WebSocket Subscription Added`);
         }
     }
-    authenticate() {
+    authenticate(resubsctibe) {
         const token = this._auth.accessToken;
         if (!token) {
             throw new Error("No access token available");
@@ -219,6 +220,11 @@ class GPortalSocket {
                     authorization: token,
                 },
             }));
+            if (resubsctibe) {
+                this._manager.servers
+                    .getAll()
+                    .forEach((server) => this.addServer(server));
+            }
         }
         else {
             throw new Error("Socket is not open");

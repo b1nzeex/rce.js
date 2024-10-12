@@ -6,6 +6,7 @@ import type { AuthOptions, LoggerOptions, RCEEventTypes } from "./interfaces";
 import { EventEmitter } from "events";
 import { ILogger } from "./logger/interfaces";
 import CommandHandler from "./servers/CommandHandler";
+import { RCEEvent } from "./constants";
 
 class RCEEventManager extends EventEmitter {
   emit<K extends keyof RCEEventTypes>(
@@ -44,7 +45,15 @@ export default class RCEManager {
   public events: RCEEventManager = new RCEEventManager();
   public servers: ServerManager;
 
-  public constructor() {}
+  public constructor() {
+    this.events.on(RCEEvent.Error, (payload) => {
+      if (payload.server) {
+        this.logger.error(`[${payload.server.identifier}] ${payload.error}`);
+      } else {
+        this.logger.error(payload.error);
+      }
+    });
+  }
 
   /**
    *

@@ -12,6 +12,7 @@ export default class ServerManager {
     add(opts: ServerOptions): Promise<void>;
     update(server: RustServer): void;
     removeAll(): void;
+    removeMany(identifiers: string[]): void;
     remove(server: RustServer): void;
     get(identifier: string): RustServer;
     getAll(): Map<string, RustServer>;

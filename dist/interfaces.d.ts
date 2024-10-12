@@ -120,6 +120,10 @@ export interface FrequencyGainedEventPayload extends EventPayload {
 export interface FrequencyLostEventPayload extends EventPayload {
     frequency: number;
 }
+export interface ErrorEventPayload {
+    error: string;
+    server?: RustServer;
+}
 export interface RCEEventTypes {
     [RCEEvent.Message]: MessageEventPayload;
     [RCEEvent.ServerReady]: ServerReadyEventPayload;
@@ -148,5 +152,6 @@ export interface RCEEventTypes {
     [RCEEvent.PlayerListUpdated]: PlayerListUpdatedEventPayload;
     [RCEEvent.FrequencyGained]: FrequencyGainedEventPayload;
     [RCEEvent.FrequencyLost]: FrequencyLostEventPayload;
+    [RCEEvent.Error]: ErrorEventPayload;
 }
 export {};

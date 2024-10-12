@@ -7,6 +7,7 @@ import type RCEManager from "../Manager";
 import ServiceStateHandler from "./ServiceState";
 import ConsoleMessagesHandler from "./ConsoleMessages";
 import ServiceSensorHandler from "./ServiceSensors";
+import ServerUtils from "../util/ServerUtils";
 
 export default class GPortalSocket {
   private _manager: RCEManager;
@@ -39,7 +40,7 @@ export default class GPortalSocket {
     this._manager.logger.debug("WebSocket Connection Closed");
   }
 
-  public connect() {
+  public connect(resubsctibe: boolean = false) {
     this._manager.logger.debug("Connecting to WebSocket Server");
 
     this._connectionAttempts++;
@@ -55,7 +56,7 @@ export default class GPortalSocket {
       this._manager.logger.debug("WebSocket Connection Established");
 
       this._connectionAttempts = 0;
-      this.authenticate();
+      this.authenticate(resubsctibe);
 
       this._heartbeatInterval = setInterval(() => {
         if (this._socket?.OPEN) {
@@ -75,10 +76,15 @@ export default class GPortalSocket {
       if (code !== 1000) {
         if (this._connectionAttempts < 5) {
           this._manager.logger.warn(
-            `WebSocket Connection Closed - Reconnecting in 10 Seconds (Attempt ${this._connectionAttempts})`
+            `WebSocket Connection Closed - Reconnecting in 10 Seconds (Attempt ${
+              this._connectionAttempts + 1
+            })`
           );
 
-          setTimeout(() => this.connect(), this._connectionAttempts * 10_000);
+          setTimeout(
+            () => this.connect(true),
+            (this._connectionAttempts + 1) * 10_000
+          );
         } else {
           throw new Error(
             "Failed to reconnect to the WS server after 5 attempts"
@@ -100,7 +106,8 @@ export default class GPortalSocket {
         if (data.type === "ka") return;
 
         if (data.type === "error") {
-          return this._manager.logger.error(
+          return ServerUtils.error(
+            this._manager,
             `WebSocket Error: ${data.payload?.message}`
           );
         }
@@ -112,12 +119,16 @@ export default class GPortalSocket {
         if (data.type === "data") {
           const request = this._requests.get(data.id);
           if (!request) {
-            return this._manager.logger.error(`Unknown Request ID: ${data.id}`);
+            return ServerUtils.error(
+              this._manager,
+              `Unknown Request ID: ${data.id}`
+            );
           }
 
           const server = this._manager.servers.get(request.identifier);
           if (!server) {
-            return this._manager.logger.error(
+            return ServerUtils.error(
+              this._manager,
               `[${server.identifier}] Unknown Server ID`
             );
           }
@@ -154,9 +165,7 @@ export default class GPortalSocket {
               return;
             }
 
-            return this._manager.logger.error(
-              `[${server.identifier}] Error: ${error}`
-            );
+            return ServerUtils.error(this._manager, `Error: ${error}`, server);
           }
 
           if (data.payload?.data?.serviceState) {
@@ -293,7 +302,7 @@ export default class GPortalSocket {
     }
   }
 
-  private authenticate() {
+  private authenticate(resubsctibe: boolean) {
     const token = this._auth.accessToken;
     if (!token) {
       throw new Error("No access token available");
@@ -310,6 +319,12 @@ export default class GPortalSocket {
           },
         })
       );
+
+      if (resubsctibe) {
+        this._manager.servers
+          .getAll()
+          .forEach((server) => this.addServer(server));
+      }
     } else {
       throw new Error("Socket is not open");
     }

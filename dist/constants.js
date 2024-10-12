@@ -328,6 +328,7 @@ var RCEEvent;
     RCEEvent["PlayerListUpdated"] = "PLAYER_LIST_UPDATED";
     RCEEvent["FrequencyGained"] = "FREQUENCY_GAINED";
     RCEEvent["FrequencyLost"] = "FREQUENCY_LOST";
+    RCEEvent["Error"] = "ERROR";
 })(RCEEvent || (exports.RCEEvent = RCEEvent = {}));
 var QuickChat;
 (function (QuickChat) {

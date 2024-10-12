@@ -44,7 +44,8 @@ export declare enum RCEEvent {
     PlayerLeft = "PLAYER_LEFT",
     PlayerListUpdated = "PLAYER_LIST_UPDATED",
     FrequencyGained = "FREQUENCY_GAINED",
-    FrequencyLost = "FREQUENCY_LOST"
+    FrequencyLost = "FREQUENCY_LOST",
+    Error = "ERROR"
 }
 export declare enum QuickChat {
     COMBAT_WereUnderAttack = "d11_quick_chat_combat_slot_0",

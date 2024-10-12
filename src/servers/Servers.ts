@@ -52,7 +52,8 @@ export default class ServerManager {
     }
 
     if (!opts.serverId[1]) {
-      this._manager.logger.error(
+      ServerUtils.error(
+        this._manager,
         `[${opts.identifier}] Failed To Add Server: Invalid SID`
       );
       return;
@@ -64,14 +65,16 @@ export default class ServerManager {
       opts.region
     );
     if (!status) {
-      this._manager.logger.error(
+      ServerUtils.error(
+        this._manager,
         `[${opts.identifier}] Failed To Add Server: No Status Information`
       );
       return;
     }
 
     if (status === "SUSPENDED") {
-      this._manager.logger.error(
+      ServerUtils.error(
+        this._manager,
         `[${opts.identifier}] Failed To Add Server: Suspended`
       );
       return;
@@ -190,13 +193,13 @@ export default class ServerManager {
   public async info(identifier: string) {
     const server = this.get(identifier);
     if (!server) {
-      this._manager.logger.error(`[${identifier}] Invalid Server`);
+      ServerUtils.error(this._manager, `[${identifier}] Invalid Server`);
       return null;
     }
 
     const info = await this.command(server.identifier, "serverinfo", true);
     if (!info?.response) {
-      this._manager.logger.error(`[${identifier}] Failed To Fetch Server Info`);
+      ServerUtils.error(this._manager, "Failed To Fetch Server Info", server);
       return null;
     }
 
@@ -211,7 +214,8 @@ export default class ServerManager {
   ): Promise<CommandResponse> {
     const token = this._auth?.accessToken;
     if (!token) {
-      this._manager.logger.error(
+      ServerUtils.error(
+        this._manager,
         `[${identifier}] Failed To Send Command: No Access Token`
       );
       return { ok: false, error: "No Access Token" };
@@ -219,7 +223,8 @@ export default class ServerManager {
 
     const server = this._servers.get(identifier);
     if (!server) {
-      this._manager.logger.error(
+      ServerUtils.error(
+        this._manager,
         `[${identifier}] Failed To Send Command: Invalid Server`
       );
       return { ok: false, error: "Invalid Server" };
@@ -265,8 +270,10 @@ export default class ServerManager {
           });
 
           if (!response.ok) {
-            this._manager.logger.error(
-              `[${identifier}] Failed To Send Command: HTTP ${response.status} ${response.statusText}`
+            ServerUtils.error(
+              this._manager,
+              `Failed To Send Command: HTTP ${response.status} ${response.statusText}`,
+              server
             );
             CommandHandler.remove(CommandHandler.get(identifier, command));
             resolve({
@@ -277,8 +284,10 @@ export default class ServerManager {
 
           const data = await response.json();
           if (!data?.data?.sendConsoleMessage?.ok) {
-            this._manager.logger.error(
-              `[${identifier}] Failed To Send Command: AioRpcError`
+            ServerUtils.error(
+              this._manager,
+              "Failed To Send Command: AioRpcError",
+              server
             );
             CommandHandler.remove(CommandHandler.get(identifier, command));
             resolve({
@@ -317,8 +326,10 @@ export default class ServerManager {
         });
 
         if (!response.ok) {
-          this._manager.logger.error(
-            `[${identifier}] Failed To Send Command: HTTP ${response.status} ${response.statusText}`
+          ServerUtils.error(
+            this._manager,
+            `Failed To Send Command: HTTP ${response.status} ${response.statusText}`,
+            server
           );
           return {
             ok: false,
@@ -328,8 +339,10 @@ export default class ServerManager {
 
         return undefined;
       } catch (error) {
-        this._manager.logger.error(
-          `[${identifier}] Failed To Send Command: ${error}`
+        ServerUtils.error(
+          this._manager,
+          `Failed To Send Command: ${error}`,
+          server
         );
         return {
           ok: false,
@@ -582,7 +595,8 @@ export default class ServerManager {
       });
 
       if (!response.ok) {
-        this._manager.logger.error(
+        ServerUtils.error(
+          this._manager,
           `[${identifier}] Failed To Fetch Server Status: ${response.status} ${response.statusText}`
         );
         return null;
@@ -592,7 +606,8 @@ export default class ServerManager {
       return data?.data?.cfgContext?.ns?.service?.currentState
         ?.state as RustServer["status"];
     } catch (error) {
-      this._manager.logger.error(
+      ServerUtils.error(
+        this._manager,
         `[${identifier}] Failed To Fetch Server Status: ${error.message}`
       );
       return null;
@@ -602,7 +617,8 @@ export default class ServerManager {
   private async fetchId(identifier: string, sid: number, region: "EU" | "US") {
     const token = this._auth?.accessToken;
     if (!token) {
-      this._manager.logger.error(
+      ServerUtils.error(
+        this._manager,
         `[${identifier}] Failed To Fetch Server ID: No Access Token`
       );
       return null;
@@ -629,7 +645,8 @@ export default class ServerManager {
       });
 
       if (!response.ok) {
-        this._manager.logger.error(
+        ServerUtils.error(
+          this._manager,
           `[${identifier}] Failed To Fetch Server ID: ${response.status} ${response.statusText}`
         );
         return null;
@@ -645,7 +662,8 @@ export default class ServerManager {
 
       const serverId = data?.data?.sid as number;
       if (!serverId) {
-        this._manager.logger.error(
+        ServerUtils.error(
+          this._manager,
           `[${identifier}] Failed To Fetch Server ID: Invalid SID`
         );
         return null;
@@ -653,7 +671,8 @@ export default class ServerManager {
 
       return serverId;
     } catch (error) {
-      this._manager.logger.error(
+      ServerUtils.error(
+        this._manager,
         `[${identifier}] Failed To Fetch Server ID: ${error.message}`
       );
       return null;

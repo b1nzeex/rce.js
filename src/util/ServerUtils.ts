@@ -3,6 +3,10 @@ import type RCEManager from "../Manager";
 import { RCEEvent } from "../constants";
 
 export default class ServerUtils {
+  public static error(manager: RCEManager, error: string, server?: RustServer) {
+    manager.events.emit(RCEEvent.Error, { error, server });
+  }
+
   public static async setReady(
     manager: RCEManager,
     server: RustServer,

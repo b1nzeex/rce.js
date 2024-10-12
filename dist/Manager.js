@@ -9,6 +9,7 @@ const Servers_1 = __importDefault(require("./servers/Servers"));
 const Logger_1 = __importDefault(require("./logger/Logger"));
 const events_1 = require("events");
 const CommandHandler_1 = __importDefault(require("./servers/CommandHandler"));
+const constants_1 = require("./constants");
 class RCEEventManager extends events_1.EventEmitter {
     emit(event, ...args) {
         return super.emit(event, ...args);
@@ -29,7 +30,16 @@ class RCEManager {
     logger;
     events = new RCEEventManager();
     servers;
-    constructor() { }
+    constructor() {
+        this.events.on(constants_1.RCEEvent.Error, (payload) => {
+            if (payload.server) {
+                this.logger.error(`[${payload.server.identifier}] ${payload.error}`);
+            }
+            else {
+                this.logger.error(payload.error);
+            }
+        });
+    }
     /**
      *
      * @param auth {AuthOptions} - The authentication options for the GPortal API

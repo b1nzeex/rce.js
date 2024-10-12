@@ -325,6 +325,7 @@ export enum RCEEvent {
   PlayerListUpdated = "PLAYER_LIST_UPDATED",
   FrequencyGained = "FREQUENCY_GAINED",
   FrequencyLost = "FREQUENCY_LOST",
+  Error = "ERROR",
 }
 
 export enum QuickChat {
