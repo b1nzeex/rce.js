@@ -27,6 +27,7 @@ class RCEEventManager extends events_1.EventEmitter {
 class RCEManager {
     _auth;
     _socket;
+    _plugins = new Map();
     logger;
     events = new RCEEventManager();
     servers;
@@ -64,6 +65,30 @@ class RCEManager {
         this._auth.destroy();
         CommandHandler_1.default.destroy();
         this.logger.info("RCE.JS - Closed Gracefully");
+    }
+    /**
+     * Register a plugin with the RCE Manager
+     * @param name {string} - The name of the plugin
+     * @param instance {any} - The instance of the plugin
+     * @returns {void}
+     */
+    registerPlugin(name, instance) {
+        if (this._plugins.has(name)) {
+            return this.logger.warn(`Plugin Is Already Registered: ${name}`);
+        }
+        this._plugins.set(name, instance);
+        if (typeof instance.init === "function") {
+            instance.init(this);
+        }
+        this.logger.info(`Plugin Registered: ${name}`);
+    }
+    /**
+     * Get a registered plugin
+     * @param name {string} - The name of the plugin
+     * @returns {any}
+     */
+    getPlugin(name) {
+        return this._plugins.get(name);
     }
 }
 exports.default = RCEManager;

@@ -11,6 +11,7 @@ declare class RCEEventManager extends EventEmitter {
 export default class RCEManager {
     private _auth;
     private _socket;
+    private _plugins;
     logger: ILogger;
     events: RCEEventManager;
     servers: ServerManager;
@@ -26,5 +27,18 @@ export default class RCEManager {
      * @returns {void}
      */
     destroy(): void;
+    /**
+     * Register a plugin with the RCE Manager
+     * @param name {string} - The name of the plugin
+     * @param instance {any} - The instance of the plugin
+     * @returns {void}
+     */
+    registerPlugin(name: string, instance: any): void;
+    /**
+     * Get a registered plugin
+     * @param name {string} - The name of the plugin
+     * @returns {any}
+     */
+    getPlugin(name: string): any;
 }
 export {};

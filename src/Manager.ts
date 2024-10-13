@@ -41,6 +41,7 @@ class RCEEventManager extends EventEmitter {
 export default class RCEManager {
   private _auth: GPortalAuth;
   private _socket: GPortalSocket;
+  private _plugins: Map<string, any> = new Map();
   public logger: ILogger;
   public events: RCEEventManager = new RCEEventManager();
   public servers: ServerManager;
@@ -84,5 +85,33 @@ export default class RCEManager {
     CommandHandler.destroy();
 
     this.logger.info("RCE.JS - Closed Gracefully");
+  }
+
+  /**
+   * Register a plugin with the RCE Manager
+   * @param name {string} - The name of the plugin
+   * @param instance {any} - The instance of the plugin
+   * @returns {void}
+   */
+  public registerPlugin(name: string, instance: any) {
+    if (this._plugins.has(name)) {
+      return this.logger.warn(`Plugin Is Already Registered: ${name}`);
+    }
+
+    this._plugins.set(name, instance);
+    if (typeof instance.init === "function") {
+      instance.init(this);
+    }
+
+    this.logger.info(`Plugin Registered: ${name}`);
+  }
+
+  /**
+   * Get a registered plugin
+   * @param name {string} - The name of the plugin
+   * @returns {any}
+   */
+  public getPlugin(name: string): any {
+    return this._plugins.get(name);
   }
 }
