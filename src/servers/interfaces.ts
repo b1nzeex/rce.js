@@ -9,6 +9,13 @@ export interface ServerOptions {
   intents: string[];
 }
 
+export interface ServerPlayer {
+  ign: string;
+  ping: number;
+  secondsConnected: number;
+  health: number;
+}
+
 export interface RustServer {
   identifier: string;
   serverId: number[]; // url, backend
@@ -25,7 +32,7 @@ export interface RustServer {
     | "RUNNING"
     | "SUSPENDED"
     | "UNKNOWN";
-  players: string[];
+  players: ServerPlayer[];
   frequencies: number[];
   intents: string[];
 }

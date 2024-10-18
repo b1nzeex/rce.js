@@ -369,15 +369,13 @@ class ServerManager {
             return this._manager.logger.warn(`[${identifier}] Failed To Update Players: Invalid Server`);
         }
         this._manager.logger.debug(`[${server.identifier}] Updating Players`);
-        const players = await this.command(server.identifier, "Users", true);
-        if (!players?.response) {
+        const playersRaw = await this.command(server.identifier, "playerlist", true);
+        if (!playersRaw?.response) {
             return this._manager.logger.warn(`[${server.identifier}] Failed To Update Players`);
         }
-        const playerlist = players.response
-            .match(/"(.*?)"/g)
-            .map((ign) => ign.replace(/"/g, ""));
-        playerlist.shift();
-        const { joined, left } = helper_1.default.comparePopulation(server.players, playerlist);
+        const players = helper_1.default.cleanOutput(playersRaw.response, true);
+        const playerlist = players.map((player) => player.DisplayName);
+        const { joined, left } = helper_1.default.comparePopulation(server.players.map((player) => player.ign), playerlist);
         joined.forEach((player) => {
             this._manager.events.emit(constants_1.RCEEvent.PlayerJoined, {
                 server,
@@ -390,7 +388,12 @@ class ServerManager {
                 ign: player,
             });
         });
-        server.players = playerlist;
+        server.players = players.map((player) => ({
+            ign: player.DisplayName,
+            ping: player.Ping,
+            secondsConnected: player.SecondsConnected,
+            health: player.Health,
+        }));
         this.update(server);
         this._manager.events.emit(constants_1.RCEEvent.PlayerListUpdated, {
             server,

@@ -8,6 +8,12 @@ export interface ServerOptions {
     extendedEventRefreshing?: boolean;
     intents: string[];
 }
+export interface ServerPlayer {
+    ign: string;
+    ping: number;
+    secondsConnected: number;
+    health: number;
+}
 export interface RustServer {
     identifier: string;
     serverId: number[];
@@ -16,7 +22,7 @@ export interface RustServer {
     flags: string[];
     state: any[];
     status: "STOPPING" | "MAINTENANCE" | "UPDATING" | "STOPPED" | "STARTING" | "RUNNING" | "SUSPENDED" | "UNKNOWN";
-    players: string[];
+    players: ServerPlayer[];
     frequencies: number[];
     intents: string[];
 }
