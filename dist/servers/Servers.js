@@ -391,7 +391,7 @@ class ServerManager {
         server.players = players.map((player) => ({
             ign: player.DisplayName,
             ping: player.Ping,
-            secondsConnected: player.SecondsConnected,
+            secondsConnected: player.ConnectedSeconds,
             health: player.Health,
         }));
         this.update(server);
