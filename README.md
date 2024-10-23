@@ -34,16 +34,17 @@ await rce.servers.addMany([
     identifier: "server2",
     region: "EU",
     serverId: 1487367,
+    intents: [RCEIntent.All],
   },
 ]);
 
-rce.on(RCEEvent.PlayerKill, (data) => {
+rce.events.on(RCEEvent.PlayerKill, (data) => {
   console.log(
     `[${data.server.identifier}] ${data.killer.name} killed ${data.victim.name}`
   );
 
   // Send an in-game command to the Rust server by the unique identifier (kill-feed!)
-  await rce.sendCommand(
+  await rce.servers.command(
     data.server.identifier,
     `say <color=red>${data.killer.name}</color> killed <color=red>${data.victim.name}</color>`
   );
