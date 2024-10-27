@@ -533,6 +533,9 @@ export default class ServerManager {
     }
 
     const players: any[] = Helper.cleanOutput(playersRaw.response, true);
+    this._manager.logger.debug(`[${server.identifier}] Playerlist: ${players}`);
+
+    if (!players) return;
     const playerlist = players.map((player) => player.DisplayName);
 
     const { joined, left } = Helper.comparePopulation(
