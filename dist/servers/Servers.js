@@ -374,6 +374,9 @@ class ServerManager {
             return this._manager.logger.warn(`[${server.identifier}] Failed To Update Players`);
         }
         const players = helper_1.default.cleanOutput(playersRaw.response, true);
+        this._manager.logger.debug(`[${server.identifier}] Playerlist: ${players}`);
+        if (!players)
+            return;
         const playerlist = players.map((player) => player.DisplayName);
         const { joined, left } = helper_1.default.comparePopulation(server.players.map((player) => player.ign), playerlist);
         joined.forEach((player) => {
