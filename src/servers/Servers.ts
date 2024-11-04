@@ -7,6 +7,7 @@ import type {
   RustServer,
   CommandResponse,
   RustServerInformation,
+  FetchedServer,
 } from "./interfaces";
 import ServerUtils from "../util/ServerUtils";
 import CommandHandler from "./CommandHandler";
@@ -28,10 +29,59 @@ export default class ServerManager {
     this._socket = socket;
   }
 
+  /**
+   *
+   * @param opts {ServerOptions[]} - The server options
+   * @returns {Promise<void>} - Resolves once all servers have been added
+   * @description Adds multiple servers to the manager
+   *
+   * @example
+   * ```js
+   * await manager.servers.addMany([
+   *  {
+   *    identifier: "my-server-id",
+   *    serverId: 1234567,
+   *    region: "EU",
+   *    playerRefreshing: true,
+   *    radioRefreshing: true,
+   *    extendedEventRefreshing: true,
+   *    intents: [RCEIntent.All]
+   *  },
+   *  {
+   *    identifier: "my-server-id-2",
+   *    serverId: 7654321,
+   *    region: "US",
+   *    playerRefreshing: true,
+   *    radioRefreshing: true,
+   *    extendedEventRefreshing: true,
+   *    intents: [RCEIntent.All]
+   *  }
+   * ]);
+   * ```
+   */
   public async addMany(opts: ServerOptions[]) {
     await Promise.all(opts.map((opt) => this.add(opt)));
   }
 
+  /**
+   *
+   * @param opts {ServerOptions} - The server options
+   * @returns {Promise<boolean>} - Whether the server was added successfully
+   * @description Adds a server to the manager
+   *
+   * @example
+   * ```js
+   * const server = await manager.servers.add({
+   *  identifier: "my-server-id",
+   *  serverId: 1234567,
+   *  region: "EU",
+   *  playerRefreshing: true,
+   *  radioRefreshing: true,
+   *  extendedEventRefreshing: true,
+   *  intents: [RCEIntent.All]
+   * });
+   * ```
+   */
   public async add(opts: ServerOptions) {
     this._manager.logger.debug(`Adding Server: ${opts.identifier}`);
 
@@ -39,6 +89,17 @@ export default class ServerManager {
       opts.serverId = [
         Array.isArray(opts.serverId) ? opts.serverId[0] : opts.serverId,
       ];
+
+      if (
+        !Number(opts.serverId[0]) ||
+        opts.serverId[0].toString().length !== 7
+      ) {
+        ServerUtils.error(
+          this._manager,
+          `[${opts.identifier}] Failed To Add Server: Invalid SID (Incorrect Length)`
+        );
+        return false;
+      }
 
       const sid = await this.fetchId(
         opts.identifier,
@@ -56,7 +117,7 @@ export default class ServerManager {
         this._manager,
         `[${opts.identifier}] Failed To Add Server: Invalid SID`
       );
-      return;
+      return false;
     }
 
     const status = await this.fetchStatus(
@@ -69,7 +130,7 @@ export default class ServerManager {
         this._manager,
         `[${opts.identifier}] Failed To Add Server: No Status Information`
       );
-      return;
+      return false;
     }
 
     if (status === "SUSPENDED") {
@@ -77,7 +138,7 @@ export default class ServerManager {
         this._manager,
         `[${opts.identifier}] Failed To Add Server: Suspended`
       );
-      return;
+      return false;
     }
 
     this._servers.set(opts.identifier, {
@@ -149,18 +210,51 @@ export default class ServerManager {
         await this.fetchGibs(opts.identifier);
       }
     }
+
+    return true;
   }
 
+  /**
+   *
+   * @param server {RustServer} - The server to update
+   * @returns {void}
+   * @description Updates a server
+   *
+   * @example
+   * ```js
+   * manager.servers.update(server);
+   * ```
+   */
   public update(server: RustServer) {
     this._manager.logger.debug(`[${server.identifier}] Updating Server`);
 
     this._servers.set(server.identifier, server);
   }
 
+  /**
+   * @returns {void}
+   * @description Removes all servers from the manager
+   *
+   * @example
+   * ```js
+   * manager.servers.removeAll();
+   * ```
+   */
   public removeAll() {
     this._servers.forEach((server) => this.remove(server));
   }
 
+  /**
+   *
+   * @param identifiers {string[]} - The server identifiers to remove
+   * @returns {void}
+   * @description Removes multiple servers from the manager
+   *
+   * @example
+   * ```js
+   * manager.servers.removeMany(["my-server-id", "my-server-id-2"]);
+   * ```
+   */
   public removeMany(identifiers: string[]) {
     identifiers.forEach((identifier) => {
       const server = this.get(identifier);
@@ -170,6 +264,17 @@ export default class ServerManager {
     });
   }
 
+  /**
+   *
+   * @param server {RustServer} - The server to remove
+   * @returns {void}
+   * @description Removes a server from the manager
+   *
+   * @example
+   * ```js
+   * manager.servers.remove(server);
+   * ```
+   */
   public remove(server: RustServer) {
     this._manager.logger.debug(`[${server.identifier}] Removing Server`);
 
@@ -182,14 +287,51 @@ export default class ServerManager {
     this._manager.logger.info(`[${server.identifier}] Server Removed`);
   }
 
+  /**
+   *
+   * @param identifier {string} - The server identifier
+   * @returns {RustServer | undefined} - The server
+   * @description Gets a server by its identifier
+   *
+   * @example
+   * ```js
+   * const server = manager.servers.get("my-server-id");
+   * ```
+   */
   public get(identifier: string) {
     return this._servers.get(identifier);
   }
 
+  /**
+   *
+   * @returns {RustServer[]} - All servers
+   * @description Gets all servers
+   *
+   * @example
+   * ```js
+   * const servers = manager.servers.getAll();
+   * ```
+   */
   public getAll() {
     return this._servers;
   }
 
+  /**
+   *
+   * @param identifier - The server identifier
+   * @param rawHostname - Whether to return the raw hostname
+   * @returns {Promise<RustServerInformation | null>} - The server information
+   *
+   * @example
+   * ```js
+   * const info = await manager.servers.info("my-server-id");
+   * ```
+   *
+   * @example
+   * ```js
+   * const info = await manager.servers.info("my-server-id", true);
+   * ```
+   */
   public async info(identifier: string, rawHostname: boolean = false) {
     const server = this.get(identifier);
     if (!server) {
@@ -211,6 +353,23 @@ export default class ServerManager {
     return data;
   }
 
+  /**
+   *
+   * @param identifier - The server identifier
+   * @param command - The command to send
+   * @param response - Whether to wait for a response
+   * @returns {Promise<CommandResponse>} - The command response
+   *
+   * @example
+   * ```js
+   * await manager.servers.command("my-server-id", "say Hello World!");
+   * ```
+   *
+   * @example
+   * ```js
+   * const response = await manager.servers.command("my-server-id", "getauthlevels", true);
+   * ```
+   */
   public async command(
     identifier: string,
     command: string,
@@ -573,6 +732,110 @@ export default class ServerManager {
     });
 
     this._manager.logger.debug(`[${server.identifier}] Players Updated`);
+  }
+
+  /**
+   *
+   * @param region - The region to fetch servers from
+   * @returns {Promise<FetchedServer[]>} - The fetched servers
+   * @description Fetches servers from the authorized GPortal account
+   *
+   * @example
+   * ```js
+   * const servers = await manager.servers.fetchServers("EU");
+   * ```
+   *
+   * @example
+   * ```js
+   * const servers = await manager.servers.fetchServers("US");
+   * ```
+   *
+   * @example
+   * ```js
+   * const servers = await manager.servers.fetchServers();
+   * ```
+   */
+  public async fetchServers(region?: "US" | "EU"): Promise<FetchedServer[]> {
+    const token = this._auth?.accessToken;
+    if (!token) {
+      this._manager.logger.warn("Failed To Fetch Servers: No Access Token");
+      return [];
+    }
+
+    this._manager.logger.debug("Fetching Servers");
+
+    if (!region) {
+      const eu = await this.fetchServers("EU");
+      const us = await this.fetchServers("US");
+      return [...eu, ...us];
+    }
+
+    try {
+      const response = await fetch(
+        `${GPortalRoutes.Origin}/${
+          region === "EU" ? "eur" : "int"
+        }/menu/clouds`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        this._manager.logger.warn(
+          `Failed To Fetch Servers: ${response.status} ${response.statusText}`
+        );
+        return [];
+      }
+
+      const data = await response.json();
+      const fetchedServers: FetchedServer[] = data?.items
+        ?.filter((s) =>
+          [
+            "Rust Xbox",
+            "Gamecloud Rust PS4 (UK)",
+            "Gamecloud Rust PS4 (US)",
+          ].includes(s.label)
+        )
+        .map((s) => {
+          return {
+            rawName: s.items[0].label,
+            name: s.items[0].label.replace(/<color=[^>]+>|<\/color>/g, ""),
+            region,
+            sid: [Number(s.items[0].data.url.split("/")[4])],
+          };
+        });
+
+      const resolveIdsRequest = await fetch(
+        `${GPortalRoutes.Origin}/${region === "EU" ? "eur" : "int"}/serviceIds`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!resolveIdsRequest.ok) {
+        this._manager.logger.warn(
+          `Failed To Fetch Servers: ${resolveIdsRequest.status} ${resolveIdsRequest.statusText}`
+        );
+        return fetchedServers ?? [];
+      }
+
+      const resolvedIds = await resolveIdsRequest.json();
+      fetchedServers?.forEach((s) => {
+        const resolvedId = resolvedIds.find((r) => r.serverId === s.sid[0]);
+        if (resolvedId) {
+          s.sid.push(resolvedId.serviceId);
+        }
+      });
+
+      return fetchedServers ?? [];
+    } catch (error) {
+      ServerUtils.error(this._manager, `Failed To Fetch Servers: ${error}`);
+      return [];
+    }
   }
 
   private async fetchStatus(

@@ -20,11 +20,37 @@ export default class RCEManager {
      *
      * @param auth {AuthOptions} - The authentication options for the GPortal API
      * @returns {Promise<void>}
+     *
+     * @example
+     * ```js
+     * const rce = new RCEManager();
+     * await rce.init({
+     *  username: "username",
+     *  password: "password"
+     * });
+     * ```
+     *
+     * @example
+     * ```js
+     * const rce = new RCEManager();
+     * await rce.init({
+     *  username: "username",
+     *  password: "password"
+     * }, {
+     *  level: LogLevel.Info,
+     *  file: "rce.log"
+     * });
      */
     init(auth: AuthOptions, logger: LoggerOptions): Promise<void>;
     /**
      * Gracefully close the RCE Manager
      * @returns {void}
+     *
+     * @example
+     * ```js
+     * const rce = new RCEManager();
+     * rce.destroy();
+     * ```
      */
     destroy(): void;
     /**
@@ -32,12 +58,24 @@ export default class RCEManager {
      * @param name {string} - The name of the plugin
      * @param instance {any} - The instance of the plugin
      * @returns {void}
+     *
+     * @example
+     * ```js
+     * const rce = new RCEManager();
+     * rce.registerPlugin("myPlugin", new MyPlugin());
+     * ```
      */
     registerPlugin(name: string, instance: any): void;
     /**
      * Get a registered plugin
      * @param name {string} - The name of the plugin
      * @returns {any}
+     *
+     * @example
+     * ```js
+     * const rce = new RCEManager();
+     * const myPlugin = rce.getPlugin("myPlugin");
+     * ```
      */
     getPlugin(name: string): any;
 }

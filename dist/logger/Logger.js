@@ -61,6 +61,16 @@ class RCELogger {
             console.log(formattedMessage, this.format(message));
         }
     }
+    /**
+     *
+     * @param message - The message to log
+     * @description Logs a message with the [DEBUG] prefix
+     *
+     * @example
+     * ```js
+     * manager.logger.debug("Hello, World!");
+     * ```
+     */
     debug(message) {
         const logType = {
             prefix: "[DEBUG]",
@@ -69,6 +79,16 @@ class RCELogger {
         };
         this.log(constants_1.LogLevel.Debug, logType, message);
     }
+    /**
+     *
+     * @param message - The message to log
+     * @description Logs a message with the [ERROR] prefix
+     *
+     * @example
+     * ```js
+     * manager.logger.error("An error occurred!");
+     * ```
+     */
     error(message) {
         const logType = {
             prefix: "[ERROR]",
@@ -77,6 +97,16 @@ class RCELogger {
         };
         this.log(constants_1.LogLevel.Error, logType, message);
     }
+    /**
+     *
+     * @param message - The message to log
+     * @description Logs a message with the [INFO] prefix
+     *
+     * @example
+     * ```js
+     * manager.logger.info("Hello, World!");
+     * ```
+     */
     info(message) {
         const logType = {
             prefix: "[INFO]",
@@ -85,6 +115,16 @@ class RCELogger {
         };
         this.log(constants_1.LogLevel.Info, logType, message);
     }
+    /**
+     *
+     * @param message - The message to log
+     * @description Logs a message with the [WARNING] prefix
+     *
+     * @example
+     * ```js
+     * manager.logger.warn("This is a warning!");
+     * ```
+     */
     warn(message) {
         const logType = {
             prefix: "[WARNING]",

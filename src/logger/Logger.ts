@@ -72,6 +72,16 @@ export default class RCELogger implements ILogger {
     }
   }
 
+  /**
+   *
+   * @param message - The message to log
+   * @description Logs a message with the [DEBUG] prefix
+   *
+   * @example
+   * ```js
+   * manager.logger.debug("Hello, World!");
+   * ```
+   */
   debug(message: string) {
     const logType: LogType = {
       prefix: "[DEBUG]",
@@ -82,6 +92,16 @@ export default class RCELogger implements ILogger {
     this.log(LogLevel.Debug, logType, message);
   }
 
+  /**
+   *
+   * @param message - The message to log
+   * @description Logs a message with the [ERROR] prefix
+   *
+   * @example
+   * ```js
+   * manager.logger.error("An error occurred!");
+   * ```
+   */
   error(message: string) {
     const logType: LogType = {
       prefix: "[ERROR]",
@@ -92,6 +112,16 @@ export default class RCELogger implements ILogger {
     this.log(LogLevel.Error, logType, message);
   }
 
+  /**
+   *
+   * @param message - The message to log
+   * @description Logs a message with the [INFO] prefix
+   *
+   * @example
+   * ```js
+   * manager.logger.info("Hello, World!");
+   * ```
+   */
   info(message: string) {
     const logType: LogType = {
       prefix: "[INFO]",
@@ -102,6 +132,16 @@ export default class RCELogger implements ILogger {
     this.log(LogLevel.Info, logType, message);
   }
 
+  /**
+   *
+   * @param message - The message to log
+   * @description Logs a message with the [WARNING] prefix
+   *
+   * @example
+   * ```js
+   * manager.logger.warn("This is a warning!");
+   * ```
+   */
   warn(message: string) {
     const logType: LogType = {
       prefix: "[WARNING]",

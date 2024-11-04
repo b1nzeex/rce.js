@@ -8,6 +8,12 @@ export interface ServerOptions {
     extendedEventRefreshing?: boolean;
     intents: string[];
 }
+export interface FetchedServer {
+    rawName: string;
+    name: string;
+    region: "EU" | "US";
+    sid: number[];
+}
 export interface ServerPlayer {
     ign: string;
     ping: number;
