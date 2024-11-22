@@ -500,7 +500,10 @@ export default class ServerManager {
           };
         }
 
-        return undefined;
+        return {
+          ok: true,
+          response: undefined,
+        };
       } catch (error) {
         ServerUtils.error(
           this._manager,
