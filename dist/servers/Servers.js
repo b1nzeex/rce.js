@@ -397,7 +397,10 @@ class ServerManager {
                         error: `HTTP ${response.status} ${response.statusText}`,
                     };
                 }
-                return undefined;
+                return {
+                    ok: true,
+                    response: undefined,
+                };
             }
             catch (error) {
                 ServerUtils_1.default.error(this._manager, `Failed To Send Command: ${error}`, server);
