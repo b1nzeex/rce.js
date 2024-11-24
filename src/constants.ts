@@ -71,6 +71,26 @@ export const playerKillData = [
     type: PlayerKillType.Entity,
   },
   {
+    id: "flameturret_fireball (entity)",
+    name: "Flame Turret",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "icewall (entity)",
+    name: "Ice Wall",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "wall.external.high.wood (entity)",
+    name: "High External Wooden Wall",
+    type: PlayerKillType.Entity,
+  },
+  {
+    id: "wall.external.high.ice (entity)",
+    name: "High External Ice Wall",
+    type: PlayerKillType.Entity,
+  },
+  {
     id: "bear",
     name: "Bear",
     type: PlayerKillType.Npc,
