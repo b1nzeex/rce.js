@@ -16,13 +16,6 @@ export interface FetchedServer {
   sid: number[];
 }
 
-export interface ServerPlayer {
-  ign: string;
-  ping: number;
-  secondsConnected: number;
-  health: number;
-}
-
 export interface RustServer {
   identifier: string;
   serverId: number[]; // url, backend
@@ -39,7 +32,7 @@ export interface RustServer {
     | "RUNNING"
     | "SUSPENDED"
     | "UNKNOWN";
-  players: ServerPlayer[];
+  players: string[];
   frequencies: number[];
   intents: string[];
 }

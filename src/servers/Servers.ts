@@ -683,25 +683,20 @@ export default class ServerManager {
 
     this._manager.logger.debug(`[${server.identifier}] Updating Players`);
 
-    const playersRaw = await this.command(
-      server.identifier,
-      "playerlist",
-      true
-    );
-    if (!playersRaw?.response) {
+    const players = await this.command(server.identifier, "Users", true);
+    if (!players?.response) {
       return this._manager.logger.warn(
         `[${server.identifier}] Failed To Update Players`
       );
     }
 
-    const players: any[] = Helper.cleanOutput(playersRaw.response, true);
-    this._manager.logger.debug(`[${server.identifier}] Playerlist: ${players}`);
-
-    if (!players) return;
-    const playerlist = players.map((player) => player.DisplayName);
+    const playerlist = players.response
+      .match(/"(.*?)"/g)
+      .map((ign) => ign.replace(/"/g, ""));
+    playerlist.shift();
 
     const { joined, left } = Helper.comparePopulation(
-      server.players.map((player) => player.ign),
+      server.players,
       playerlist
     );
 
@@ -719,12 +714,7 @@ export default class ServerManager {
       });
     });
 
-    server.players = players.map((player) => ({
-      ign: player.DisplayName,
-      ping: player.Ping,
-      secondsConnected: player.ConnectedSeconds,
-      health: player.Health,
-    }));
+    server.players = playerlist;
     this.update(server);
 
     this._manager.events.emit(RCEEvent.PlayerListUpdated, {
