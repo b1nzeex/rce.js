@@ -14,12 +14,6 @@ export interface FetchedServer {
     region: "EU" | "US";
     sid: number[];
 }
-export interface ServerPlayer {
-    ign: string;
-    ping: number;
-    secondsConnected: number;
-    health: number;
-}
 export interface RustServer {
     identifier: string;
     serverId: number[];
@@ -28,7 +22,7 @@ export interface RustServer {
     flags: string[];
     state: any[];
     status: "STOPPING" | "MAINTENANCE" | "UPDATING" | "STOPPED" | "STARTING" | "RUNNING" | "SUSPENDED" | "UNKNOWN";
-    players: ServerPlayer[];
+    players: string[];
     frequencies: number[];
     intents: string[];
 }

@@ -523,16 +523,15 @@ class ServerManager {
             return this._manager.logger.warn(`[${identifier}] Failed To Update Players: Invalid Server`);
         }
         this._manager.logger.debug(`[${server.identifier}] Updating Players`);
-        const playersRaw = await this.command(server.identifier, "playerlist", true);
-        if (!playersRaw?.response) {
+        const players = await this.command(server.identifier, "Users", true);
+        if (!players?.response) {
             return this._manager.logger.warn(`[${server.identifier}] Failed To Update Players`);
         }
-        const players = helper_1.default.cleanOutput(playersRaw.response, true);
-        this._manager.logger.debug(`[${server.identifier}] Playerlist: ${players}`);
-        if (!players)
-            return;
-        const playerlist = players.map((player) => player.DisplayName);
-        const { joined, left } = helper_1.default.comparePopulation(server.players.map((player) => player.ign), playerlist);
+        const playerlist = players.response
+            .match(/"(.*?)"/g)
+            .map((ign) => ign.replace(/"/g, ""));
+        playerlist.shift();
+        const { joined, left } = helper_1.default.comparePopulation(server.players, playerlist);
         joined.forEach((player) => {
             this._manager.events.emit(constants_1.RCEEvent.PlayerJoined, {
                 server,
@@ -545,12 +544,7 @@ class ServerManager {
                 ign: player,
             });
         });
-        server.players = players.map((player) => ({
-            ign: player.DisplayName,
-            ping: player.Ping,
-            secondsConnected: player.ConnectedSeconds,
-            health: player.Health,
-        }));
+        server.players = playerlist;
         this.update(server);
         this._manager.events.emit(constants_1.RCEEvent.PlayerListUpdated, {
             server,
@@ -605,11 +599,7 @@ class ServerManager {
             }
             const data = await response.json();
             const fetchedServers = data?.items
-                ?.filter((s) => [
-                "Rust Xbox",
-                "Gamecloud Rust PS4 (UK)",
-                "Gamecloud Rust PS4 (US)",
-            ].includes(s.label))
+                ?.filter((s) => s.label.includes("Rust"))
                 .map((s) => {
                 return {
                     rawName: s.items[0].label,

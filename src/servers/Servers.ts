@@ -784,13 +784,7 @@ export default class ServerManager {
 
       const data = await response.json();
       const fetchedServers: FetchedServer[] = data?.items
-        ?.filter((s) =>
-          [
-            "Rust Xbox",
-            "Gamecloud Rust PS4 (UK)",
-            "Gamecloud Rust PS4 (US)",
-          ].includes(s.label)
-        )
+        ?.filter((s) => s.label.includes("Rust"))
         .map((s) => {
           return {
             rawName: s.items[0].label,
