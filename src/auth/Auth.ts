@@ -62,6 +62,17 @@ export default class GPortalAuth {
         throw new Error("Failed to authenticate");
       }
 
+      const filteredUrl = authResponse.url
+        .replace(
+          /(code=[^&]+)(.{25})(?=&|$)/i,
+          (_, prefix) => prefix + "X".repeat(25)
+        )
+        .replace(
+          /(state=[^&]+)(.{25})(?=&|$)/i,
+          (_, prefix) => prefix + "X".repeat(25)
+        );
+      this._manager.logger.debug(filteredUrl);
+
       const code = new URLSearchParams(new URL(authResponse.url).search).get(
         "code"
       );
