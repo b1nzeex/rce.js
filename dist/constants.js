@@ -449,7 +449,7 @@ exports.RegularExpressions = {
     CustomZoneCreated: new RegExp(/Successfully created zone \[([\w\d\s_-]+)\]/),
     CustomZoneRemoved: new RegExp(/Successfully removed zone \[([\w\d\s_-]+)\]/),
     PlayerRoleAdd: new RegExp(/\[?SERVER\]?\s*Added\s*\[([^\]]+)\](?::\[([^\]]+)\])?\s*(?:to\s*(?:Group\s*)?)?\[(\w+)\]/i),
-    ItemSpawn: new RegExp(/\bgiving ([\w\s_-]+) ([\d.]+) x ([\w\s-]+(?: [\w\s-]+)*)\b/),
+    ItemSpawn: new RegExp(/\bgiving ([\w\s._-]+) ([\d.]+) x ([\w\s._-]+(?: [\w\s._-]+)*)\b/),
     NoteEdit: new RegExp(/\[NOTE PANEL\] Player \[ ([^\]]+) \] changed name from \[\s*([\s\S]*?)\s*\] to \[\s*([\s\S]*?)\s*\]/),
     TeamCreate: new RegExp(/\[([^\]]+)\] created a new team, ID: (\d+)/),
     TeamJoin: new RegExp(/\[([^\]]+)\] has joined \[([^\]]+)]s team, ID: \[(\d+)\]/),

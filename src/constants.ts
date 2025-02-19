@@ -452,7 +452,7 @@ export const RegularExpressions: { [key: string]: RegExp } = {
     /\[?SERVER\]?\s*Added\s*\[([^\]]+)\](?::\[([^\]]+)\])?\s*(?:to\s*(?:Group\s*)?)?\[(\w+)\]/i
   ),
   ItemSpawn: new RegExp(
-    /\bgiving ([\w\s_-]+) ([\d.]+) x ([\w\s-]+(?: [\w\s-]+)*)\b/
+    /\bgiving ([\w\s._-]+) ([\d.]+) x ([\w\s._-]+(?: [\w\s._-]+)*)\b/
   ),
   NoteEdit: new RegExp(
     /\[NOTE PANEL\] Player \[ ([^\]]+) \] changed name from \[\s*([\s\S]*?)\s*\] to \[\s*([\s\S]*?)\s*\]/
