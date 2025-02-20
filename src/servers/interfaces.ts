@@ -76,3 +76,37 @@ export interface RustServerInformation {
   Restarting: boolean;
   SaveCreatedTime: string;
 }
+
+export interface RustServerAdvancedInformation {
+  name: string;
+  platforms: string[];
+  ipPort: string;
+  permissions: RustServerAdvancedInformationPermissions;
+  backups: RustServerAdvancedInformationBackups[];
+  restarts: RustServerAdvancedInformationRestarts[];
+}
+
+interface RustServerAdvancedInformationPermissions {
+  username: string;
+  created: Date;
+  owner: boolean;
+}
+
+interface RustServerAdvancedInformationBackups {
+  id: number;
+  size: number;
+  created: Date;
+  auto: boolean;
+}
+
+interface RustServerAdvancedInformationRestarts {
+  id: number;
+  schedule: {
+    type: "weekly" | "monthly" | "daily";
+    timezone: string;
+    day?: string;
+    dayOfMonth?: number;
+    time: string;
+  };
+  nextRun: Date;
+}

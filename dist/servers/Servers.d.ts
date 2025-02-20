@@ -1,7 +1,7 @@
 import type GPortalAuth from "../auth/Auth";
 import type GPortalSocket from "../socket/Socket";
 import type RCEManager from "../Manager";
-import type { ServerOptions, RustServer, CommandResponse, RustServerInformation, FetchedServer } from "./interfaces";
+import type { ServerOptions, RustServer, CommandResponse, RustServerInformation, FetchedServer, RustServerAdvancedInformation } from "./interfaces";
 export default class ServerManager {
     private _manager;
     private _auth;
@@ -145,6 +145,7 @@ export default class ServerManager {
      * ```
      */
     info(identifier: string, rawHostname?: boolean): Promise<RustServerInformation>;
+    fetchAdvanced(identifier: string): Promise<RustServerAdvancedInformation>;
     /**
      *
      * @param identifier - The server identifier
