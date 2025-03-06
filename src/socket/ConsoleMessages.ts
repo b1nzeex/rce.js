@@ -266,6 +266,17 @@ export default class ConsoleMessagesHandler {
         });
       }
 
+      // EVENT: TEAM_INVITE
+      const teamInviteMatch = log.match(RegularExpressions.TeamInvite);
+      if (teamInviteMatch) {
+        manager.events.emit(RCEEvent.TeamInvite, {
+          server,
+          id: parseInt(teamInviteMatch[3]),
+          owner: teamInviteMatch[1],
+          ign: teamInviteMatch[2],
+        });
+      }
+
       // EVENT: TEAM_LEAVE
       const teamLeaveMatch = log.match(RegularExpressions.TeamLeave);
       if (teamLeaveMatch) {

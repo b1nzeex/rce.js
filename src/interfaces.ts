@@ -96,6 +96,12 @@ export interface TeamJoinEventPayload extends EventPayload {
   ign: string;
 }
 
+export interface TeamInviteEventPayload extends EventPayload {
+  id: number;
+  owner: string;
+  ign: string;
+}
+
 export interface TeamLeaveEventPayload extends EventPayload {
   id: number;
   owner: string;
@@ -183,6 +189,7 @@ export interface RCEEventTypes {
   [RCEEvent.NoteEdit]: NoteEditEventPayload;
   [RCEEvent.TeamCreate]: TeamCreateEventPayload;
   [RCEEvent.TeamJoin]: TeamJoinEventPayload;
+  [RCEEvent.TeamInvite]: TeamInviteEventPayload;
   [RCEEvent.TeamLeave]: TeamLeaveEventPayload;
   [RCEEvent.KitSpawn]: KitSpawnEventPayload;
   [RCEEvent.KitGive]: KitGiveEventPayload;
