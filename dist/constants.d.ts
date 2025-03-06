@@ -35,6 +35,7 @@ export declare enum RCEEvent {
     TeamCreate = "TEAM_CREATE",
     TeamJoin = "TEAM_JOIN",
     TeamLeave = "TEAM_LEAVE",
+    TeamInvite = "TEAM_INVITE",
     KitSpawn = "KIT_SPAWN",
     KitGive = "KIT_GIVE",
     SpecialEventSet = "SPECIAL_EVENT_SET",
