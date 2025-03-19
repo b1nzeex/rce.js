@@ -1,7 +1,6 @@
-import { load } from "cheerio";
-import type { GPortalAuthData } from "./interfaces";
-import type RCEManager from "../Manager";
-import { GPortalRoutes } from "../constants";
+import type { GPortalAuthData } from './interfaces';
+import type RCEManager from '../Manager';
+import { GPortalRoutes } from '../constants';
 
 export default class GPortalAuth {
   private _manager: RCEManager;
@@ -21,80 +20,82 @@ export default class GPortalAuth {
    * @throws {Error} If the login fails
    */
   public async login(username: string, password: string) {
-    this._manager.logger.debug("Logging in to G-Portal");
+    this._manager.logger.debug('Logging In To G-Portal');
 
     try {
       const authUrl = new URL(GPortalRoutes.Auth);
-      authUrl.searchParams.append("client_id", "website");
-      authUrl.searchParams.append("redirect_uri", GPortalRoutes.Home);
-      authUrl.searchParams.append("response_mode", "query");
-      authUrl.searchParams.append("response_type", "code");
-      authUrl.searchParams.append("scope", "openid email profile gportal");
+      authUrl.searchParams.append('client_id', 'website');
+      authUrl.searchParams.append('redirect_uri', GPortalRoutes.Home);
+      authUrl.searchParams.append('response_mode', 'query');
+      authUrl.searchParams.append('response_type', 'code');
+      authUrl.searchParams.append('scope', 'openid email profile gportal');
       const loginResponse = await fetch(authUrl);
       if (!loginResponse.ok) {
-        throw new Error("Failed to fetch the login page");
+        throw new Error('Failed To Fetch The Login Page');
       }
 
       const loginPage = await loginResponse.text();
-      const cookies = loginResponse.headers.get("set-cookie");
+      const cookies = loginResponse.headers.get('set-cookie');
 
-      const $ = load(loginPage);
-      const url = $("#kc-form-login").attr("action");
+      const regex = /"loginAction"\s*:\s*"([^"]+)"/;
+      const match = regex.exec(loginPage);
 
-      if (!url) {
-        throw new Error("Failed to extract the login URL");
+      if (!match || !match[1]) {
+        throw new Error('Failed To Extract The Login URL');
       }
 
+      const url: string = match[1];
+
       const authResponse = await fetch(url, {
-        method: "POST",
+        method: 'POST',
         headers: {
           Cookie: cookies,
-          "Content-Type": "application/x-www-form-urlencoded",
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
           username,
           password,
-          credentialId: "",
+          credentialId: '',
         }),
       });
 
       if (!authResponse.ok) {
-        throw new Error("Failed to authenticate");
+        throw new Error('Failed to authenticate');
       }
 
       const filteredUrl = authResponse.url
         .replace(
           /(code=[^&]+)(.{25})(?=&|$)/i,
-          (_, prefix) => prefix + "X".repeat(25)
+          (_, prefix) => prefix + 'X'.repeat(25)
         )
         .replace(
           /(state=[^&]+)(.{25})(?=&|$)/i,
-          (_, prefix) => prefix + "X".repeat(25)
+          (_, prefix) => prefix + 'X'.repeat(25)
         );
       this._manager.logger.debug(filteredUrl);
 
       const code = new URLSearchParams(new URL(authResponse.url).search).get(
-        "code"
+        'code'
       );
       if (!code) {
-        throw new Error("Failed to extract the authentication code");
+        throw new Error('Failed To Extract The Authentication Code');
       }
 
       const tokenResponse = await fetch(GPortalRoutes.Token, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
           code,
-          grant_type: "authorization_code",
-          client_id: "website",
+          grant_type: 'authorization_code',
+          client_id: 'website',
           redirect_uri: GPortalRoutes.Home,
         }),
       });
 
       if (!tokenResponse.ok) {
-        throw new Error("Failed to fetch the authentication token");
+        throw new Error('Failed To Fetch The Authentication Token');
       }
 
       this._authData = await tokenResponse.json();
@@ -104,7 +105,7 @@ export default class GPortalAuth {
         (this._authData.expires_in - 60) * 1_000
       );
     } catch (error) {
-      throw new Error(`Failed to login: ${error.message}`);
+      throw new Error(`Failed To Login: ${error.message}`);
     }
   }
 
@@ -115,26 +116,26 @@ export default class GPortalAuth {
    */
   private async refresh() {
     if (!this._authData?.refresh_token) {
-      throw new Error("Missing refresh token");
+      throw new Error('Missing refresh token');
     }
 
-    this._manager.logger.debug("Refreshing The Authentication Token");
+    this._manager.logger.debug('Refreshing The Authentication Token');
 
     try {
       const tokenResponse = await fetch(GPortalRoutes.Token, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
           refresh_token: this._authData.refresh_token,
-          grant_type: "refresh_token",
-          client_id: "website",
+          grant_type: 'refresh_token',
+          client_id: 'website',
         }),
       });
 
       if (!tokenResponse.ok) {
-        throw new Error("Failed to fetch the authentication token");
+        throw new Error('Failed to fetch the authentication token');
       }
 
       this._authData = await tokenResponse.json();
@@ -144,9 +145,9 @@ export default class GPortalAuth {
         (this._authData.expires_in - 60) * 1_000
       );
 
-      this._manager.logger.debug("Token Refreshed");
+      this._manager.logger.debug('Token Refreshed');
     } catch (error) {
-      throw new Error(`Failed to refresh the token: ${error.message}`);
+      throw new Error(`Failed To Refresh The Token: ${error.message}`);
     }
   }
 
