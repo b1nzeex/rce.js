@@ -1,4 +1,4 @@
-import type RCEManager from "../Manager";
+import type RCEManager from '../Manager';
 export default class GPortalAuth {
     private _manager;
     private _authData;
