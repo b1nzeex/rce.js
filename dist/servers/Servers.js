@@ -33,7 +33,8 @@ class ServerManager {
      *    playerRefreshing: true,
      *    radioRefreshing: true,
      *    extendedEventRefreshing: true,
-     *    intents: [RCEIntent.All]
+     *    intents: [RCEIntent.All],
+     *    silent: false
      *  },
      *  {
      *    identifier: "my-server-id-2",
@@ -42,7 +43,8 @@ class ServerManager {
      *    playerRefreshing: true,
      *    radioRefreshing: true,
      *    extendedEventRefreshing: true,
-     *    intents: [RCEIntent.All]
+     *    intents: [RCEIntent.All],
+     *    silent: true
      *  }
      * ]);
      * ```
@@ -65,7 +67,8 @@ class ServerManager {
      *  playerRefreshing: true,
      *  radioRefreshing: true,
      *  extendedEventRefreshing: true,
-     *  intents: [RCEIntent.All]
+     *  intents: [RCEIntent.All],
+     *  silent: false
      * });
      * ```
      */
@@ -143,6 +146,7 @@ class ServerManager {
             players: [],
             frequencies: [],
             intents: opts.intents,
+            silent: opts.silent ?? false,
         });
         const server = this._servers.get(opts.identifier);
         this._socket.addServer(server);
@@ -400,7 +404,9 @@ class ServerManager {
             return { ok: false, error: "Invalid Server" };
         }
         if (server.status !== "RUNNING") {
-            this._manager.logger.warn(`[${identifier}] Failed To Send Command: Server Not Running`);
+            if (!server.silent) {
+                this._manager.logger.warn(`[${identifier}] Failed To Send Command: Server Not Running`);
+            }
             return { ok: false, error: "Server Not Running" };
         }
         this._manager.logger.debug(`[${identifier}] Sending Command: ${command}`);
@@ -501,12 +507,16 @@ class ServerManager {
     async updateBroadcasters(identifier) {
         const server = this.get(identifier);
         if (!server) {
-            return this._manager.logger.warn(`[${identifier}] Failed To Update Broadcasters: Invalid Server`);
+            if (!server.silent) {
+                return this._manager.logger.warn(`[${identifier}] Failed To Update Broadcasters: Invalid Server`);
+            }
         }
         this._manager.logger.debug(`[${server.identifier}] Updating Broadcasters`);
         const broadcasters = await this.command(server.identifier, "rf.listboardcaster", true);
         if (!broadcasters?.response) {
-            return this._manager.logger.warn(`[${server.identifier}] Failed To Update Broadcasters`);
+            if (!server.silent) {
+                return this._manager.logger.warn(`[${server.identifier}] Failed To Update Broadcasters`);
+            }
         }
         const broadcasts = [];
         const regex = /\[(\d+) MHz\] Position: \(([\d.-]+), ([\d.-]+), ([\d.-]+)\), Range: (\d+)/g;
@@ -561,13 +571,17 @@ class ServerManager {
     async fetchGibs(identifier) {
         const server = this.get(identifier);
         if (!server) {
-            return this._manager.logger.warn(`[${identifier}] Failed To Fetch Gibs: Invalid Server`);
+            if (!server.silent) {
+                return this._manager.logger.warn(`[${identifier}] Failed To Fetch Gibs: Invalid Server`);
+            }
         }
         this._manager.logger.debug(`[${server.identifier}] Fetching Gibs`);
         const bradley = await this.command(server.identifier, "find_entity servergibs_bradley", true);
         const heli = await this.command(server.identifier, "find_entity servergibs_patrolhelicopter", true);
         if (!bradley?.response || !heli?.response) {
-            return this._manager.logger.warn(`[${server.identifier}] Failed To Fetch Gibs`);
+            if (!server.silent) {
+                return this._manager.logger.warn(`[${server.identifier}] Failed To Fetch Gibs`);
+            }
         }
         if (bradley.response.includes("servergibs_bradley") &&
             !server.flags.includes("BRADLEY")) {
@@ -607,12 +621,16 @@ class ServerManager {
     async updatePlayers(identifier) {
         const server = this.get(identifier);
         if (!server) {
-            return this._manager.logger.warn(`[${identifier}] Failed To Update Players: Invalid Server`);
+            if (!server.silent) {
+                return this._manager.logger.warn(`[${identifier}] Failed To Update Players: Invalid Server`);
+            }
         }
         this._manager.logger.debug(`[${server.identifier}] Updating Players`);
         const players = await this.command(server.identifier, "Users", true);
         if (!players?.response) {
-            return this._manager.logger.warn(`[${server.identifier}] Failed To Update Players`);
+            if (!server.silent) {
+                return this._manager.logger.warn(`[${server.identifier}] Failed To Update Players`);
+            }
         }
         const playerlist = players.response
             .match(/"(.*?)"/g)

@@ -24,7 +24,8 @@ export default class ServerManager {
      *    playerRefreshing: true,
      *    radioRefreshing: true,
      *    extendedEventRefreshing: true,
-     *    intents: [RCEIntent.All]
+     *    intents: [RCEIntent.All],
+     *    silent: false
      *  },
      *  {
      *    identifier: "my-server-id-2",
@@ -33,7 +34,8 @@ export default class ServerManager {
      *    playerRefreshing: true,
      *    radioRefreshing: true,
      *    extendedEventRefreshing: true,
-     *    intents: [RCEIntent.All]
+     *    intents: [RCEIntent.All],
+     *    silent: true
      *  }
      * ]);
      * ```
@@ -54,7 +56,8 @@ export default class ServerManager {
      *  playerRefreshing: true,
      *  radioRefreshing: true,
      *  extendedEventRefreshing: true,
-     *  intents: [RCEIntent.All]
+     *  intents: [RCEIntent.All],
+     *  silent: false
      * });
      * ```
      */

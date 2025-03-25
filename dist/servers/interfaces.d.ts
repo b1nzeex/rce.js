@@ -7,6 +7,7 @@ export interface ServerOptions {
     radioRefreshing?: boolean;
     extendedEventRefreshing?: boolean;
     intents: string[];
+    silent?: boolean;
 }
 export interface FetchedServer {
     rawName: string;
@@ -25,6 +26,7 @@ export interface RustServer {
     players: string[];
     frequencies: number[];
     intents: string[];
+    silent: boolean;
 }
 interface RustServerIntervals {
     playerRefreshing?: {
