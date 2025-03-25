@@ -175,20 +175,42 @@ export default class ServerManager {
      *
      * @example
      * ```js
-     * const servers = await manager.servers.fetchServers("EU");
+     * const servers = await manager.servers.fetch("EU");
      * ```
      *
      * @example
      * ```js
-     * const servers = await manager.servers.fetchServers("US");
+     * const servers = await manager.servers.fetch("US");
      * ```
      *
      * @example
      * ```js
-     * const servers = await manager.servers.fetchServers();
+     * const servers = await manager.servers.fetch();
      * ```
      */
-    fetchServers(region?: "US" | "EU"): Promise<FetchedServer[]>;
+    fetch(region?: "US" | "EU"): Promise<FetchedServer[]>;
+    /**
+     *
+     * @param identifier - The identifier of the server to stop
+     * @description Stops a server
+     *
+     * @example
+     * ```js
+     * await manager.servers.stop("my-server-id");
+     * ```
+     */
+    stop(identifier: string, force?: boolean): Promise<boolean>;
+    /**
+     *
+     * @param identifier - The identifier of the server to start
+     * @description Starts a server
+     *
+     * @example
+     * ```js
+     * await manager.servers.start("my-server-id");
+     * ```
+     */
+    start(identifier: string): Promise<boolean>;
     private fetchStatus;
     private fetchId;
 }
