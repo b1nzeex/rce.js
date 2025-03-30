@@ -648,10 +648,12 @@ export default class ServerManager {
     const server = this.get(identifier);
     if (!server) {
       if (!server.silent) {
-        return this._manager.logger.warn(
+        this._manager.logger.warn(
           `[${identifier}] Failed To Update Broadcasters: Invalid Server`
         );
       }
+
+      return;
     }
 
     this._manager.logger.debug(`[${server.identifier}] Updating Broadcasters`);
@@ -663,10 +665,12 @@ export default class ServerManager {
     );
     if (!broadcasters?.response) {
       if (!server.silent) {
-        return this._manager.logger.warn(
+        this._manager.logger.warn(
           `[${server.identifier}] Failed To Update Broadcasters`
         );
       }
+
+      return;
     }
 
     const broadcasts = [];
@@ -733,10 +737,12 @@ export default class ServerManager {
     const server = this.get(identifier);
     if (!server) {
       if (!server.silent) {
-        return this._manager.logger.warn(
+        this._manager.logger.warn(
           `[${identifier}] Failed To Fetch Gibs: Invalid Server`
         );
       }
+
+      return;
     }
 
     this._manager.logger.debug(`[${server.identifier}] Fetching Gibs`);
@@ -754,10 +760,12 @@ export default class ServerManager {
 
     if (!bradley?.response || !heli?.response) {
       if (!server.silent) {
-        return this._manager.logger.warn(
+        this._manager.logger.warn(
           `[${server.identifier}] Failed To Fetch Gibs`
         );
       }
+
+      return;
     }
 
     if (
@@ -811,10 +819,12 @@ export default class ServerManager {
     const server = this.get(identifier);
     if (!server) {
       if (!server.silent) {
-        return this._manager.logger.warn(
+        this._manager.logger.warn(
           `[${identifier}] Failed To Update Players: Invalid Server`
         );
       }
+
+      return;
     }
 
     this._manager.logger.debug(`[${server.identifier}] Updating Players`);
@@ -822,10 +832,12 @@ export default class ServerManager {
     const players = await this.command(server.identifier, "Users", true);
     if (!players?.response) {
       if (!server.silent) {
-        return this._manager.logger.warn(
+        this._manager.logger.warn(
           `[${server.identifier}] Failed To Update Players`
         );
       }
+
+      return;
     }
 
     const playerlist = players.response
