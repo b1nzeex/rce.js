@@ -508,15 +508,17 @@ class ServerManager {
         const server = this.get(identifier);
         if (!server) {
             if (!server.silent) {
-                return this._manager.logger.warn(`[${identifier}] Failed To Update Broadcasters: Invalid Server`);
+                this._manager.logger.warn(`[${identifier}] Failed To Update Broadcasters: Invalid Server`);
             }
+            return;
         }
         this._manager.logger.debug(`[${server.identifier}] Updating Broadcasters`);
         const broadcasters = await this.command(server.identifier, "rf.listboardcaster", true);
         if (!broadcasters?.response) {
             if (!server.silent) {
-                return this._manager.logger.warn(`[${server.identifier}] Failed To Update Broadcasters`);
+                this._manager.logger.warn(`[${server.identifier}] Failed To Update Broadcasters`);
             }
+            return;
         }
         const broadcasts = [];
         const regex = /\[(\d+) MHz\] Position: \(([\d.-]+), ([\d.-]+), ([\d.-]+)\), Range: (\d+)/g;
@@ -572,16 +574,18 @@ class ServerManager {
         const server = this.get(identifier);
         if (!server) {
             if (!server.silent) {
-                return this._manager.logger.warn(`[${identifier}] Failed To Fetch Gibs: Invalid Server`);
+                this._manager.logger.warn(`[${identifier}] Failed To Fetch Gibs: Invalid Server`);
             }
+            return;
         }
         this._manager.logger.debug(`[${server.identifier}] Fetching Gibs`);
         const bradley = await this.command(server.identifier, "find_entity servergibs_bradley", true);
         const heli = await this.command(server.identifier, "find_entity servergibs_patrolhelicopter", true);
         if (!bradley?.response || !heli?.response) {
             if (!server.silent) {
-                return this._manager.logger.warn(`[${server.identifier}] Failed To Fetch Gibs`);
+                this._manager.logger.warn(`[${server.identifier}] Failed To Fetch Gibs`);
             }
+            return;
         }
         if (bradley.response.includes("servergibs_bradley") &&
             !server.flags.includes("BRADLEY")) {
@@ -622,15 +626,17 @@ class ServerManager {
         const server = this.get(identifier);
         if (!server) {
             if (!server.silent) {
-                return this._manager.logger.warn(`[${identifier}] Failed To Update Players: Invalid Server`);
+                this._manager.logger.warn(`[${identifier}] Failed To Update Players: Invalid Server`);
             }
+            return;
         }
         this._manager.logger.debug(`[${server.identifier}] Updating Players`);
         const players = await this.command(server.identifier, "Users", true);
         if (!players?.response) {
             if (!server.silent) {
-                return this._manager.logger.warn(`[${server.identifier}] Failed To Update Players`);
+                this._manager.logger.warn(`[${server.identifier}] Failed To Update Players`);
             }
+            return;
         }
         const playerlist = players.response
             .match(/"(.*?)"/g)
