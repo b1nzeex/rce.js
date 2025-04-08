@@ -336,6 +336,8 @@ export enum RCEEvent {
   TeamJoin = "TEAM_JOIN",
   TeamLeave = "TEAM_LEAVE",
   TeamInvite = "TEAM_INVITE",
+  TeamInviteCancel = "TEAM_INVITE_CANCEL",
+  TeamPromoted = "TEAM_PROMOTED",
   KitSpawn = "KIT_SPAWN",
   KitGive = "KIT_GIVE",
   SpecialEventSet = "SPECIAL_EVENT_SET",
@@ -467,6 +469,12 @@ export const RegularExpressions: { [key: string]: RegExp } = {
   ),
   TeamInvite: new RegExp(
     /\[([\w\s]+)] has invited \[([\w-]+)] to their team ID: \[(\d+)]/
+  ),
+  TeamInviteCancel: new RegExp(
+    /\[([\w\s-]+)] canceled the invitation for \[([\w\s-]+)] to their team, ID: \[(\d+)]/
+  ),
+  TeamPromoted: new RegExp(
+    /\[([\w\s-]+)] promoted \[([\w\s-]+)] as their new leader of the team, ID: \[(\d+)]/
   ),
   KitSpawn: new RegExp(/SERVER giving (.+?) kit (\w+)/),
   KitGive: new RegExp(

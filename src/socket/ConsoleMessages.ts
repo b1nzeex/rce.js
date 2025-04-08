@@ -288,6 +288,30 @@ export default class ConsoleMessagesHandler {
         });
       }
 
+      // EVENT: TEAM_INVITE_CANCEL
+      const teamInviteCancelMatch = log.match(
+        RegularExpressions.TeamInviteCancel
+      );
+      if (teamInviteCancelMatch) {
+        manager.events.emit(RCEEvent.TeamInviteCancel, {
+          server,
+          id: parseInt(teamInviteCancelMatch[3]),
+          owner: teamInviteCancelMatch[2],
+          ign: teamInviteCancelMatch[1],
+        });
+      }
+
+      // EVENT: TEAM_PROMOTED
+      const teamPromotedMatch = log.match(RegularExpressions.TeamPromoted);
+      if (teamPromotedMatch) {
+        manager.events.emit(RCEEvent.TeamPromoted, {
+          server,
+          id: parseInt(teamPromotedMatch[3]),
+          oldOwner: teamPromotedMatch[1],
+          newOwner: teamCreateMatch[2],
+        });
+      }
+
       // EVENT: KIT_SPAWN
       const kitSpawnMatch = log.match(RegularExpressions.KitSpawn);
       if (kitSpawnMatch) {
