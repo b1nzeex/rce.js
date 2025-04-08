@@ -81,6 +81,16 @@ export interface TeamInviteEventPayload extends EventPayload {
     owner: string;
     ign: string;
 }
+export interface TeamInviteCancelEventPayload extends EventPayload {
+    id: number;
+    owner: string;
+    ign: string;
+}
+export interface TeamPromotedEventPayload extends EventPayload {
+    id: number;
+    oldOwner: string;
+    newOwner: string;
+}
 export interface TeamLeaveEventPayload extends EventPayload {
     id: number;
     owner: string;
@@ -148,6 +158,8 @@ export interface RCEEventTypes {
     [RCEEvent.TeamJoin]: TeamJoinEventPayload;
     [RCEEvent.TeamInvite]: TeamInviteEventPayload;
     [RCEEvent.TeamLeave]: TeamLeaveEventPayload;
+    [RCEEvent.TeamInviteCancel]: TeamInviteCancelEventPayload;
+    [RCEEvent.TeamPromoted]: TeamPromotedEventPayload;
     [RCEEvent.KitSpawn]: KitSpawnEventPayload;
     [RCEEvent.KitGive]: KitGiveEventPayload;
     [RCEEvent.SpecialEventSet]: SpecialEventSetEventPayload;

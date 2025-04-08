@@ -339,6 +339,8 @@ var RCEEvent;
     RCEEvent["TeamJoin"] = "TEAM_JOIN";
     RCEEvent["TeamLeave"] = "TEAM_LEAVE";
     RCEEvent["TeamInvite"] = "TEAM_INVITE";
+    RCEEvent["TeamInviteCancel"] = "TEAM_INVITE_CANCEL";
+    RCEEvent["TeamPromoted"] = "TEAM_PROMOTED";
     RCEEvent["KitSpawn"] = "KIT_SPAWN";
     RCEEvent["KitGive"] = "KIT_GIVE";
     RCEEvent["SpecialEventSet"] = "SPECIAL_EVENT_SET";
@@ -456,6 +458,8 @@ exports.RegularExpressions = {
     TeamJoin: new RegExp(/\[([^\]]+)\] has joined \[([^\]]+)]s team, ID: \[(\d+)\]/),
     TeamLeave: new RegExp(/\[([^\]]+)\] has left \[([^\]]+)]s team, ID: \[(\d+)\]/),
     TeamInvite: new RegExp(/\[([\w\s]+)] has invited \[([\w-]+)] to their team ID: \[(\d+)]/),
+    TeamInviteCancel: new RegExp(/\[([\w\s-]+)] canceled the invitation for \[([\w\s-]+)] to their team, ID: \[(\d+)]/),
+    TeamPromoted: new RegExp(/\[([\w\s-]+)] promoted \[([\w\s-]+)] as their new leader of the team, ID: \[(\d+)]/),
     KitSpawn: new RegExp(/SERVER giving (.+?) kit (\w+)/),
     KitGive: new RegExp(/\[ServerVar\] ([\w\s_-]+) giving ([\w\s_-]+) kit ([\w\s_-]+)/),
     SpecialEventSet: new RegExp(/Setting event as :(\w+)/),
