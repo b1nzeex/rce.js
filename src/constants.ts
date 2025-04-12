@@ -330,6 +330,7 @@ export enum RCEEvent {
   CustomZoneCreated = "CUSTOM_ZONE_CREATED",
   CustomZoneRemoved = "CUSTOM_ZONE_REMOVED",
   PlayerRoleAdd = "PLAYER_ROLE_ADD",
+  PlayerRoleRemove = "PLAYER_ROLE_REMOVE",
   ItemSpawn = "ITEM_SPAWN",
   NoteEdit = "NOTE_EDIT",
   TeamCreate = "TEAM_CREATE",
@@ -452,7 +453,10 @@ export const RegularExpressions: { [key: string]: RegExp } = {
   CustomZoneCreated: new RegExp(/Successfully created zone \[([\w\d\s_-]+)\]/),
   CustomZoneRemoved: new RegExp(/Successfully removed zone \[([\w\d\s_-]+)\]/),
   PlayerRoleAdd: new RegExp(
-    /\[?SERVER\]?\s*Added\s*\[([^\]]+)\](?::\[([^\]]+)\])?\s*(?:to\s*(?:Group\s*)?)?\[(\w+)\]/i
+    /\[([\w\s-]+)] Added \[([\w\s-]+)] to Group \[([\w\s-]+)]/
+  ),
+  PlayerRoleRemove: new RegExp(
+    /\[([\w\s-]+)] Removed \[([\w\s-]+)] from Group \[([\w\s-]+)]/
   ),
   ItemSpawn: new RegExp(
     /\bgiving ([\w\s._-]+) ([\d.]+) x ([\w\s._-]+(?: [\w\s._-]+)*)\b/

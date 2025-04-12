@@ -333,6 +333,7 @@ var RCEEvent;
     RCEEvent["CustomZoneCreated"] = "CUSTOM_ZONE_CREATED";
     RCEEvent["CustomZoneRemoved"] = "CUSTOM_ZONE_REMOVED";
     RCEEvent["PlayerRoleAdd"] = "PLAYER_ROLE_ADD";
+    RCEEvent["PlayerRoleRemove"] = "PLAYER_ROLE_REMOVE";
     RCEEvent["ItemSpawn"] = "ITEM_SPAWN";
     RCEEvent["NoteEdit"] = "NOTE_EDIT";
     RCEEvent["TeamCreate"] = "TEAM_CREATE";
@@ -451,7 +452,8 @@ exports.RegularExpressions = {
     QuickChat: new RegExp(/(\[CHAT (TEAM|SERVER|LOCAL)\]) ([\w\s\-_]+) : (.+)/),
     CustomZoneCreated: new RegExp(/Successfully created zone \[([\w\d\s_-]+)\]/),
     CustomZoneRemoved: new RegExp(/Successfully removed zone \[([\w\d\s_-]+)\]/),
-    PlayerRoleAdd: new RegExp(/\[?SERVER\]?\s*Added\s*\[([^\]]+)\](?::\[([^\]]+)\])?\s*(?:to\s*(?:Group\s*)?)?\[(\w+)\]/i),
+    PlayerRoleAdd: new RegExp(/\[([\w\s-]+)] Added \[([\w\s-]+)] to Group \[([\w\s-]+)]/),
+    PlayerRoleRemove: new RegExp(/\[([\w\s-]+)] Removed \[([\w\s-]+)] from Group \[([\w\s-]+)]/),
     ItemSpawn: new RegExp(/\bgiving ([\w\s._-]+) ([\d.]+) x ([\w\s._-]+(?: [\w\s._-]+)*)\b/),
     NoteEdit: new RegExp(/\[NOTE PANEL\] Player \[ ([^\]]+) \] changed name from \[\s*([\s\S]*?)\s*\] to \[\s*([\s\S]*?)\s*\]/),
     TeamCreate: new RegExp(/\[([^\]]+)\] created a new team, ID: (\d+)/),

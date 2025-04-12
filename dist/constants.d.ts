@@ -30,6 +30,7 @@ export declare enum RCEEvent {
     CustomZoneCreated = "CUSTOM_ZONE_CREATED",
     CustomZoneRemoved = "CUSTOM_ZONE_REMOVED",
     PlayerRoleAdd = "PLAYER_ROLE_ADD",
+    PlayerRoleRemove = "PLAYER_ROLE_REMOVE",
     ItemSpawn = "ITEM_SPAWN",
     NoteEdit = "NOTE_EDIT",
     TeamCreate = "TEAM_CREATE",

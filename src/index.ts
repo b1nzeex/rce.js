@@ -39,6 +39,7 @@ import {
   CustomZoneRemovedEventPayload,
   VendingMachineNameEventPayload,
   ErrorEventPayload,
+  PlayerRoleRemoveEventPayload,
 } from "./interfaces";
 
 export {
@@ -80,4 +81,5 @@ export {
   QuickChat,
   ErrorEventPayload,
   PlayerKillType,
+  PlayerRoleRemoveEventPayload,
 };

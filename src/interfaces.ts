@@ -69,6 +69,13 @@ export interface CustomZoneRemovedEventPayload extends EventPayload {
 }
 
 export interface PlayerRoleAddEventPayload extends EventPayload {
+  admin?: string;
+  ign: string;
+  role: string;
+}
+
+export interface PlayerRoleRemoveEventPayload extends EventPayload {
+  admin?: string;
   ign: string;
   role: string;
 }
@@ -197,6 +204,7 @@ export interface RCEEventTypes {
   [RCEEvent.CustomZoneCreated]: CustomZoneCreatedEventPayload;
   [RCEEvent.CustomZoneRemoved]: CustomZoneRemovedEventPayload;
   [RCEEvent.PlayerRoleAdd]: PlayerRoleAddEventPayload;
+  [RCEEvent.PlayerRoleRemove]: PlayerRoleRemoveEventPayload;
   [RCEEvent.ItemSpawn]: ItemSpawnEventPayload;
   [RCEEvent.NoteEdit]: NoteEditEventPayload;
   [RCEEvent.TeamCreate]: TeamCreateEventPayload;

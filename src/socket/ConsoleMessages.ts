@@ -209,13 +209,37 @@ export default class ConsoleMessagesHandler {
       }
 
       // EVENT: PLAYER_ROLE_ADD
-      const playerRoleAddMatch = log.match(RegularExpressions.PlayerRoleAdd);
-      if (playerRoleAddMatch && log.includes("Added")) {
-        manager.events.emit(RCEEvent.PlayerRoleAdd, {
-          server,
-          ign: playerRoleAddMatch[1],
-          role: playerRoleAddMatch[3],
-        });
+      if (log.includes("Added")) {
+        const playerRoleAddMatch = log.match(RegularExpressions.PlayerRoleAdd);
+        if (playerRoleAddMatch) {
+          manager.events.emit(RCEEvent.PlayerRoleAdd, {
+            server,
+            admin:
+              playerRoleAddMatch[1] === "SERVER"
+                ? undefined
+                : playerRoleAddMatch[1],
+            ign: playerRoleAddMatch[2],
+            role: playerRoleAddMatch[3],
+          });
+        }
+      }
+
+      // EVENT: PLAYER_ROLE_REMOVE
+      if (log.includes("Removed")) {
+        const playerRoleRemoveMatch = log.match(
+          RegularExpressions.PlayerRoleRemove
+        );
+        if (playerRoleRemoveMatch) {
+          manager.events.emit(RCEEvent.PlayerRoleRemove, {
+            server,
+            admin:
+              playerRoleRemoveMatch[1] === "SERVER"
+                ? undefined
+                : playerRoleRemoveMatch[1],
+            ign: playerRoleRemoveMatch[2],
+            role: playerRoleRemoveMatch[3],
+          });
+        }
       }
 
       // EVENT: ITEM_SPAWN
