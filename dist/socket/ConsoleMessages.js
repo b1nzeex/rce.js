@@ -7,42 +7,42 @@ const constants_1 = require("../constants");
 const CommandHandler_1 = __importDefault(require("../servers/CommandHandler"));
 const EVENTS = {
     event_airdrop: {
-        name: "Airdrop",
+        name: 'Airdrop',
         special: false,
     },
     event_cargoship: {
-        name: "Cargo Ship",
+        name: 'Cargo Ship',
         special: false,
     },
     event_cargoheli: {
-        name: "Chinook",
+        name: 'Chinook',
         special: false,
     },
     event_helicopter: {
-        name: "Patrol Helicopter",
+        name: 'Patrol Helicopter',
         special: false,
     },
     event_halloween: {
-        name: "Halloween",
+        name: 'Halloween',
         special: true,
     },
     event_xmas: {
-        name: "Christmas",
+        name: 'Christmas',
         special: true,
     },
     event_easter: {
-        name: "Easter",
+        name: 'Easter',
         special: true,
     },
 };
 class ConsoleMessagesHandler {
     static handle(manager, message, server) {
         const messageArray = message.payload.data.consoleMessages.message
-            ?.split("\n")
-            .filter((e) => e !== "") || [];
-        if (!server.flags.includes("INIT_LOGS")) {
+            ?.split('\n')
+            .filter((e) => e !== '') || [];
+        if (!server.flags.includes('INIT_LOGS')) {
             manager.logger.debug(`[${server.identifier}] Initial Logs Received: ${messageArray.length}`);
-            server.flags.push("INIT_LOGS");
+            server.flags.push('INIT_LOGS');
             return manager.servers.update(server);
         }
         let currentCommand;
@@ -75,7 +75,7 @@ class ConsoleMessagesHandler {
             }
             // Check for Command Response
             const command = CommandHandler_1.default.getQueued(server.identifier, date);
-            if (command && !log.startsWith("[ SAVE ]")) {
+            if (command && !log.startsWith('[ SAVE ]')) {
                 manager.logger.debug(`[${server.identifier}] Command Response Found: ${command.command}`);
                 command.resolve({
                     ok: true,
@@ -111,9 +111,9 @@ class ConsoleMessagesHandler {
             const quickChatMatch = log.match(constants_1.RegularExpressions.QuickChat);
             if (quickChatMatch) {
                 const types = {
-                    "[CHAT TEAM]": "team",
-                    "[CHAT SERVER]": "server",
-                    "[CHAT LOCAL]": "local",
+                    '[CHAT TEAM]': 'team',
+                    '[CHAT SERVER]': 'server',
+                    '[CHAT LOCAL]': 'local',
                 };
                 manager.events.emit(constants_1.RCEEvent.QuickChat, {
                     server,
@@ -123,17 +123,17 @@ class ConsoleMessagesHandler {
                 });
             }
             // EVENT: PLAYER_SUICIDE
-            if (log.includes("was suicide by Suicide")) {
-                const ign = log.split(" was suicide by Suicide")[0];
+            if (log.includes('was suicide by Suicide')) {
+                const ign = log.split(' was suicide by Suicide')[0];
                 manager.events.emit(constants_1.RCEEvent.PlayerSuicide, {
                     server,
                     ign,
                 });
             }
             // EVENT: PLAYER_RESPAWNED
-            if (log.includes("has entered the game")) {
-                const ign = log.split(" [")[0];
-                const platform = log.includes("[xboxone]") ? "XBL" : "PS";
+            if (log.includes('has entered the game')) {
+                const ign = log.split(' [')[0];
+                const platform = log.includes('[SCARLETT]') ? 'XBL' : 'PS';
                 manager.events.emit(constants_1.RCEEvent.PlayerRespawned, {
                     server,
                     ign,
@@ -157,12 +157,12 @@ class ConsoleMessagesHandler {
                 });
             }
             // EVENT: PLAYER_ROLE_ADD
-            if (log.includes("Added")) {
+            if (log.includes('Added')) {
                 const playerRoleAddMatch = log.match(constants_1.RegularExpressions.PlayerRoleAdd);
                 if (playerRoleAddMatch) {
                     manager.events.emit(constants_1.RCEEvent.PlayerRoleAdd, {
                         server,
-                        admin: playerRoleAddMatch[1] === "SERVER"
+                        admin: playerRoleAddMatch[1] === 'SERVER'
                             ? undefined
                             : playerRoleAddMatch[1],
                         ign: playerRoleAddMatch[2],
@@ -171,12 +171,12 @@ class ConsoleMessagesHandler {
                 }
             }
             // EVENT: PLAYER_ROLE_REMOVE
-            if (log.includes("Removed")) {
+            if (log.includes('Removed')) {
                 const playerRoleRemoveMatch = log.match(constants_1.RegularExpressions.PlayerRoleRemove);
                 if (playerRoleRemoveMatch) {
                     manager.events.emit(constants_1.RCEEvent.PlayerRoleRemove, {
                         server,
-                        admin: playerRoleRemoveMatch[1] === "SERVER"
+                        admin: playerRoleRemoveMatch[1] === 'SERVER'
                             ? undefined
                             : playerRoleRemoveMatch[1],
                         ign: playerRoleRemoveMatch[2],
@@ -197,8 +197,8 @@ class ConsoleMessagesHandler {
             // EVENT: NOTE_EDIT
             const noteEditMatch = log.match(constants_1.RegularExpressions.NoteEdit);
             if (noteEditMatch) {
-                const oldContent = noteEditMatch[2].trim().split("\\n")[0];
-                const newContent = noteEditMatch[3].trim().split("\\n")[0];
+                const oldContent = noteEditMatch[2].trim().split('\\n')[0];
+                const newContent = noteEditMatch[3].trim().split('\\n')[0];
                 if (newContent.length > 0 && oldContent !== newContent) {
                     manager.events.emit(constants_1.RCEEvent.NoteEdit, {
                         server,
@@ -295,7 +295,7 @@ class ConsoleMessagesHandler {
                 });
             }
             // EVENT: EVENT_START
-            if (log.startsWith("[event]")) {
+            if (log.startsWith('[EVENT]')) {
                 for (const [key, options] of Object.entries(EVENTS)) {
                     if (log.includes(key)) {
                         manager.events.emit(constants_1.RCEEvent.EventStart, {
@@ -307,9 +307,9 @@ class ConsoleMessagesHandler {
                 }
             }
             // EVENT: PLAYER_KILL
-            if (log.includes(" was killed by ")) {
+            if (log.includes(' was killed by ')) {
                 const [victim, killer] = log
-                    .split(" was killed by ")
+                    .split(' was killed by ')
                     .map((str) => str.trim());
                 const victimData = this.getKill(victim);
                 const killerData = this.getKill(killer);
@@ -333,7 +333,7 @@ class ConsoleMessagesHandler {
         if (Number(ign)) {
             return {
                 id: ign,
-                name: "Scientist",
+                name: 'Scientist',
                 type: constants_1.PlayerKillType.Npc,
             };
         }
