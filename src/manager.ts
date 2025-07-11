@@ -6,6 +6,7 @@ import {
   type IRustServerInformation,
   type IOptions,
   LogLevel,
+  type ILogger,
 } from "./types";
 import SocketManager from "./socket/socketManager";
 import { EventEmitter } from "events";
@@ -14,7 +15,7 @@ import Logger from "./logger";
 
 export default class RCEManager extends EventEmitter {
   private servers: Map<string, IServer> = new Map();
-  public logger: Logger;
+  public logger: ILogger;
 
   /**
    *
@@ -22,10 +23,13 @@ export default class RCEManager extends EventEmitter {
    * @param opts.logLevel The log level for the logger. Default is LogLevel.Info
    * Creates an instance of RCEManager.
    */
-  public constructor(opts: IOptions = { logLevel: LogLevel.Info }) {
+  public constructor(opts: IOptions) {
     super();
 
-    this.logger = new Logger(opts.logLevel);
+    this.logger =
+      opts.logger?.instance ||
+      new Logger(opts.logger?.level, opts.logger?.file);
+
     this.on(RCEEvent.Error, (payload) => {
       if (payload.server) {
         this.logger.error(`[${payload.server.identifier}] ${payload.error}`);
