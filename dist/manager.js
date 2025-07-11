@@ -76,8 +76,8 @@ class RCEManager extends events_1.EventEmitter {
             this.updatePlayers(options.identifier);
             this.updateBroadcasters(options.identifier);
             this.fetchGibs(options.identifier);
+            this.logger.info(`[${options.identifier}] Server added successfully.`);
         });
-        this.logger.info(`[${options.identifier}] Server added successfully.`);
     }
     /**
      *
