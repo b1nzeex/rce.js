@@ -1,6 +1,6 @@
 # rce.js
 
-> A library for developers to easily create their own Rust Console Edition integrations such as discord bots using GPORTAL's API & WebSocket!
+> A library for developers to easily create their own Rust Console Edition integrations such as discord bots using RCON!
 
 ## Documentation
 
@@ -15,48 +15,41 @@ npm i b1nzeex/rce.js
 ## Example Usage - TypeScript
 
 ```typescript
-import { RCEManager, LogLevel, RCEEvent, RCEIntent } from "rce.js";
+import RCEManager, { LogLevel, RCEEvent } from "rce.js";
 
-const rce = new RCEManager();
-await rce.init({ username: "", password: "" }, { level: LogLevel.Info });
+const rce = new RCEManager({
+  logLevel: LogLevel.Debug,
+});
 
-await rce.servers.addMany([
+await rce.addServer([
   {
     identifier: "server1", // A Unique Name For your Server To Be Recognised By
-    region: "US", // It's Either EU or US
-    serverId: 1387554, // Find This In The URL On Your Server Page
-    intents: [RCEIntent.ConsoleMessages], // Specify Which WebSocket Subscriptions To Use
-    playerRefreshing: true, // Enable Playerlist Caching
-    radioRefreshing: true, // Enable RF Events
-    extendedEventRefreshing: true, // Enable Bradley / Heli Events
-  },
-  {
-    identifier: "server2",
-    region: "EU",
-    serverId: 1487367,
-    intents: [RCEIntent.All],
+    rcon: {
+      host: "", // IP address of server
+      port: 0, // RCON port of server
+      password: "", // RCON password of server
+    },
+    state: [], // Any information you wish to pass to the server
   },
 ]);
 
-rce.events.on(RCEEvent.PlayerKill, (data) => {
+rce.on(RCEEvent.PlayerKill, (data) => {
   console.log(
     `[${data.server.identifier}] ${data.killer.name} killed ${data.victim.name}`
   );
 
   // Send an in-game command to the Rust server by the unique identifier (kill-feed!)
-  await rce.servers.command(
+  rce.sendCommand(
     data.server.identifier,
     `say <color=red>${data.killer.name}</color> killed <color=red>${data.victim.name}</color>`
   );
 });
 
 // Optional Methods
-await rce.servers.add(SERVER_INFO); // Add A Single Server
-await rce.servers.addMany([SERVER_INFO]); // Add Multiple Servers
-rce.servers.remove("identifier"); // Remove A Server
-rce.servers.removeAll(); // Remove All Servers
-rce.servers.get("identifier"); // Get Server
-await rce.servers.info("identifier"); // Get "serverinfo" Command Details
-await rce.servers.command("identifier", "say Hello World"); // Send Command
+await rce.addServer(SERVER_INFO); // Add A Single Server
+rce.removeServer("identifier"); // Remove A Server
+rce.getServer("identifier"); // Get Server
+await rce.fetchInfo("identifier"); // Get "serverinfo" Command Details
+await rce.sendCommand("identifier", "say Hello World"); // Send Command
 rce.destroy(); // Gracefully Close RCE.JS
 ```
