@@ -17,9 +17,11 @@ class RCEManager extends events_1.EventEmitter {
      * @param opts.logLevel The log level for the logger. Default is LogLevel.Info
      * Creates an instance of RCEManager.
      */
-    constructor(opts = { logLevel: types_1.LogLevel.Info }) {
+    constructor(opts) {
         super();
-        this.logger = new logger_1.default(opts.logLevel);
+        this.logger =
+            opts.logger?.instance ||
+                new logger_1.default(opts.logger?.level, opts.logger?.file);
         this.on(types_1.RCEEvent.Error, (payload) => {
             if (payload.server) {
                 this.logger.error(`[${payload.server.identifier}] ${payload.error}`);
@@ -74,8 +76,8 @@ class RCEManager extends events_1.EventEmitter {
             this.updatePlayers(options.identifier);
             this.updateBroadcasters(options.identifier);
             this.fetchGibs(options.identifier);
+            this.logger.info(`[${options.identifier}] Server added successfully.`);
         });
-        this.logger.info(`[${options.identifier}] Server added successfully.`);
     }
     /**
      *

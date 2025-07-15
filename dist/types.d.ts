@@ -2,7 +2,11 @@ import type { WebSocket } from "ws";
 import { type PlayerKillType } from "./data/playerKill";
 import { QuickChat } from "./data/quickChat";
 export interface IOptions {
-    logLevel?: LogLevel;
+    logger: {
+        level?: LogLevel;
+        instance?: ILogger;
+        file?: string;
+    };
 }
 interface IServerRCON {
     host: string;

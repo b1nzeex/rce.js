@@ -87,11 +87,10 @@ export default class SocketManager {
       if (parsed.Message) {
         const uniqueId = parsed.Identifier;
         const server = this._manager.getServer(opts.identifier);
+        const message = parsed.Message.replace(/\u0000/g, "").trim();
 
         this._manager.logger.debug(
-          `[${opts.identifier}] Received message: ${JSON.stringify(
-            parsed.Message
-          )}`
+          `[${opts.identifier}] Received message: ${JSON.stringify(message)}`
         );
 
         // Resolve the command if it exists
@@ -102,12 +101,12 @@ export default class SocketManager {
               clearTimeout(cmd.timeout);
             }
 
-            cmd.resolve(parsed.Message);
+            cmd.resolve(message);
           }
         }
 
         // Send the command to regular expression handler
-        ResponseHandler.handle(this._manager, server, parsed.Message);
+        ResponseHandler.handle(this._manager, server, message);
       }
     });
   }

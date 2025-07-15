@@ -69,7 +69,8 @@ class SocketManager {
             if (parsed.Message) {
                 const uniqueId = parsed.Identifier;
                 const server = this._manager.getServer(opts.identifier);
-                this._manager.logger.debug(`[${opts.identifier}] Received message: ${JSON.stringify(parsed.Message)}`);
+                const message = parsed.Message.replace(/\u0000/g, "").trim();
+                this._manager.logger.debug(`[${opts.identifier}] Received message: ${JSON.stringify(message)}`);
                 // Resolve the command if it exists
                 if (uniqueId > 0) {
                     const cmd = commandManager_1.default.get(opts.identifier, Number(uniqueId));
@@ -77,11 +78,11 @@ class SocketManager {
                         if (cmd.timeout) {
                             clearTimeout(cmd.timeout);
                         }
-                        cmd.resolve(parsed.Message);
+                        cmd.resolve(message);
                     }
                 }
                 // Send the command to regular expression handler
-                responseHandler_1.default.handle(this._manager, server, parsed.Message);
+                responseHandler_1.default.handle(this._manager, server, message);
             }
         });
     }

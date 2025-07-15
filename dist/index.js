@@ -17,7 +17,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.RCEManager = void 0;
 const manager_1 = __importDefault(require("./manager"));
+exports.RCEManager = manager_1.default;
 __exportStar(require("./types"), exports);
 __exportStar(require("./data/events"), exports);
 __exportStar(require("./data/playerKill"), exports);

@@ -1,16 +1,15 @@
-import { type IServerOptions, type IServer, type IEvent, type IRustServerInformation, type IOptions } from "./types";
+import { type IServerOptions, type IServer, type IEvent, type IRustServerInformation, type IOptions, type ILogger } from "./types";
 import { EventEmitter } from "events";
-import Logger from "./logger";
 export default class RCEManager extends EventEmitter {
     private servers;
-    logger: Logger;
+    logger: ILogger;
     /**
      *
      * @param opts Options for the RCEManager instance.
      * @param opts.logLevel The log level for the logger. Default is LogLevel.Info
      * Creates an instance of RCEManager.
      */
-    constructor(opts?: IOptions);
+    constructor(opts: IOptions);
     /**
      *
      * @param options Options for the server to be added.
