@@ -225,7 +225,6 @@ export interface IFrequencyLostEventPayload extends EventPayload {
 }
 
 export interface IServerSavingEventPayload extends EventPayload {
-  server?: IServer;
   entities: number;
 }
 
