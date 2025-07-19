@@ -72,3 +72,8 @@ export declare enum QuickChat {
     HAVE_Hatchet = "d11_quick_chat_i_have_phrase_format hatchet",
     HAVE_HighQualityMetal = "d11_quick_chat_i_have_phrase_format metal.refined"
 }
+export declare enum QuickChatChannel {
+    TEAM = "TEAM",
+    SERVER = "SERVER",
+    LOCAL = "LOCAL"
+}
