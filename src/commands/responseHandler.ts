@@ -1,7 +1,7 @@
-import { RCEEvent, type IServer } from "../types";
+import { RCEEvent, type IServer, GamePlatform } from "../types";
 import type RCEManager from "../manager";
 import { RegularExpressions } from "../data/regularExpressions";
-import { QuickChat } from "../data/quickChat";
+import { QuickChat, QuickChatChannel } from "../data/quickChat";
 import { EVENTS } from "../data/events";
 import { getKill } from "../data/playerKill";
 
@@ -29,15 +29,9 @@ export default class ResponseHandler {
     // Event: Quick Chat
     const quickChatMatch = message.match(RegularExpressions.QuickChat);
     if (quickChatMatch) {
-      const types = {
-        "[CHAT TEAM]": "team",
-        "[CHAT SERVER]": "server",
-        "[CHAT LOCAL]": "local",
-      };
-
       manager.emit(RCEEvent.QuickChat, {
         server,
-        type: types[quickChatMatch[1]],
+        type: quickChatMatch[2] as QuickChatChannel,
         ign: quickChatMatch[3],
         message: quickChatMatch[4] as QuickChat,
       });
@@ -56,7 +50,9 @@ export default class ResponseHandler {
     // Event: Player Respawned
     if (message.includes("has entered the game")) {
       const ign = message.split(" [")[0];
-      const platform = message.includes("[SCARLETT]") ? "XBL" : "PS";
+      const platform: GamePlatform = message.includes("[SCARLETT]")
+        ? GamePlatform.XBOX
+        : GamePlatform.Playstation;
 
       manager.emit(RCEEvent.PlayerRespawned, {
         server,
@@ -87,7 +83,7 @@ export default class ResponseHandler {
       });
     }
 
-    // Event: Player Role Add
+    // Event: Player Role Add / Player Banned
     if (message.includes("Added")) {
       const playerRoleAddMatch = message.match(
         RegularExpressions.PlayerRoleAdd
@@ -103,9 +99,20 @@ export default class ResponseHandler {
           role: playerRoleAddMatch[3],
         });
       }
+      const playerBannedMatch = message.match(RegularExpressions.PlayerBanned);
+      if (playerBannedMatch) {
+        manager.emit(RCEEvent.PlayerBanned, {
+          server,
+          admin:
+            playerBannedMatch[1] === "SERVER"
+              ? undefined
+              : playerBannedMatch[1],
+          ign: playerBannedMatch[2],
+        });
+      }
     }
 
-    // Event: Player Role Remove
+    // Event: Player Role Remove / Player Unbanned
     if (message.includes("Removed")) {
       const playerRoleRemoveMatch = message.match(
         RegularExpressions.PlayerRoleRemove
@@ -119,6 +126,19 @@ export default class ResponseHandler {
               : playerRoleRemoveMatch[1],
           ign: playerRoleRemoveMatch[2],
           role: playerRoleRemoveMatch[3],
+        });
+      }
+      const playerUnbannedMatch = message.match(
+        RegularExpressions.PlayerUnbanned
+      );
+      if (playerUnbannedMatch) {
+        manager.emit(RCEEvent.PlayerUnbanned, {
+          server,
+          admin:
+            playerUnbannedMatch[1] === "SERVER"
+              ? undefined
+              : playerUnbannedMatch[1],
+          ign: playerUnbannedMatch[2],
         });
       }
     }
@@ -266,6 +286,17 @@ export default class ResponseHandler {
         victim: victimData,
         killer: killerData,
       });
+    }
+
+    // Event: Server Saving
+    if (message.startsWith("[ SAVE ]")) {
+      const serverSavingMatch = message.match(RegularExpressions.ServerSaving);
+      if (serverSavingMatch) {
+        manager.emit(RCEEvent.ServerSaving, {
+          server,
+          entities: parseInt(serverSavingMatch[1]),
+        });
+      }
     }
   }
 }
