@@ -12,6 +12,10 @@ export const RegularExpressions: { [key: string]: RegExp } = {
   PlayerRoleRemove: new RegExp(
     /\[([\w\s-]+)] Removed \[([\w\s-]+)] from Group \[([\w\s-]+)]/
   ),
+  PlayerBanned: new RegExp(/\[([\w\s-]+)\] Added \[([\w\s-]+)\] to \[Banned\]/),
+  PlayerUnbanned: new RegExp(
+    /\[([\w\s-]+)\] Removed \[([\w\s-]+)\] from \[Banned\]/
+  ),
   ItemSpawn: new RegExp(
     /\bgiving ([\w\s._-]+) ([\d.]+) x ([\w\s._-]+(?: [\w\s._-]+)*)\b/
   ),
@@ -38,4 +42,5 @@ export const RegularExpressions: { [key: string]: RegExp } = {
   KitGive: new RegExp(
     /\[ServerVar\] ([\w\s_-]+) giving ([\w\s_-]+) kit ([\w\s_-]+)/
   ),
+  ServerSaving: new RegExp(/^\[ SAVE \] Saved (\d+) ents$/),
 };

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.QuickChat = void 0;
+exports.QuickChatChannel = exports.QuickChat = void 0;
 var QuickChat;
 (function (QuickChat) {
     QuickChat["COMBAT_WereUnderAttack"] = "d11_quick_chat_combat_slot_0";
@@ -76,4 +76,10 @@ var QuickChat;
     QuickChat["HAVE_Hatchet"] = "d11_quick_chat_i_have_phrase_format hatchet";
     QuickChat["HAVE_HighQualityMetal"] = "d11_quick_chat_i_have_phrase_format metal.refined";
 })(QuickChat || (exports.QuickChat = QuickChat = {}));
+var QuickChatChannel;
+(function (QuickChatChannel) {
+    QuickChatChannel["TEAM"] = "TEAM";
+    QuickChatChannel["SERVER"] = "SERVER";
+    QuickChatChannel["LOCAL"] = "LOCAL";
+})(QuickChatChannel || (exports.QuickChatChannel = QuickChatChannel = {}));
 //# sourceMappingURL=quickChat.js.map

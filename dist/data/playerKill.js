@@ -375,6 +375,31 @@ exports.playerKillData = [
         name: "Submarine",
         type: PlayerKillType.Entity,
     },
+    {
+        id: "submarineduo.entity (entity)",
+        name: "Submarine",
+        type: PlayerKillType.Entity,
+    },
+    {
+        id: "gates.external.high.adobe (entity)",
+        name: "High External Adobe Gate",
+        type: PlayerKillType.Entity,
+    },
+    {
+        id: "graveyardfence (entity)",
+        name: "Graveyard Fence",
+        type: PlayerKillType.Entity,
+    },
+    {
+        id: "fireball_small (entity)",
+        name: "Fireball",
+        type: PlayerKillType.Entity,
+    },
+    {
+        id: "fireball_small (entity)",
+        name: "Fireball",
+        type: PlayerKillType.Entity,
+    },
 ];
 function getKill(ign) {
     const data = exports.playerKillData.find((e) => e.id === ign.toLowerCase());

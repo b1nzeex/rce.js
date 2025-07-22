@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LogLevel = exports.RCEEvent = void 0;
+exports.LogLevel = exports.GamePlatform = exports.RCEEvent = void 0;
 var RCEEvent;
 (function (RCEEvent) {
     RCEEvent["Ready"] = "ready";
@@ -14,6 +14,8 @@ var RCEEvent;
     RCEEvent["CustomZoneRemoved"] = "customZoneRemoved";
     RCEEvent["PlayerRoleAdd"] = "playerRoleAdd";
     RCEEvent["PlayerRoleRemove"] = "playerRoleRemove";
+    RCEEvent["PlayerBanned"] = "playerBanned";
+    RCEEvent["PlayerUnbanned"] = "playerUnbanned";
     RCEEvent["ItemSpawn"] = "itemSpawn";
     RCEEvent["NoteEdit"] = "noteEdit";
     RCEEvent["TeamCreated"] = "teamCreated";
@@ -30,8 +32,14 @@ var RCEEvent;
     RCEEvent["PlayerListUpdated"] = "playerListUpdated";
     RCEEvent["FrequencyGained"] = "frequencyGained";
     RCEEvent["FrequencyLost"] = "frequencyLost";
+    RCEEvent["ServerSaving"] = "serverSaving";
     RCEEvent["Error"] = "error";
 })(RCEEvent || (exports.RCEEvent = RCEEvent = {}));
+var GamePlatform;
+(function (GamePlatform) {
+    GamePlatform["Playstation"] = "PS";
+    GamePlatform["XBOX"] = "XBL";
+})(GamePlatform || (exports.GamePlatform = GamePlatform = {}));
 var LogLevel;
 (function (LogLevel) {
     LogLevel[LogLevel["None"] = 0] = "None";

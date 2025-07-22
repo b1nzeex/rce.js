@@ -1,6 +1,6 @@
 import type { WebSocket } from "ws";
 import { type PlayerKillType } from "./data/playerKill";
-import { QuickChat } from "./data/quickChat";
+import { QuickChat, QuickChatChannel } from "./data/quickChat";
 export interface IOptions {
     logger: {
         level?: LogLevel;
@@ -67,7 +67,7 @@ export interface IVendingMachineNameEventPayload extends EventPayload {
     newName: string;
 }
 export interface IQuickChatEventPayload extends EventPayload {
-    type: "team" | "server" | "local";
+    type: QuickChatChannel;
     ign: string;
     message: QuickChat;
 }
@@ -76,7 +76,7 @@ export interface IPlayerSuicideEventPayload extends EventPayload {
 }
 export interface IPlayerRespawnedEventPayload extends EventPayload {
     ign: string;
-    platform: "PS" | "XBL";
+    platform: GamePlatform;
 }
 export interface ICustomZoneCreatedEventPayload extends EventPayload {
     zone: string;
@@ -93,6 +93,14 @@ export interface IPlayerRoleRemoveEventPayload extends EventPayload {
     admin?: string;
     ign: string;
     role: string;
+}
+export interface IPlayerBannedEventPayload extends EventPayload {
+    admin?: string;
+    ign: string;
+}
+export interface IPlayerUnbannedEventPayload extends EventPayload {
+    admin?: string;
+    ign: string;
 }
 export interface IIitemSpawnEventPayload extends EventPayload {
     ign: string;
@@ -165,6 +173,9 @@ export interface IFrequencyGainedEventPayload extends EventPayload {
 export interface IFrequencyLostEventPayload extends EventPayload {
     frequency: number;
 }
+export interface IServerSavingEventPayload extends EventPayload {
+    entities: number;
+}
 export interface IErrorEventPayload {
     server?: IServer;
     error: string;
@@ -186,6 +197,8 @@ export declare enum RCEEvent {
     CustomZoneRemoved = "customZoneRemoved",
     PlayerRoleAdd = "playerRoleAdd",
     PlayerRoleRemove = "playerRoleRemove",
+    PlayerBanned = "playerBanned",
+    PlayerUnbanned = "playerUnbanned",
     ItemSpawn = "itemSpawn",
     NoteEdit = "noteEdit",
     TeamCreated = "teamCreated",
@@ -202,6 +215,7 @@ export declare enum RCEEvent {
     PlayerListUpdated = "playerListUpdated",
     FrequencyGained = "frequencyGained",
     FrequencyLost = "frequencyLost",
+    ServerSaving = "serverSaving",
     Error = "error"
 }
 export interface IEvent {
@@ -216,6 +230,8 @@ export interface IEvent {
     [RCEEvent.CustomZoneRemoved]: ICustomZoneRemovedEventPayload;
     [RCEEvent.PlayerRoleAdd]: IPlayerRoleAddEventPayload;
     [RCEEvent.PlayerRoleRemove]: IPlayerRoleRemoveEventPayload;
+    [RCEEvent.PlayerBanned]: IPlayerBannedEventPayload;
+    [RCEEvent.PlayerUnbanned]: IPlayerUnbannedEventPayload;
     [RCEEvent.ItemSpawn]: IIitemSpawnEventPayload;
     [RCEEvent.NoteEdit]: INoteEditEventPayload;
     [RCEEvent.TeamCreated]: ITeamCreatedEventPayload;
@@ -232,7 +248,12 @@ export interface IEvent {
     [RCEEvent.PlayerListUpdated]: IPlayerListUpdatedEventPayload;
     [RCEEvent.FrequencyGained]: IFrequencyGainedEventPayload;
     [RCEEvent.FrequencyLost]: IFrequencyLostEventPayload;
+    [RCEEvent.ServerSaving]: IServerSavingEventPayload;
     [RCEEvent.Error]: IErrorEventPayload;
+}
+export declare enum GamePlatform {
+    Playstation = "PS",
+    XBOX = "XBL"
 }
 export interface ICommandRequest {
     identifier: string;
