@@ -23,7 +23,8 @@
   "description": "A wrapper for Rust Console Edition (RCE) that allows you to use RCON to create integrations.",
   "devDependencies": {
     "@types/node": "^20.19.6",
-    "@types/ws": "^8.18.1"
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "ws": "^8.18.3"

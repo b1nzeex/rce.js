@@ -1,6 +1,7 @@
 import type { WebSocket } from "ws";
 import { type PlayerKillType } from "./data/playerKill";
 import { QuickChat, QuickChatChannel } from "./data/quickChat";
+import SocketManager from "./socket/socketManager"; 
 
 export interface IOptions {
   logger: {
@@ -23,6 +24,11 @@ export interface IServerOptions {
   identifier: string;
   rcon: IServerRCON;
   state: any[];
+  reconnection?: {
+    enabled?: boolean;
+    interval?: number; // in milliseconds, default 5000
+    maxAttempts?: number; // -1 for infinite, default -1
+  };
 }
 
 interface IServerIntervals {
@@ -34,6 +40,7 @@ interface IServerIntervals {
 export interface IServer {
   identifier: string;
   socket: WebSocket;
+  socketManager?: SocketManager; // Reference to SocketManager for proper cleanup
   flags: string[];
   intervals: IServerIntervals;
   state: any[];
