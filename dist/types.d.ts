@@ -1,6 +1,7 @@
 import type { WebSocket } from "ws";
 import { type PlayerKillType } from "./data/playerKill";
 import { QuickChat, QuickChatChannel } from "./data/quickChat";
+import SocketManager from "./socket/socketManager";
 export interface IOptions {
     logger: {
         level?: LogLevel;
@@ -17,6 +18,11 @@ export interface IServerOptions {
     identifier: string;
     rcon: IServerRCON;
     state: any[];
+    reconnection?: {
+        enabled?: boolean;
+        interval?: number;
+        maxAttempts?: number;
+    };
 }
 interface IServerIntervals {
     playerRefreshing: NodeJS.Timeout;
@@ -26,6 +32,7 @@ interface IServerIntervals {
 export interface IServer {
     identifier: string;
     socket: WebSocket;
+    socketManager?: SocketManager;
     flags: string[];
     intervals: IServerIntervals;
     state: any[];

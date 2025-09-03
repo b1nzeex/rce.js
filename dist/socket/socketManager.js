@@ -11,16 +11,29 @@ class SocketManager {
     _manager;
     _socket = null;
     connectionAttempts = 0;
+    _options;
+    _reconnectionTimer = null;
+    _isDestroyed = false;
     constructor(manager, options) {
         this._manager = manager;
+        this._options = options;
         this.connect(options);
     }
     connect(opts) {
-        const { rcon } = opts;
+        if (this._isDestroyed) {
+            return;
+        }
+        const { rcon, reconnection } = opts;
         const { host, port, password } = rcon;
+        // Clear any existing reconnection timer
+        if (this._reconnectionTimer) {
+            clearTimeout(this._reconnectionTimer);
+            this._reconnectionTimer = null;
+        }
         const url = `ws://${host}:${port}/${password}`;
         this._socket = new ws_1.WebSocket(url);
         this._socket.on("open", () => {
+            this.connectionAttempts = 0; // Reset connection attempts on successful connection
             const server = this._manager.getServer(opts.identifier);
             if (server) {
                 server.socket = this._socket;
@@ -34,28 +47,19 @@ class SocketManager {
         });
         this._socket.on("close", (code, reason) => {
             this._manager.logger.debug(`[${opts.identifier}] WebSocket closed: ${code} - ${reason}`);
-            this._socket.removeAllListeners();
-            this._socket.terminate();
+            if (this._socket) {
+                this._socket.removeAllListeners();
+                this._socket.terminate();
+                this._socket = null;
+            }
             const server = this._manager.getServer(opts.identifier);
             if (server) {
                 server.flags = server.flags.filter((flag) => flag !== "READY");
                 this._manager.updateServer(server);
             }
-            if (code !== 1000) {
-                if (this.connectionAttempts < 5) {
-                    this._manager.logger.warn(`[${opts.identifier}] Reconnecting WebSocket...`);
-                    setTimeout(() => {
-                        this.connectionAttempts++;
-                        this.connect(opts);
-                    }, (this.connectionAttempts + 1) * 10_000);
-                }
-                else {
-                    this._manager.emit(types_1.RCEEvent.Error, {
-                        error: `WebSocket connection failed for server "${opts.identifier}" after multiple attempts.`,
-                        server: this._manager.getServer(opts.identifier) || undefined,
-                    });
-                    this._manager.removeServer(opts.identifier);
-                }
+            // Only attempt reconnection if not a normal closure and reconnection is enabled
+            if (code !== 1000 && !this._isDestroyed) {
+                this.attemptReconnection(opts);
             }
         });
         this._socket.on("error", (error) => {
@@ -85,6 +89,47 @@ class SocketManager {
                 responseHandler_1.default.handle(this._manager, server, message);
             }
         });
+    }
+    attemptReconnection(opts) {
+        if (this._isDestroyed) {
+            return;
+        }
+        const { reconnection } = opts;
+        const isReconnectionEnabled = reconnection?.enabled !== false; // Default to true
+        const maxAttempts = reconnection?.maxAttempts ?? -1; // Default to infinite (-1)
+        const interval = reconnection?.interval ?? 5000; // Default to 5 seconds
+        // Check if reconnection is disabled
+        if (!isReconnectionEnabled) {
+            this._manager.logger.warn(`[${opts.identifier}] Reconnection is disabled. Not attempting to reconnect.`);
+            return;
+        }
+        // Check if we've exceeded max attempts (if maxAttempts is not -1)
+        if (maxAttempts !== -1 && this.connectionAttempts >= maxAttempts) {
+            this._manager.emit(types_1.RCEEvent.Error, {
+                error: `WebSocket connection failed for server "${opts.identifier}" after ${maxAttempts} attempts.`,
+                server: this._manager.getServer(opts.identifier) || undefined,
+            });
+            return;
+        }
+        this.connectionAttempts++;
+        this._manager.logger.warn(`[${opts.identifier}] Attempting to reconnect WebSocket... (Attempt ${this.connectionAttempts}${maxAttempts !== -1 ? `/${maxAttempts}` : ''})`);
+        this._reconnectionTimer = setTimeout(() => {
+            if (!this._isDestroyed) {
+                this.connect(opts);
+            }
+        }, interval);
+    }
+    destroy() {
+        this._isDestroyed = true;
+        if (this._reconnectionTimer) {
+            clearTimeout(this._reconnectionTimer);
+            this._reconnectionTimer = null;
+        }
+        if (this._socket) {
+            this._socket.removeAllListeners();
+            this._socket.terminate();
+            this._socket = null;
+        }
     }
     getSocket() {
         return this._socket;

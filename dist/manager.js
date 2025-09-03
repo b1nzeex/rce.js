@@ -51,10 +51,12 @@ class RCEManager extends events_1.EventEmitter {
             });
             return;
         }
-        const socket = new socketManager_1.default(this, options).getSocket();
+        const socketManager = new socketManager_1.default(this, options);
+        const socket = socketManager.getSocket();
         const server = {
             identifier: options.identifier,
             socket,
+            socketManager,
             flags: [],
             intervals: {
                 playerRefreshing: setInterval(() => {
@@ -109,8 +111,14 @@ class RCEManager extends events_1.EventEmitter {
             return;
         }
         const server = this.servers.get(identifier);
-        if (server && server.socket) {
-            server.socket.close();
+        if (server) {
+            // Properly destroy the SocketManager to stop reconnection attempts
+            if (server.socketManager) {
+                server.socketManager.destroy();
+            }
+            if (server.socket) {
+                server.socket.close();
+            }
             Object.values(server.intervals).forEach(clearInterval);
         }
         this.servers.delete(identifier);
@@ -209,6 +217,10 @@ class RCEManager extends events_1.EventEmitter {
      */
     destroy() {
         this.servers.forEach((server) => {
+            // Properly destroy the SocketManager to stop reconnection attempts
+            if (server.socketManager) {
+                server.socketManager.destroy();
+            }
             if (server.socket) {
                 server.socket.close();
             }
