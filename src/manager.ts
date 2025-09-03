@@ -61,10 +61,12 @@ export default class RCEManager extends EventEmitter {
       return;
     }
 
-    const socket = new SocketManager(this, options).getSocket();
+    const socketManager = new SocketManager(this, options);
+    const socket = socketManager.getSocket();
     const server: IServer = {
       identifier: options.identifier,
       socket,
+      socketManager,
       flags: [],
       intervals: {
         playerRefreshing: setInterval(() => {
@@ -127,8 +129,16 @@ export default class RCEManager extends EventEmitter {
     }
 
     const server = this.servers.get(identifier);
-    if (server && server.socket) {
-      server.socket.close();
+    if (server) {
+      // Properly destroy the SocketManager to stop reconnection attempts
+      if (server.socketManager) {
+        server.socketManager.destroy();
+      }
+      
+      if (server.socket) {
+        server.socket.close();
+      }
+      
       Object.values(server.intervals).forEach(clearInterval);
     }
 
@@ -244,6 +254,11 @@ export default class RCEManager extends EventEmitter {
    */
   public destroy(): void {
     this.servers.forEach((server) => {
+      // Properly destroy the SocketManager to stop reconnection attempts
+      if (server.socketManager) {
+        server.socketManager.destroy();
+      }
+      
       if (server.socket) {
         server.socket.close();
       }
