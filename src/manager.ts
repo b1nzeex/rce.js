@@ -7,6 +7,7 @@ import {
   type IOptions,
   LogLevel,
   type ILogger,
+  Player,
 } from "./types";
 import SocketManager from "./socket/socketManager";
 import { EventEmitter } from "events";
@@ -445,7 +446,6 @@ export default class RCEManager extends EventEmitter {
 
     this.updateServer(server);
   }
-
   private async updatePlayers(identifier: string): Promise<void> {
     const server = this.getServer(identifier);
     if (!server) {
@@ -455,45 +455,57 @@ export default class RCEManager extends EventEmitter {
       return;
     }
 
-    const players = await this.sendCommand(identifier, "Users");
-    if (players) {
-      const playerlist = players
-        .match(/"(.*?)"/g)
-        .map((ign) => ign.replace(/"/g, ""));
-      playerlist.shift();
+    const rawPlayerList = await this.sendCommand(identifier, "playerlist");
+
+    if (rawPlayerList) {
+      const parsedPlayers: any[] = JSON.parse(rawPlayerList);
+
+      const newPlayerList: Player[] = parsedPlayers.map((player: any) => ({
+        ign: player.DisplayName,
+        ping: player.Ping,
+        timeConnected: player.ConnectedSeconds,
+        health: Math.round(player.Health),
+      }));
+
+      const oldPlayerNames = server.connectedPlayers.map(
+        (player: Player) => player.ign
+      );
+      const newPlayerNames = newPlayerList.map((player: Player) => player.ign);
 
       const comparePopulation = (oldList: string[], newList: string[]) => {
         const joined = newList.filter((ign) => !oldList.includes(ign));
         const left = oldList.filter((ign) => !newList.includes(ign));
-
         return { joined, left };
       };
 
       const { joined, left } = comparePopulation(
-        server.connectedPlayers,
-        playerlist
+        oldPlayerNames,
+        newPlayerNames
       );
 
-      joined.forEach((player) => {
-        this.emit(RCEEvent.PlayerJoined, {
-          server,
-          ign: player,
-        });
+      joined.forEach((playerName) => {
+        const player = newPlayerList.find((p) => p.ign === playerName);
+        if (player) {
+          this.emit(RCEEvent.PlayerJoined, {
+            server,
+            ign: player.ign,
+          });
+        }
       });
 
-      left.forEach((player) => {
+      left.forEach((playerName) => {
         this.emit(RCEEvent.PlayerLeft, {
           server,
-          ign: player,
+          ign: playerName,
         });
       });
 
-      server.connectedPlayers = playerlist;
+      server.connectedPlayers = newPlayerList;
       this.updateServer(server);
 
       this.emit(RCEEvent.PlayerListUpdated, {
         server,
-        players: playerlist,
+        players: newPlayerList,
         joined,
         left,
       });
