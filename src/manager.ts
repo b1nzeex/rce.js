@@ -37,6 +37,14 @@ export default class RCEManager extends EventEmitter {
         this.logger.error(payload.error);
       }
     });
+    this.on(RCEEvent.Ready, (payload) => {
+      this.updatePlayers(payload.server.identifier);
+      this.updateBroadcasters(payload.server.identifier);
+      this.fetchGibs(payload.server.identifier);
+      this.logger.info(
+        `[${payload.server.identifier}] Server Successfully Added!`
+      );
+    });
   }
 
   /**
@@ -52,11 +60,11 @@ export default class RCEManager extends EventEmitter {
    * @returns void
    */
   public addServer(options: IServerOptions): void {
-    this.logger.debug(`[${options.identifier}] Attempting to add server...`);
+    this.logger.debug(`[${options.identifier}] Attempting To Add Server...`);
 
     if (this.servers.has(options.identifier)) {
       this.emit(RCEEvent.Error, {
-        error: `Server with identifier "${options.identifier}" already exists.`,
+        error: `Server With Identifier "${options.identifier}" Already Exists!`,
       });
       return;
     }
@@ -87,13 +95,6 @@ export default class RCEManager extends EventEmitter {
     };
 
     this.servers.set(options.identifier, server);
-    this.on(RCEEvent.Ready, (_payload) => {
-      this.updatePlayers(options.identifier);
-      this.updateBroadcasters(options.identifier);
-      this.fetchGibs(options.identifier);
-
-      this.logger.info(`[${options.identifier}] Server added successfully.`);
-    });
   }
 
   /**
@@ -106,7 +107,7 @@ export default class RCEManager extends EventEmitter {
   public updateServer(server: IServer): void {
     if (!this.servers.has(server.identifier)) {
       this.emit(RCEEvent.Error, {
-        error: `Server with identifier "${server.identifier}" does not exist.`,
+        error: `Server With Identifier "${server.identifier}" Does Not Exist!`,
       });
       return;
     }
@@ -123,7 +124,7 @@ export default class RCEManager extends EventEmitter {
   public removeServer(identifier: string): void {
     if (!this.servers.has(identifier)) {
       this.emit(RCEEvent.Error, {
-        error: `Server with identifier "${identifier}" does not exist.`,
+        error: `Server With Identifier "${identifier}" Does Not Exist!`,
       });
       return;
     }
@@ -134,16 +135,16 @@ export default class RCEManager extends EventEmitter {
       if (server.socketManager) {
         server.socketManager.destroy();
       }
-      
+
       if (server.socket) {
         server.socket.close();
       }
-      
+
       Object.values(server.intervals).forEach(clearInterval);
     }
 
     this.servers.delete(identifier);
-    this.logger.info(`[${identifier}] Server removed successfully.`);
+    this.logger.info(`[${identifier}] Server Successfully Removed!`);
   }
 
   /**
@@ -166,7 +167,7 @@ export default class RCEManager extends EventEmitter {
     const server = this.getServer(identifier);
     if (!server) {
       this.emit(RCEEvent.Error, {
-        error: `Server with identifier "${identifier}" does not exist.`,
+        error: `Server With Identifier "${identifier}" Does Not Exist!`,
       });
       return;
     }
@@ -174,7 +175,7 @@ export default class RCEManager extends EventEmitter {
     const info = await this.sendCommand(identifier, "serverinfo");
     if (!info) {
       this.emit(RCEEvent.Error, {
-        error: `Failed to fetch server info for "${identifier}".`,
+        error: `Failed To Fetch Server Information For "${identifier}"!`,
       });
       return;
     }
@@ -202,7 +203,7 @@ export default class RCEManager extends EventEmitter {
     const server = this.getServer(identifier);
     if (!server?.socket) {
       this.emit(RCEEvent.Error, {
-        error: `Server with identifier "${identifier}" does not exist or is not connected.`,
+        error: `Server With Identifier "${identifier}" Does Not Exist Or Is Not Connected!`,
       });
       return;
     }
@@ -229,7 +230,7 @@ export default class RCEManager extends EventEmitter {
         );
 
         this.logger.debug(
-          `[${identifier}] Sending command: ${command} (ID: ${rand})`
+          `[${identifier}] Sending Command: ${command} (ID: ${rand})`
         );
 
         const cmd = CommandManager.get(identifier, rand);
@@ -242,7 +243,7 @@ export default class RCEManager extends EventEmitter {
       });
     } else {
       this.emit(RCEEvent.Error, {
-        error: `Server with identifier "${identifier}" is not connected.`,
+        error: `Server With Identifier "${identifier}" Is Not Connected!`,
       });
       return;
     }
@@ -258,7 +259,7 @@ export default class RCEManager extends EventEmitter {
       if (server.socketManager) {
         server.socketManager.destroy();
       }
-      
+
       if (server.socket) {
         server.socket.close();
       }
@@ -266,7 +267,7 @@ export default class RCEManager extends EventEmitter {
     });
     this.servers.clear();
     this.removeAllListeners();
-    this.logger.info("RCEManager destroyed successfully.");
+    this.logger.info("RCEManager Successfully Destroyed!");
   }
 
   /*
@@ -307,7 +308,7 @@ export default class RCEManager extends EventEmitter {
     const server = this.getServer(identifier);
     if (!server) {
       this.emit(RCEEvent.Error, {
-        error: `Server with identifier "${identifier}" does not exist.`,
+        error: `Server With Identifier "${identifier}" Does Not Exist!`,
       });
       return;
     }
@@ -379,7 +380,7 @@ export default class RCEManager extends EventEmitter {
     const server = this.getServer(identifier);
     if (!server) {
       this.emit(RCEEvent.Error, {
-        error: `Server with identifier "${identifier}" does not exist.`,
+        error: `Server With Identifier "${identifier}" Does Not Exist!`,
       });
       return;
     }
@@ -395,7 +396,7 @@ export default class RCEManager extends EventEmitter {
 
     if (!bradley || !helicopter) {
       this.emit(RCEEvent.Error, {
-        error: `Failed to fetch gibs for server "${identifier}".`,
+        error: `Failed To Fetch Gibs For Server "${identifier}"`,
       });
       return;
     }
@@ -449,7 +450,7 @@ export default class RCEManager extends EventEmitter {
     const server = this.getServer(identifier);
     if (!server) {
       this.emit(RCEEvent.Error, {
-        error: `Server with identifier "${identifier}" does not exist.`,
+        error: `Server With Identifier "${identifier}" Does Not Exist!`,
       });
       return;
     }
