@@ -30,6 +30,12 @@ class RCEManager extends events_1.EventEmitter {
                 this.logger.error(payload.error);
             }
         });
+        this.on(types_1.RCEEvent.Ready, (payload) => {
+            this.updatePlayers(payload.server.identifier);
+            this.updateBroadcasters(payload.server.identifier);
+            this.fetchGibs(payload.server.identifier);
+            this.logger.info(`[${payload.server.identifier}] Server Successfully Added!`);
+        });
     }
     /**
      *
@@ -44,10 +50,10 @@ class RCEManager extends events_1.EventEmitter {
      * @returns void
      */
     addServer(options) {
-        this.logger.debug(`[${options.identifier}] Attempting to add server...`);
+        this.logger.debug(`[${options.identifier}] Attempting To Add Server...`);
         if (this.servers.has(options.identifier)) {
             this.emit(types_1.RCEEvent.Error, {
-                error: `Server with identifier "${options.identifier}" already exists.`,
+                error: `Server With Identifier "${options.identifier}" Already Exists!`,
             });
             return;
         }
@@ -74,12 +80,6 @@ class RCEManager extends events_1.EventEmitter {
             frequencies: [],
         };
         this.servers.set(options.identifier, server);
-        this.on(types_1.RCEEvent.Ready, (_payload) => {
-            this.updatePlayers(options.identifier);
-            this.updateBroadcasters(options.identifier);
-            this.fetchGibs(options.identifier);
-            this.logger.info(`[${options.identifier}] Server added successfully.`);
-        });
     }
     /**
      *
@@ -91,7 +91,7 @@ class RCEManager extends events_1.EventEmitter {
     updateServer(server) {
         if (!this.servers.has(server.identifier)) {
             this.emit(types_1.RCEEvent.Error, {
-                error: `Server with identifier "${server.identifier}" does not exist.`,
+                error: `Server With Identifier "${server.identifier}" Does Not Exist!`,
             });
             return;
         }
@@ -106,7 +106,7 @@ class RCEManager extends events_1.EventEmitter {
     removeServer(identifier) {
         if (!this.servers.has(identifier)) {
             this.emit(types_1.RCEEvent.Error, {
-                error: `Server with identifier "${identifier}" does not exist.`,
+                error: `Server With Identifier "${identifier}" Does Not Exist!`,
             });
             return;
         }
@@ -122,7 +122,7 @@ class RCEManager extends events_1.EventEmitter {
             Object.values(server.intervals).forEach(clearInterval);
         }
         this.servers.delete(identifier);
-        this.logger.info(`[${identifier}] Server removed successfully.`);
+        this.logger.info(`[${identifier}] Server Successfully Removed!`);
     }
     /**
      *
@@ -143,14 +143,14 @@ class RCEManager extends events_1.EventEmitter {
         const server = this.getServer(identifier);
         if (!server) {
             this.emit(types_1.RCEEvent.Error, {
-                error: `Server with identifier "${identifier}" does not exist.`,
+                error: `Server With Identifier "${identifier}" Does Not Exist!`,
             });
             return;
         }
         const info = await this.sendCommand(identifier, "serverinfo");
         if (!info) {
             this.emit(types_1.RCEEvent.Error, {
-                error: `Failed to fetch server info for "${identifier}".`,
+                error: `Failed To Fetch Server Information For "${identifier}"!`,
             });
             return;
         }
@@ -174,7 +174,7 @@ class RCEManager extends events_1.EventEmitter {
         const server = this.getServer(identifier);
         if (!server?.socket) {
             this.emit(types_1.RCEEvent.Error, {
-                error: `Server with identifier "${identifier}" does not exist or is not connected.`,
+                error: `Server With Identifier "${identifier}" Does Not Exist Or Is Not Connected!`,
             });
             return;
         }
@@ -194,7 +194,7 @@ class RCEManager extends events_1.EventEmitter {
                     message: command,
                     identifier: rand,
                 }));
-                this.logger.debug(`[${identifier}] Sending command: ${command} (ID: ${rand})`);
+                this.logger.debug(`[${identifier}] Sending Command: ${command} (ID: ${rand})`);
                 const cmd = commandManager_1.default.get(identifier, rand);
                 if (cmd) {
                     cmd.timeout = setTimeout(() => {
@@ -206,7 +206,7 @@ class RCEManager extends events_1.EventEmitter {
         }
         else {
             this.emit(types_1.RCEEvent.Error, {
-                error: `Server with identifier "${identifier}" is not connected.`,
+                error: `Server With Identifier "${identifier}" Is Not Connected!`,
             });
             return;
         }
@@ -228,7 +228,7 @@ class RCEManager extends events_1.EventEmitter {
         });
         this.servers.clear();
         this.removeAllListeners();
-        this.logger.info("RCEManager destroyed successfully.");
+        this.logger.info("RCEManager Successfully Destroyed!");
     }
     /*
       Event Handling
@@ -252,7 +252,7 @@ class RCEManager extends events_1.EventEmitter {
         const server = this.getServer(identifier);
         if (!server) {
             this.emit(types_1.RCEEvent.Error, {
-                error: `Server with identifier "${identifier}" does not exist.`,
+                error: `Server With Identifier "${identifier}" Does Not Exist!`,
             });
             return;
         }
@@ -312,7 +312,7 @@ class RCEManager extends events_1.EventEmitter {
         const server = this.getServer(identifier);
         if (!server) {
             this.emit(types_1.RCEEvent.Error, {
-                error: `Server with identifier "${identifier}" does not exist.`,
+                error: `Server With Identifier "${identifier}" Does Not Exist!`,
             });
             return;
         }
@@ -320,7 +320,7 @@ class RCEManager extends events_1.EventEmitter {
         const helicopter = await this.sendCommand(identifier, "find_entity servergibs_patrolhelicopter");
         if (!bradley || !helicopter) {
             this.emit(types_1.RCEEvent.Error, {
-                error: `Failed to fetch gibs for server "${identifier}".`,
+                error: `Failed To Fetch Gibs For Server "${identifier}"`,
             });
             return;
         }
@@ -362,39 +362,47 @@ class RCEManager extends events_1.EventEmitter {
         const server = this.getServer(identifier);
         if (!server) {
             this.emit(types_1.RCEEvent.Error, {
-                error: `Server with identifier "${identifier}" does not exist.`,
+                error: `Server With Identifier "${identifier}" Does Not Exist!`,
             });
             return;
         }
-        const players = await this.sendCommand(identifier, "Users");
-        if (players) {
-            const playerlist = players
-                .match(/"(.*?)"/g)
-                .map((ign) => ign.replace(/"/g, ""));
-            playerlist.shift();
+        const rawPlayerList = await this.sendCommand(identifier, "playerlist");
+        if (rawPlayerList) {
+            const parsedPlayers = JSON.parse(rawPlayerList);
+            const newPlayerList = parsedPlayers.map((player) => ({
+                ign: player.DisplayName,
+                ping: player.Ping,
+                timeConnected: player.ConnectedSeconds,
+                health: Math.round(player.Health),
+            }));
+            const oldPlayerNames = server.connectedPlayers.map((player) => player.ign);
+            const newPlayerNames = newPlayerList.map((player) => player.ign);
             const comparePopulation = (oldList, newList) => {
                 const joined = newList.filter((ign) => !oldList.includes(ign));
                 const left = oldList.filter((ign) => !newList.includes(ign));
                 return { joined, left };
             };
-            const { joined, left } = comparePopulation(server.connectedPlayers, playerlist);
-            joined.forEach((player) => {
-                this.emit(types_1.RCEEvent.PlayerJoined, {
-                    server,
-                    ign: player,
-                });
+            const { joined, left } = comparePopulation(oldPlayerNames, newPlayerNames);
+            joined.forEach((playerName) => {
+                const player = newPlayerList.find((p) => p.ign === playerName);
+                if (player) {
+                    this.emit(types_1.RCEEvent.PlayerJoined, {
+                        server,
+                        ign: player.ign,
+                    });
+                }
             });
-            left.forEach((player) => {
+            left.forEach((playerName) => {
                 this.emit(types_1.RCEEvent.PlayerLeft, {
                     server,
-                    ign: player,
+                    ign: playerName,
                 });
             });
-            server.connectedPlayers = playerlist;
+            server.connectedPlayers = newPlayerList;
             this.updateServer(server);
             this.emit(types_1.RCEEvent.PlayerListUpdated, {
                 server,
-                players: playerlist,
+                players: newPlayerList,
                 joined,
                 left,
             });

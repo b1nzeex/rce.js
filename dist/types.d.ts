@@ -36,7 +36,7 @@ export interface IServer {
     flags: string[];
     intervals: IServerIntervals;
     state: any[];
-    connectedPlayers: string[];
+    connectedPlayers: Player[];
     frequencies: number[];
 }
 export interface IRustServerInformation {
@@ -168,7 +168,7 @@ export interface IPlayerKillEVentPayload extends EventPayload {
     killer: IKillPlayer;
 }
 export interface IPlayerListUpdatedEventPayload extends EventPayload {
-    players: string[];
+    players: Player[];
     joined: string[];
     left: string[];
 }
@@ -224,6 +224,12 @@ export declare enum RCEEvent {
     FrequencyLost = "frequencyLost",
     ServerSaving = "serverSaving",
     Error = "error"
+}
+export interface Player {
+    ign: string;
+    ping: number;
+    timeConnected: number;
+    health: number;
 }
 export interface IEvent {
     [RCEEvent.Ready]: IReadyEventPayload;
