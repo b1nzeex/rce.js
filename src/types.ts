@@ -1,7 +1,7 @@
 import type { WebSocket } from "ws";
 import { type PlayerKillType } from "./data/playerKill";
 import { QuickChat, QuickChatChannel } from "./data/quickChat";
-import SocketManager from "./socket/socketManager"; 
+import SocketManager from "./socket/socketManager";
 
 export interface IOptions {
   logger: {
@@ -44,7 +44,7 @@ export interface IServer {
   flags: string[];
   intervals: IServerIntervals;
   state: any[];
-  connectedPlayers: string[];
+  connectedPlayers: Player[];
   frequencies: number[];
 }
 
@@ -216,7 +216,7 @@ export interface IPlayerKillEVentPayload extends EventPayload {
 }
 
 export interface IPlayerListUpdatedEventPayload extends EventPayload {
-  players: string[];
+  players: Player[];
   joined: string[];
   left: string[];
 }
@@ -279,7 +279,12 @@ export enum RCEEvent {
   ServerSaving = "serverSaving",
   Error = "error",
 }
-
+export interface Player {
+  ign: string;
+  ping: number;
+  timeConnected: number;
+  health: number;
+}
 export interface IEvent {
   [RCEEvent.Ready]: IReadyEventPayload;
   [RCEEvent.Message]: IMessageEventPayload;
