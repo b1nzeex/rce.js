@@ -395,11 +395,6 @@ exports.playerKillData = [
         name: "Fireball",
         type: PlayerKillType.Entity,
     },
-    {
-        id: "fireball_small (entity)",
-        name: "Fireball",
-        type: PlayerKillType.Entity,
-    },
 ];
 function getKill(ign) {
     const data = exports.playerKillData.find((e) => e.id === ign.toLowerCase());
