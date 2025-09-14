@@ -393,11 +393,6 @@ export const playerKillData = [
     name: "Fireball",
     type: PlayerKillType.Entity,
   },
-  {
-    id: "fireball_small (entity)",
-    name: "Fireball",
-    type: PlayerKillType.Entity,
-  },
 ];
 
 export function getKill(ign: string): IKillPlayer {
