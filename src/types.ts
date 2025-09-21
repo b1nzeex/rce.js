@@ -148,25 +148,21 @@ export interface INoteEditEventPayload extends EventPayload {
 }
 
 export interface ITeamCreatedEventPayload extends EventPayload {
-  id: number;
-  owner: Player;
+  team: Team;
 }
 
 export interface ITeamJoinEventPayload extends EventPayload {
-  id: number;
-  owner: string;
+  team: Team;
   player: Player;
 }
 
 export interface ITeamLeaveEventPayload extends EventPayload {
-  id: number;
-  owner: string;
+  team: Team;
   player: Player;
 }
 
 export interface ITeamInviteEventPayload extends EventPayload {
-  id: number;
-  owner: string;
+  team: Team;
   player: Player;
 }
 
@@ -177,7 +173,7 @@ export interface ITeamInviteCancelEventPayload extends EventPayload {
 }
 
 export interface ITeamPromotedEventPayload extends EventPayload {
-  id: number;
+  team: Team;
   oldOwner: Player;
   newOwner: Player;
 }

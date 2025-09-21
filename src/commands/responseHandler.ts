@@ -206,8 +206,11 @@ export default class ResponseHandler {
       
       manager.emit(RCEEvent.TeamCreated, {
         server,
-        id: teamId,
-        owner: leaderPlayer,
+        team: serverData?.teams.find(t => t.id === teamId) || {
+          id: teamId,
+          leader: leaderPlayer,
+          members: [leaderPlayer]
+        },
       });
     }
 
@@ -233,10 +236,14 @@ export default class ResponseHandler {
         joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign);
       }
       
+      const team = serverData?.teams.find(t => t.id === teamId);
       manager.emit(RCEEvent.TeamJoin, {
         server,
-        id: teamId,
-        owner: teamJoinMatch[2],
+        team: team || {
+          id: teamId,
+          leader: joiningPlayer,
+          members: [joiningPlayer]
+        },
         player: joiningPlayer,
       });
     }
@@ -264,10 +271,14 @@ export default class ResponseHandler {
       }
       
       const leavingPlayer = manager.getOrCreatePlayer(server.identifier, ign, { team: null });
+      const team = serverData?.teams.find(t => t.id === teamId);
       manager.emit(RCEEvent.TeamLeave, {
         server,
-        id: teamId,
-        owner: teamLeaveMatch[2],
+        team: team || {
+          id: teamId,
+          leader: leavingPlayer,
+          members: []
+        },
         player: leavingPlayer,
       });
     }
@@ -275,11 +286,17 @@ export default class ResponseHandler {
     // Event: Team Invite
     const teamInviteMatch = message.match(RegularExpressions.TeamInvite);
     if (teamInviteMatch) {
+      const teamId = parseInt(teamInviteMatch[3]);
       const player = manager.getOrCreatePlayer(server.identifier, teamInviteMatch[2]);
+      const serverData = manager.getServer(server.identifier);
+      const team = serverData?.teams.find(t => t.id === teamId);
       manager.emit(RCEEvent.TeamInvite, {
         server,
-        id: parseInt(teamInviteMatch[3]),
-        owner: teamInviteMatch[1],
+        team: team || {
+          id: teamId,
+          leader: player,
+          members: []
+        },
         player,
       });
     }
@@ -319,9 +336,14 @@ export default class ResponseHandler {
       const oldOwnerPlayer = manager.getOrCreatePlayer(server.identifier, oldOwner);
       const newOwnerPlayer = manager.getOrCreatePlayer(server.identifier, newOwner);
       
+      const team = serverData?.teams.find(t => t.id === teamId);
       manager.emit(RCEEvent.TeamPromoted, {
         server,
-        id: teamId,
+        team: team || {
+          id: teamId,
+          leader: newOwnerPlayer,
+          members: []
+        },
         oldOwner: oldOwnerPlayer,
         newOwner: newOwnerPlayer,
       });
