@@ -43,4 +43,8 @@ export const RegularExpressions: { [key: string]: RegExp } = {
     /\[ServerVar\] ([\w\s_-]+) giving ([\w\s_-]+) kit ([\w\s_-]+)/
   ),
   ServerSaving: new RegExp(/^\[ SAVE \] Saved (\d+) ents$/),
+  // Team Info patterns
+  TeamInfoNoTeams: new RegExp(/No teams found/),
+  TeamInfoTeamHeader: new RegExp(/Team (\d+) member list:/),
+  TeamInfoPlayer: new RegExp(/^(.+?)\s+\[(\d+)\](?:\s+\(LEADER\))?$/),
 };
