@@ -18,9 +18,10 @@ export default class ResponseHandler {
       RegularExpressions.VendingMachineName
     );
     if (vendingMachineNameMatch) {
+      const player = manager.getOrCreatePlayer(server.identifier, vendingMachineNameMatch[1]);
       manager.emit(RCEEvent.VendingMachineName, {
         server,
-        ign: vendingMachineNameMatch[1],
+        player,
         oldName: vendingMachineNameMatch[2],
         newName: vendingMachineNameMatch[3],
       });
@@ -29,10 +30,11 @@ export default class ResponseHandler {
     // Event: Quick Chat
     const quickChatMatch = message.match(RegularExpressions.QuickChat);
     if (quickChatMatch) {
+      const player = manager.getOrCreatePlayer(server.identifier, quickChatMatch[3]);
       manager.emit(RCEEvent.QuickChat, {
         server,
         type: quickChatMatch[2] as QuickChatChannel,
-        ign: quickChatMatch[3],
+        player,
         message: quickChatMatch[4] as QuickChat,
       });
     }
@@ -40,10 +42,11 @@ export default class ResponseHandler {
     // Event: Player Suicide
     if (message.includes("was suicide by Suicide")) {
       const ign = message.split(" was suicide by Suicide")[0];
+      const player = manager.getOrCreatePlayer(server.identifier, ign);
 
       manager.emit(RCEEvent.PlayerSuicide, {
         server,
-        ign,
+        player,
       });
     }
 
@@ -55,11 +58,11 @@ export default class ResponseHandler {
         : GamePlatform.Playstation;
 
       // Create or get player and update platform
-      manager.getOrCreatePlayer(server.identifier, ign, { platform });
+      const player = manager.getOrCreatePlayer(server.identifier, ign, { platform });
 
       manager.emit(RCEEvent.PlayerRespawned, {
         server,
-        ign,
+        player,
         platform,
       });
     }
@@ -149,9 +152,10 @@ export default class ResponseHandler {
     // Event: Item Spawn
     const itemSpawnMatch = message.match(RegularExpressions.ItemSpawn);
     if (itemSpawnMatch) {
+      const player = manager.getOrCreatePlayer(server.identifier, itemSpawnMatch[1]);
       manager.emit(RCEEvent.ItemSpawn, {
         server,
-        ign: itemSpawnMatch[1],
+        player,
         item: itemSpawnMatch[3],
         quantity: parseInt(itemSpawnMatch[2]),
       });
@@ -164,9 +168,10 @@ export default class ResponseHandler {
       const newContent = noteEditMatch[3].trim().split("\\n")[0];
 
       if (newContent.length > 0 && newContent !== oldContent) {
+        const player = manager.getOrCreatePlayer(server.identifier, noteEditMatch[1]);
         manager.emit(RCEEvent.NoteEdit, {
           server,
-          ign: noteEditMatch[1],
+          player,
           oldContent,
           newContent,
         });
@@ -181,6 +186,7 @@ export default class ResponseHandler {
       
       // Create or get player and add team to teams list
       const serverData = manager.getServer(server.identifier);
+      let leaderPlayer;
       if (serverData) {
         const team = {
           id: teamId,
@@ -188,18 +194,20 @@ export default class ResponseHandler {
           members: []
         };
         
-        const leaderPlayer = manager.getOrCreatePlayer(server.identifier, owner, { team });
+        leaderPlayer = manager.getOrCreatePlayer(server.identifier, owner, { team });
         team.leader = leaderPlayer;
         team.members = [leaderPlayer];
         
         serverData.teams.push(team);
         manager.updateServer(serverData);
+      } else {
+        leaderPlayer = manager.getOrCreatePlayer(server.identifier, owner);
       }
       
       manager.emit(RCEEvent.TeamCreated, {
         server,
         id: teamId,
-        owner,
+        owner: leaderPlayer,
       });
     }
 
@@ -211,20 +219,25 @@ export default class ResponseHandler {
       
       // Create or get player and add to team members list
       const serverData = manager.getServer(server.identifier);
+      let joiningPlayer;
       if (serverData) {
         const team = serverData.teams.find(t => t.id === teamId);
         if (team && !team.members.some(member => member.ign === ign)) {
-          const joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign, { team });
+          joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign, { team });
           team.members.push(joiningPlayer);
           manager.updateServer(serverData);
+        } else {
+          joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign);
         }
+      } else {
+        joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign);
       }
       
       manager.emit(RCEEvent.TeamJoin, {
         server,
         id: teamId,
         owner: teamJoinMatch[2],
-        ign,
+        player: joiningPlayer,
       });
     }
 
@@ -250,22 +263,24 @@ export default class ResponseHandler {
         }
       }
       
+      const leavingPlayer = manager.getOrCreatePlayer(server.identifier, ign, { team: null });
       manager.emit(RCEEvent.TeamLeave, {
         server,
         id: teamId,
         owner: teamLeaveMatch[2],
-        ign,
+        player: leavingPlayer,
       });
     }
 
     // Event: Team Invite
     const teamInviteMatch = message.match(RegularExpressions.TeamInvite);
     if (teamInviteMatch) {
+      const player = manager.getOrCreatePlayer(server.identifier, teamInviteMatch[2]);
       manager.emit(RCEEvent.TeamInvite, {
         server,
         id: parseInt(teamInviteMatch[3]),
         owner: teamInviteMatch[1],
-        ign: teamInviteMatch[2],
+        player,
       });
     }
 
@@ -274,10 +289,11 @@ export default class ResponseHandler {
       RegularExpressions.TeamInviteCancel
     );
     if (teamInviteCancelMatch) {
+      const owner = manager.getOrCreatePlayer(server.identifier, teamInviteCancelMatch[2]);
       manager.emit(RCEEvent.TeamInviteCancel, {
         server,
         id: parseInt(teamInviteCancelMatch[3]),
-        owner: teamInviteCancelMatch[2],
+        owner,
         ign: teamInviteCancelMatch[1],
       });
     }
@@ -300,11 +316,14 @@ export default class ResponseHandler {
         }
       }
       
+      const oldOwnerPlayer = manager.getOrCreatePlayer(server.identifier, oldOwner);
+      const newOwnerPlayer = manager.getOrCreatePlayer(server.identifier, newOwner);
+      
       manager.emit(RCEEvent.TeamPromoted, {
         server,
         id: teamId,
-        oldOwner,
-        newOwner,
+        oldOwner: oldOwnerPlayer,
+        newOwner: newOwnerPlayer,
       });
     }
 

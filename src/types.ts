@@ -86,23 +86,23 @@ export interface IExecutingCommandEventPayload extends EventPayload {
 }
 
 export interface IVendingMachineNameEventPayload extends EventPayload {
-  ign: string;
+  player: Player;
   oldName: string;
   newName: string;
 }
 
 export interface IQuickChatEventPayload extends EventPayload {
   type: QuickChatChannel;
-  ign: string;
+  player: Player;
   message: QuickChat;
 }
 
 export interface IPlayerSuicideEventPayload extends EventPayload {
-  ign: string;
+  player: Player;
 }
 
 export interface IPlayerRespawnedEventPayload extends EventPayload {
-  ign: string;
+  player: Player;
   platform: GamePlatform;
 }
 
@@ -136,50 +136,50 @@ export interface IPlayerUnbannedEventPayload extends EventPayload {
 }
 
 export interface IIitemSpawnEventPayload extends EventPayload {
-  ign: string;
+  player: Player;
   item: string;
   quantity: number;
 }
 
 export interface INoteEditEventPayload extends EventPayload {
-  ign: string;
+  player: Player;
   oldContent: string;
   newContent: string;
 }
 
 export interface ITeamCreatedEventPayload extends EventPayload {
   id: number;
-  owner: string;
+  owner: Player;
 }
 
 export interface ITeamJoinEventPayload extends EventPayload {
   id: number;
   owner: string;
-  ign: string;
+  player: Player;
 }
 
 export interface ITeamLeaveEventPayload extends EventPayload {
   id: number;
   owner: string;
-  ign: string;
+  player: Player;
 }
 
 export interface ITeamInviteEventPayload extends EventPayload {
   id: number;
   owner: string;
-  ign: string;
+  player: Player;
 }
 
 export interface ITeamInviteCancelEventPayload extends EventPayload {
   id: number;
-  owner: string;
+  owner: Player;
   ign: string;
 }
 
 export interface ITeamPromotedEventPayload extends EventPayload {
   id: number;
-  oldOwner: string;
-  newOwner: string;
+  oldOwner: Player;
+  newOwner: Player;
 }
 
 export interface IKitSpawnEventPayload extends EventPayload {
