@@ -8,6 +8,7 @@ const socketManager_1 = __importDefault(require("./socket/socketManager"));
 const events_1 = require("events");
 const commandManager_1 = __importDefault(require("./commands/commandManager"));
 const logger_1 = __importDefault(require("./logger"));
+const teamInfo_1 = require("./data/teamInfo");
 class RCEManager extends events_1.EventEmitter {
     servers = new Map();
     logger;
@@ -34,6 +35,10 @@ class RCEManager extends events_1.EventEmitter {
             this.updatePlayers(payload.server.identifier);
             this.updateBroadcasters(payload.server.identifier);
             this.fetchGibs(payload.server.identifier);
+            // Fetch team information on ready
+            this.fetchTeamInfo(payload.server.identifier).catch(error => {
+                this.logger.debug(`[${payload.server.identifier}] Failed to fetch team info: ${error.message}`);
+            });
             this.logger.info(`[${payload.server.identifier}] Server Successfully Added!`);
         });
     }
@@ -76,8 +81,9 @@ class RCEManager extends events_1.EventEmitter {
                 }, 60_000),
             },
             state: options.state || [],
-            connectedPlayers: [],
+            players: [],
             frequencies: [],
+            teams: [],
         };
         this.servers.set(options.identifier, server);
     }
@@ -358,6 +364,95 @@ class RCEManager extends events_1.EventEmitter {
         }
         this.updateServer(server);
     }
+    /**
+     * Creates a placeholder player or returns existing one, optionally updating player data
+     * @param identifier Server identifier
+     * @param playerName Player's IGN
+     * @param playerData Optional data to set on the player
+     * @returns Player object (existing or newly created placeholder)
+     */
+    getOrCreatePlayer(identifier, playerName, playerData) {
+        const server = this.getServer(identifier);
+        if (!server) {
+            throw new Error(`Server with identifier "${identifier}" not found`);
+        }
+        let player = server.players.find(p => p.ign === playerName);
+        let isNewPlayer = false;
+        if (!player) {
+            // Create placeholder player
+            player = {
+                ign: playerName,
+                ping: 0,
+                timeConnected: 0,
+                health: 0,
+                team: null,
+                platform: undefined
+            };
+            server.players.push(player);
+            isNewPlayer = true;
+        }
+        // Apply any provided data
+        if (playerData) {
+            Object.assign(player, playerData);
+        }
+        // Update server if we created a new player or modified existing data
+        if (isNewPlayer || playerData) {
+            this.updateServer(server);
+        }
+        return player;
+    }
+    /**
+     * Fetches team information and updates team references for all players
+     * @param identifier Server identifier
+     */
+    async fetchTeamInfo(identifier) {
+        const server = this.getServer(identifier);
+        if (!server)
+            return;
+        const rawTeamInfo = await this.sendCommand(identifier, "relationshipmanager.teaminfoall");
+        if (!rawTeamInfo)
+            return;
+        // Clear existing team references
+        server.players.forEach(player => {
+            player.team = null;
+        });
+        const { teams } = (0, teamInfo_1.parseTeamInfo)(rawTeamInfo, server.players);
+        // Update teams list
+        server.teams = teams;
+        this.updateServer(server);
+    }
+    /**
+     * Gets all teams on the server
+     * @param identifier Server identifier
+     * @returns Array of teams with their leaders and members
+     */
+    getTeams(identifier) {
+        const server = this.getServer(identifier);
+        return server ? server.teams : [];
+    }
+    /**
+     * Gets a specific team by ID
+     * @param identifier Server identifier
+     * @param teamId Team ID to find
+     * @returns Team object or undefined if not found
+     */
+    getTeam(identifier, teamId) {
+        const server = this.getServer(identifier);
+        return server ? server.teams.find(team => team.id === teamId) : undefined;
+    }
+    /**
+     * Gets the team that a specific player belongs to
+     * @param identifier Server identifier
+     * @param playerName Player's IGN
+     * @returns Team object or undefined if player is not in a team
+     */
+    getPlayerTeam(identifier, playerName) {
+        const server = this.getServer(identifier);
+        if (!server)
+            return undefined;
+        const player = server.players.find(p => p.ign === playerName);
+        return player?.team || undefined;
+    }
     async updatePlayers(identifier) {
         const server = this.getServer(identifier);
         if (!server) {
@@ -369,40 +464,62 @@ class RCEManager extends events_1.EventEmitter {
         const rawPlayerList = await this.sendCommand(identifier, "playerlist");
         if (rawPlayerList) {
             const parsedPlayers = JSON.parse(rawPlayerList);
-            const newPlayerList = parsedPlayers.map((player) => ({
-                ign: player.DisplayName,
-                ping: player.Ping,
-                timeConnected: player.ConnectedSeconds,
-                health: Math.round(player.Health),
-            }));
-            const oldPlayerNames = server.connectedPlayers.map((player) => player.ign);
-            const newPlayerNames = newPlayerList.map((player) => player.ign);
-            const comparePopulation = (oldList, newList) => {
-                const joined = newList.filter((ign) => !oldList.includes(ign));
-                const left = oldList.filter((ign) => !newList.includes(ign));
-                return { joined, left };
-            };
-            const { joined, left } = comparePopulation(oldPlayerNames, newPlayerNames);
-            joined.forEach((playerName) => {
-                const player = newPlayerList.find((p) => p.ign === playerName);
-                if (player) {
-                    this.emit(types_1.RCEEvent.PlayerJoined, {
-                        server,
-                        ign: player.ign,
-                    });
+            // Update existing players with new data, preserve team and platform references
+            const existingPlayers = server.players;
+            const existingPlayerNames = new Set(existingPlayers.map(p => p.ign));
+            const newPlayerNames = new Set(parsedPlayers.map((p) => p.DisplayName));
+            const joined = [];
+            const left = existingPlayers.filter(player => !newPlayerNames.has(player.ign));
+            // Update existing players and identify new ones
+            parsedPlayers.forEach((playerData) => {
+                const playerName = playerData.DisplayName;
+                const existingPlayer = existingPlayers.find(p => p.ign === playerName);
+                if (existingPlayer) {
+                    // Update existing player data but preserve team and platform references
+                    existingPlayer.ping = playerData.Ping;
+                    existingPlayer.timeConnected = playerData.ConnectedSeconds;
+                    existingPlayer.health = Math.round(playerData.Health);
+                    // team and platform are preserved from existing player
+                }
+                else {
+                    // Create new player with default values
+                    const newPlayer = {
+                        ign: playerName,
+                        ping: playerData.Ping,
+                        timeConnected: playerData.ConnectedSeconds,
+                        health: Math.round(playerData.Health),
+                        team: null, // Will be set by team events or connection
+                        platform: undefined, // Will be set from respawn events
+                    };
+                    joined.push(newPlayer);
+                    existingPlayers.push(newPlayer);
                 }
             });
-            left.forEach((playerName) => {
-                this.emit(types_1.RCEEvent.PlayerLeft, {
+            // Remove players that are no longer connected
+            left.forEach(player => {
+                const index = existingPlayers.indexOf(player);
+                if (index > -1) {
+                    existingPlayers.splice(index, 1);
+                }
+            });
+            // Emit events for joined players
+            joined.forEach(player => {
+                this.emit(types_1.RCEEvent.PlayerJoined, {
                     server,
-                    ign: playerName,
+                    player,
                 });
             });
-            server.connectedPlayers = newPlayerList;
+            // Emit events for left players
+            left.forEach(player => {
+                this.emit(types_1.RCEEvent.PlayerLeft, {
+                    server,
+                    player,
+                });
+            });
             this.updateServer(server);
             this.emit(types_1.RCEEvent.PlayerListUpdated, {
                 server,
-                players: newPlayerList,
+                players: existingPlayers,
                 joined,
                 left,
             });

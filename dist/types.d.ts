@@ -36,8 +36,9 @@ export interface IServer {
     flags: string[];
     intervals: IServerIntervals;
     state: any[];
-    connectedPlayers: Player[];
+    players: Player[];
     frequencies: number[];
+    teams: Team[];
 }
 export interface IRustServerInformation {
     Hostname: string;
@@ -69,20 +70,20 @@ export interface IExecutingCommandEventPayload extends EventPayload {
     command: string;
 }
 export interface IVendingMachineNameEventPayload extends EventPayload {
-    ign: string;
+    player: Player;
     oldName: string;
     newName: string;
 }
 export interface IQuickChatEventPayload extends EventPayload {
     type: QuickChatChannel;
-    ign: string;
+    player: Player;
     message: QuickChat;
 }
 export interface IPlayerSuicideEventPayload extends EventPayload {
-    ign: string;
+    player: Player;
 }
 export interface IPlayerRespawnedEventPayload extends EventPayload {
-    ign: string;
+    player: Player;
     platform: GamePlatform;
 }
 export interface ICustomZoneCreatedEventPayload extends EventPayload {
@@ -110,43 +111,39 @@ export interface IPlayerUnbannedEventPayload extends EventPayload {
     ign: string;
 }
 export interface IIitemSpawnEventPayload extends EventPayload {
-    ign: string;
+    player: Player;
     item: string;
     quantity: number;
 }
 export interface INoteEditEventPayload extends EventPayload {
-    ign: string;
+    player: Player;
     oldContent: string;
     newContent: string;
 }
 export interface ITeamCreatedEventPayload extends EventPayload {
-    id: number;
-    owner: string;
+    team: Team;
 }
 export interface ITeamJoinEventPayload extends EventPayload {
-    id: number;
-    owner: string;
-    ign: string;
+    team: Team;
+    player: Player;
 }
 export interface ITeamLeaveEventPayload extends EventPayload {
-    id: number;
-    owner: string;
-    ign: string;
+    team: Team;
+    player: Player;
 }
 export interface ITeamInviteEventPayload extends EventPayload {
-    id: number;
-    owner: string;
-    ign: string;
+    team: Team;
+    player: Player;
 }
 export interface ITeamInviteCancelEventPayload extends EventPayload {
     id: number;
-    owner: string;
+    owner: Player;
     ign: string;
 }
 export interface ITeamPromotedEventPayload extends EventPayload {
-    id: number;
-    oldOwner: string;
-    newOwner: string;
+    team: Team;
+    oldOwner: Player;
+    newOwner: Player;
 }
 export interface IKitSpawnEventPayload extends EventPayload {
     ign: string;
@@ -154,10 +151,10 @@ export interface IKitSpawnEventPayload extends EventPayload {
     kit: string;
 }
 export interface IPlayerJoinedEventPayload extends EventPayload {
-    ign: string;
+    player: Player;
 }
 export interface IPlayerLeftEventPayload extends EventPayload {
-    ign: string;
+    player: Player;
 }
 export interface IEventStartEventPayload extends EventPayload {
     event: "Airdrop" | "Cargo Ship" | "Chinook" | "Patrol Helicopter" | "Halloween" | "Christmas" | "Small Oil Rig" | "Oil Rig" | "Bradley APC Debris" | "Patrol Helicopter Debris";
@@ -169,8 +166,8 @@ export interface IPlayerKillEVentPayload extends EventPayload {
 }
 export interface IPlayerListUpdatedEventPayload extends EventPayload {
     players: Player[];
-    joined: string[];
-    left: string[];
+    joined: Player[];
+    left: Player[];
 }
 export interface IFrequencyGainedEventPayload extends EventPayload {
     frequency: number;
@@ -230,6 +227,13 @@ export interface Player {
     ping: number;
     timeConnected: number;
     health: number;
+    team?: Team | null;
+    platform?: GamePlatform;
+}
+export interface Team {
+    id: number;
+    leader: Player;
+    members: Player[];
 }
 export interface IEvent {
     [RCEEvent.Ready]: IReadyEventPayload;
