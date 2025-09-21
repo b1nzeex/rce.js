@@ -189,11 +189,11 @@ export interface IKitSpawnEventPayload extends EventPayload {
 }
 
 export interface IPlayerJoinedEventPayload extends EventPayload {
-  ign: string;
+  player: Player;
 }
 
 export interface IPlayerLeftEventPayload extends EventPayload {
-  ign: string;
+  player: Player;
 }
 
 export interface IEventStartEventPayload extends EventPayload {
@@ -218,8 +218,8 @@ export interface IPlayerKillEVentPayload extends EventPayload {
 
 export interface IPlayerListUpdatedEventPayload extends EventPayload {
   players: Player[];
-  joined: string[];
-  left: string[];
+  joined: Player[];
+  left: Player[];
 }
 
 export interface IFrequencyGainedEventPayload extends EventPayload {

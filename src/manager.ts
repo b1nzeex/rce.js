@@ -576,72 +576,61 @@ export default class RCEManager extends EventEmitter {
     if (rawPlayerList) {
       const parsedPlayers: any[] = JSON.parse(rawPlayerList);
       
-      const newPlayerList: Player[] = parsedPlayers.map((player: any) => ({
-        ign: player.DisplayName,
-        ping: player.Ping,
-        timeConnected: player.ConnectedSeconds,
-        health: Math.round(player.Health),
-        team: null, // Will be set by team events or connection
-        platform: undefined, // Will be set from respawn events
-      }));
-
-      // Update existing players with new data, preserve team references
+      // Update existing players with new data, preserve team and platform references
       const existingPlayers = server.players;
-      newPlayerList.forEach(newPlayer => {
-        const existingPlayer = existingPlayers.find(p => p.ign === newPlayer.ign);
+      const existingPlayerNames = new Set(existingPlayers.map(p => p.ign));
+      const newPlayerNames = new Set(parsedPlayers.map((p: any) => p.DisplayName));
+      
+      const joined: Player[] = [];
+      const left = existingPlayers.filter(player => !newPlayerNames.has(player.ign));
+
+      // Update existing players and identify new ones
+      parsedPlayers.forEach((playerData: any) => {
+        const playerName = playerData.DisplayName;
+        const existingPlayer = existingPlayers.find(p => p.ign === playerName);
+        
         if (existingPlayer) {
-          // Update existing player data but preserve team reference
-          existingPlayer.ping = newPlayer.ping;
-          existingPlayer.timeConnected = newPlayer.timeConnected;
-          existingPlayer.health = newPlayer.health;
-          existingPlayer.platform = existingPlayer.platform; // Keep existing platform
+          // Update existing player data but preserve team and platform references
+          existingPlayer.ping = playerData.Ping;
+          existingPlayer.timeConnected = playerData.ConnectedSeconds;
+          existingPlayer.health = Math.round(playerData.Health);
+          // team and platform are preserved from existing player
+        } else {
+          // Create new player with default values
+          const newPlayer: Player = {
+            ign: playerName,
+            ping: playerData.Ping,
+            timeConnected: playerData.ConnectedSeconds,
+            health: Math.round(playerData.Health),
+            team: null, // Will be set by team events or connection
+            platform: undefined, // Will be set from respawn events
+          };
+          joined.push(newPlayer);
+          existingPlayers.push(newPlayer);
         }
       });
 
-      // Add new players that weren't in the existing list
-      const existingPlayerNames = existingPlayers.map(p => p.ign);
-      const newPlayers = newPlayerList.filter(p => !existingPlayerNames.includes(p.ign));
-      existingPlayers.push(...newPlayers);
-
       // Remove players that are no longer connected
-      const newPlayerNames = newPlayerList.map(p => p.ign);
-      const playersToRemove = existingPlayers.filter(p => !newPlayerNames.includes(p.ign));
-      playersToRemove.forEach(player => {
+      left.forEach(player => {
         const index = existingPlayers.indexOf(player);
         if (index > -1) {
           existingPlayers.splice(index, 1);
         }
       });
 
-      // Calculate joined and left players
-      const oldPlayerNames = existingPlayers.map((player: Player) => player.ign);
-      const currentPlayerNames = newPlayerList.map((player: Player) => player.ign);
-
-      const comparePopulation = (oldList: string[], newList: string[]) => {
-        const joined = newList.filter((ign) => !oldList.includes(ign));
-        const left = oldList.filter((ign) => !newList.includes(ign));
-        return { joined, left };
-      };
-
-      const { joined, left } = comparePopulation(
-        oldPlayerNames,
-        currentPlayerNames
-      );
-
-      joined.forEach((playerName) => {
-        const player = newPlayerList.find((p) => p.ign === playerName);
-        if (player) {
-          this.emit(RCEEvent.PlayerJoined, {
-            server,
-            ign: player.ign,
-          });
-        }
+      // Emit events for joined players
+      joined.forEach(player => {
+        this.emit(RCEEvent.PlayerJoined, {
+          server,
+          player,
+        });
       });
 
-      left.forEach((playerName) => {
+      // Emit events for left players
+      left.forEach(player => {
         this.emit(RCEEvent.PlayerLeft, {
           server,
-          ign: playerName,
+          player,
         });
       });
 
