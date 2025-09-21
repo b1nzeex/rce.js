@@ -44,8 +44,9 @@ export interface IServer {
   flags: string[];
   intervals: IServerIntervals;
   state: any[];
-  connectedPlayers: Player[];
+  players: Player[];
   frequencies: number[];
+  teams: Team[];
 }
 
 export interface IRustServerInformation {
@@ -279,12 +280,22 @@ export enum RCEEvent {
   ServerSaving = "serverSaving",
   Error = "error",
 }
+
 export interface Player {
   ign: string;
   ping: number;
   timeConnected: number;
   health: number;
+  team?: Team | null;
+  platform?: GamePlatform;
 }
+
+export interface Team {
+  id: number;
+  leader: Player;
+  members: Player[];
+}
+
 export interface IEvent {
   [RCEEvent.Ready]: IReadyEventPayload;
   [RCEEvent.Message]: IMessageEventPayload;

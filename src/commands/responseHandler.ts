@@ -54,6 +54,9 @@ export default class ResponseHandler {
         ? GamePlatform.XBOX
         : GamePlatform.Playstation;
 
+      // Create or get player and update platform
+      manager.getOrCreatePlayer(server.identifier, ign, { platform });
+
       manager.emit(RCEEvent.PlayerRespawned, {
         server,
         ign,
@@ -173,32 +176,85 @@ export default class ResponseHandler {
     // Event: Team Create
     const teamCreateMatch = message.match(RegularExpressions.TeamCreate);
     if (teamCreateMatch) {
+      const teamId = parseInt(teamCreateMatch[2]);
+      const owner = teamCreateMatch[1];
+      
+      // Create or get player and add team to teams list
+      const serverData = manager.getServer(server.identifier);
+      if (serverData) {
+        const team = {
+          id: teamId,
+          leader: null, // Will be set below
+          members: []
+        };
+        
+        const leaderPlayer = manager.getOrCreatePlayer(server.identifier, owner, { team });
+        team.leader = leaderPlayer;
+        team.members = [leaderPlayer];
+        
+        serverData.teams.push(team);
+        manager.updateServer(serverData);
+      }
+      
       manager.emit(RCEEvent.TeamCreated, {
         server,
-        id: parseInt(teamCreateMatch[2]),
-        owner: teamCreateMatch[1],
+        id: teamId,
+        owner,
       });
     }
 
     // Event: Team Join
     const teamJoinMatch = message.match(RegularExpressions.TeamJoin);
     if (teamJoinMatch) {
+      const teamId = parseInt(teamJoinMatch[3]);
+      const ign = teamJoinMatch[1];
+      
+      // Create or get player and add to team members list
+      const serverData = manager.getServer(server.identifier);
+      if (serverData) {
+        const team = serverData.teams.find(t => t.id === teamId);
+        if (team && !team.members.some(member => member.ign === ign)) {
+          const joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign, { team });
+          team.members.push(joiningPlayer);
+          manager.updateServer(serverData);
+        }
+      }
+      
       manager.emit(RCEEvent.TeamJoin, {
         server,
-        id: parseInt(teamJoinMatch[3]),
+        id: teamId,
         owner: teamJoinMatch[2],
-        ign: teamJoinMatch[1],
+        ign,
       });
     }
 
     // Event: Team Leave
     const teamLeaveMatch = message.match(RegularExpressions.TeamLeave);
     if (teamLeaveMatch) {
+      const ign = teamLeaveMatch[1];
+      const teamId = parseInt(teamLeaveMatch[3]);
+      
+      // Create or get player and remove from team members list
+      const serverData = manager.getServer(server.identifier);
+      if (serverData) {
+        const team = serverData.teams.find(t => t.id === teamId);
+        if (team) {
+          team.members = team.members.filter(member => member.ign !== ign);
+          manager.getOrCreatePlayer(server.identifier, ign, { team: null });
+          
+          // If team is empty, remove it
+          if (team.members.length === 0) {
+            serverData.teams = serverData.teams.filter(t => t.id !== teamId);
+          }
+          manager.updateServer(serverData);
+        }
+      }
+      
       manager.emit(RCEEvent.TeamLeave, {
         server,
-        id: parseInt(teamLeaveMatch[3]),
+        id: teamId,
         owner: teamLeaveMatch[2],
-        ign: teamLeaveMatch[1],
+        ign,
       });
     }
 
@@ -229,11 +285,26 @@ export default class ResponseHandler {
     // Event: Team Promoted
     const teamPromotedMatch = message.match(RegularExpressions.TeamPromoted);
     if (teamPromotedMatch) {
+      const teamId = parseInt(teamPromotedMatch[3]);
+      const oldOwner = teamPromotedMatch[1];
+      const newOwner = teamPromotedMatch[2];
+      
+      // Update team leadership
+      const serverData = manager.getServer(server.identifier);
+      if (serverData) {
+        const team = serverData.teams.find(t => t.id === teamId);
+        if (team) {
+          // Update the team's leader
+          team.leader = manager.getOrCreatePlayer(server.identifier, newOwner, { team });
+          manager.updateServer(serverData);
+        }
+      }
+      
       manager.emit(RCEEvent.TeamPromoted, {
         server,
-        id: parseInt(teamPromotedMatch[3]),
-        oldOwner: teamPromotedMatch[1],
-        newOwner: teamPromotedMatch[2],
+        id: teamId,
+        oldOwner,
+        newOwner,
       });
     }
 
