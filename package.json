@@ -18,7 +18,7 @@
     "websocket",
     "api"
   ],
-  "author": "b1nzee / b1nzeee / b1nzeex",
+  "author": "b1nzee / b1nzeee / b1nzeex - Publicly Maintained",
   "license": "ISC",
   "description": "A wrapper for Rust Console Edition (RCE) that allows you to use RCON to create integrations.",
   "devDependencies": {
