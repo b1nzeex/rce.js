@@ -10,16 +10,17 @@ const regularExpressions_1 = require("./regularExpressions");
  */
 function parseTeamInfo(teamInfoResponse, players = []) {
     const teams = [];
-    if (!teamInfoResponse || regularExpressions_1.RegularExpressions.TeamInfoNoTeams.test(teamInfoResponse)) {
+    if (!teamInfoResponse ||
+        regularExpressions_1.RegularExpressions.TeamInfoNoTeams.test(teamInfoResponse)) {
         return { teams };
     }
     // Create a map of player names to Player objects for quick lookup
     const playerMap = new Map();
-    players.forEach(player => {
+    players.forEach((player) => {
         playerMap.set(player.ign, player);
     });
     // Split the response into lines for processing
-    const lines = teamInfoResponse.split('\n').filter(line => line.trim());
+    const lines = teamInfoResponse.split("\n").filter((line) => line.trim());
     let currentTeamId = null;
     let currentTeamMembers = [];
     let currentTeamLeader = null;
@@ -33,10 +34,10 @@ function parseTeamInfo(teamInfoResponse, players = []) {
                     const team = {
                         id: currentTeamId,
                         leader: currentTeamLeader,
-                        members: currentTeamMembers
+                        members: currentTeamMembers,
                     };
                     // Set team reference on all team members
-                    currentTeamMembers.forEach(player => {
+                    currentTeamMembers.forEach((player) => {
                         player.team = team;
                     });
                     teams.push(team);
@@ -57,7 +58,7 @@ function parseTeamInfo(teamInfoResponse, players = []) {
             if (player) {
                 currentTeamMembers.push(player);
                 // Check if this player is the leader
-                if (line.includes('(LEADER)')) {
+                if (line.includes("(LEADER)")) {
                     currentTeamLeader = player;
                 }
             }
@@ -69,10 +70,10 @@ function parseTeamInfo(teamInfoResponse, players = []) {
             const team = {
                 id: currentTeamId,
                 leader: currentTeamLeader,
-                members: currentTeamMembers
+                members: currentTeamMembers,
             };
             // Set team reference on all team members
-            currentTeamMembers.forEach(player => {
+            currentTeamMembers.forEach((player) => {
                 player.team = team;
             });
             teams.push(team);

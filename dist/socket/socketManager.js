@@ -11,12 +11,10 @@ class SocketManager {
     _manager;
     _socket = null;
     connectionAttempts = 0;
-    _options;
     _reconnectionTimer = null;
     _isDestroyed = false;
     constructor(manager, options) {
         this._manager = manager;
-        this._options = options;
         this.connect(options);
     }
     connect(opts) {
@@ -112,7 +110,7 @@ class SocketManager {
             return;
         }
         this.connectionAttempts++;
-        this._manager.logger.warn(`[${opts.identifier}] Attempting to reconnect WebSocket... (Attempt ${this.connectionAttempts}${maxAttempts !== -1 ? `/${maxAttempts}` : ''})`);
+        this._manager.logger.warn(`[${opts.identifier}] Attempting to reconnect WebSocket... (Attempt ${this.connectionAttempts}${maxAttempts !== -1 ? `/${maxAttempts}` : ""})`);
         this._reconnectionTimer = setTimeout(() => {
             if (!this._isDestroyed) {
                 this.connect(opts);
