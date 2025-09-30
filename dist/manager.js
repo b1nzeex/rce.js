@@ -466,7 +466,6 @@ class RCEManager extends events_1.EventEmitter {
             const parsedPlayers = JSON.parse(rawPlayerList);
             // Update existing players with new data, preserve team and platform references
             const existingPlayers = server.players;
-            const existingPlayerNames = new Set(existingPlayers.map((p) => p.ign));
             const newPlayerNames = new Set(parsedPlayers.map((p) => p.DisplayName));
             const joined = [];
             const left = existingPlayers.filter((player) => !newPlayerNames.has(player.ign));
