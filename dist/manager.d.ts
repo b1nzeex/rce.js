@@ -1,6 +1,5 @@
-import { type IServerOptions, type IServer, type IEvent, type IRustServerInformation, type IOptions, type ILogger, Player } from "./types";
+import { type IServerOptions, type IServer, type IEvent, type IRustServerInformation, type IOptions, type ILogger, type IPlayer, type ITeam } from "./types";
 import { EventEmitter } from "events";
-import { Team } from "./types";
 export default class RCEManager extends EventEmitter {
     private servers;
     logger: ILogger;
@@ -79,7 +78,7 @@ export default class RCEManager extends EventEmitter {
      * @param playerData Optional data to set on the player
      * @returns Player object (existing or newly created placeholder)
      */
-    getOrCreatePlayer(identifier: string, playerName: string, playerData?: Partial<Player>): Player;
+    getOrCreatePlayer(identifier: string, playerName: string, playerData?: Partial<IPlayer>): IPlayer;
     /**
      * Fetches team information and updates team references for all players
      * @param identifier Server identifier
@@ -90,20 +89,20 @@ export default class RCEManager extends EventEmitter {
      * @param identifier Server identifier
      * @returns Array of teams with their leaders and members
      */
-    getTeams(identifier: string): Team[];
+    getTeams(identifier: string): ITeam[];
     /**
      * Gets a specific team by ID
      * @param identifier Server identifier
      * @param teamId Team ID to find
      * @returns Team object or undefined if not found
      */
-    getTeam(identifier: string, teamId: number): Team | undefined;
+    getTeam(identifier: string, teamId: number): ITeam | undefined;
     /**
      * Gets the team that a specific player belongs to
      * @param identifier Server identifier
      * @param playerName Player's IGN
      * @returns Team object or undefined if player is not in a team
      */
-    getPlayerTeam(identifier: string, playerName: string): Team | undefined;
+    getPlayerTeam(identifier: string, playerName: string): ITeam | undefined;
     private updatePlayers;
 }
