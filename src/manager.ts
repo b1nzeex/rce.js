@@ -5,16 +5,15 @@ import {
   RCEEvent,
   type IRustServerInformation,
   type IOptions,
-  LogLevel,
   type ILogger,
-  Player,
+  type IPlayer,
+  type ITeam,
 } from "./types";
 import SocketManager from "./socket/socketManager";
 import { EventEmitter } from "events";
 import CommandManager from "./commands/commandManager";
 import Logger from "./logger";
 import { parseTeamInfo } from "./data/teamInfo";
-import { Team } from "./types";
 
 export default class RCEManager extends EventEmitter {
   private servers: Map<string, IServer> = new Map();
@@ -44,14 +43,14 @@ export default class RCEManager extends EventEmitter {
       this.updatePlayers(payload.server.identifier);
       this.updateBroadcasters(payload.server.identifier);
       this.fetchGibs(payload.server.identifier);
-      
+
       // Fetch team information on ready
-      this.fetchTeamInfo(payload.server.identifier).catch(error => {
+      this.fetchTeamInfo(payload.server.identifier).catch((error) => {
         this.logger.debug(
           `[${payload.server.identifier}] Failed to fetch team info: ${error.message}`
         );
       });
-      
+
       this.logger.info(
         `[${payload.server.identifier}] Server Successfully Added!`
       );
@@ -458,7 +457,6 @@ export default class RCEManager extends EventEmitter {
     this.updateServer(server);
   }
 
-
   /**
    * Creates a placeholder player or returns existing one, optionally updating player data
    * @param identifier Server identifier
@@ -466,15 +464,19 @@ export default class RCEManager extends EventEmitter {
    * @param playerData Optional data to set on the player
    * @returns Player object (existing or newly created placeholder)
    */
-  public getOrCreatePlayer(identifier: string, playerName: string, playerData?: Partial<Player>): Player {
+  public getOrCreatePlayer(
+    identifier: string,
+    playerName: string,
+    playerData?: Partial<IPlayer>
+  ): IPlayer {
     const server = this.getServer(identifier);
     if (!server) {
       throw new Error(`Server with identifier "${identifier}" not found`);
     }
 
-    let player = server.players.find(p => p.ign === playerName);
+    let player = server.players.find((p) => p.ign === playerName);
     let isNewPlayer = false;
-    
+
     if (!player) {
       // Create placeholder player
       player = {
@@ -483,7 +485,7 @@ export default class RCEManager extends EventEmitter {
         timeConnected: 0,
         health: 0,
         team: null,
-        platform: undefined
+        platform: undefined,
       };
       server.players.push(player);
       isNewPlayer = true;
@@ -502,7 +504,6 @@ export default class RCEManager extends EventEmitter {
     return player;
   }
 
-
   /**
    * Fetches team information and updates team references for all players
    * @param identifier Server identifier
@@ -511,19 +512,22 @@ export default class RCEManager extends EventEmitter {
     const server = this.getServer(identifier);
     if (!server) return;
 
-    const rawTeamInfo = await this.sendCommand(identifier, "relationshipmanager.teaminfoall");
+    const rawTeamInfo = await this.sendCommand(
+      identifier,
+      "relationshipmanager.teaminfoall"
+    );
     if (!rawTeamInfo) return;
 
     // Clear existing team references
-    server.players.forEach(player => {
+    server.players.forEach((player) => {
       player.team = null;
     });
 
     const { teams } = parseTeamInfo(rawTeamInfo, server.players);
-    
+
     // Update teams list
     server.teams = teams;
-    
+
     this.updateServer(server);
   }
 
@@ -532,7 +536,7 @@ export default class RCEManager extends EventEmitter {
    * @param identifier Server identifier
    * @returns Array of teams with their leaders and members
    */
-  public getTeams(identifier: string): Team[] {
+  public getTeams(identifier: string): ITeam[] {
     const server = this.getServer(identifier);
     return server ? server.teams : [];
   }
@@ -543,9 +547,9 @@ export default class RCEManager extends EventEmitter {
    * @param teamId Team ID to find
    * @returns Team object or undefined if not found
    */
-  public getTeam(identifier: string, teamId: number): Team | undefined {
+  public getTeam(identifier: string, teamId: number): ITeam | undefined {
     const server = this.getServer(identifier);
-    return server ? server.teams.find(team => team.id === teamId) : undefined;
+    return server ? server.teams.find((team) => team.id === teamId) : undefined;
   }
 
   /**
@@ -554,11 +558,14 @@ export default class RCEManager extends EventEmitter {
    * @param playerName Player's IGN
    * @returns Team object or undefined if player is not in a team
    */
-  public getPlayerTeam(identifier: string, playerName: string): Team | undefined {
+  public getPlayerTeam(
+    identifier: string,
+    playerName: string
+  ): ITeam | undefined {
     const server = this.getServer(identifier);
     if (!server) return undefined;
 
-    const player = server.players.find(p => p.ign === playerName);
+    const player = server.players.find((p) => p.ign === playerName);
     return player?.team || undefined;
   }
 
@@ -575,20 +582,26 @@ export default class RCEManager extends EventEmitter {
 
     if (rawPlayerList) {
       const parsedPlayers: any[] = JSON.parse(rawPlayerList);
-      
+
       // Update existing players with new data, preserve team and platform references
       const existingPlayers = server.players;
-      const existingPlayerNames = new Set(existingPlayers.map(p => p.ign));
-      const newPlayerNames = new Set(parsedPlayers.map((p: any) => p.DisplayName));
-      
-      const joined: Player[] = [];
-      const left = existingPlayers.filter(player => !newPlayerNames.has(player.ign));
+      const existingPlayerNames = new Set(existingPlayers.map((p) => p.ign));
+      const newPlayerNames = new Set(
+        parsedPlayers.map((p: any) => p.DisplayName)
+      );
+
+      const joined: IPlayer[] = [];
+      const left = existingPlayers.filter(
+        (player) => !newPlayerNames.has(player.ign)
+      );
 
       // Update existing players and identify new ones
       parsedPlayers.forEach((playerData: any) => {
         const playerName = playerData.DisplayName;
-        const existingPlayer = existingPlayers.find(p => p.ign === playerName);
-        
+        const existingPlayer = existingPlayers.find(
+          (p) => p.ign === playerName
+        );
+
         if (existingPlayer) {
           // Update existing player data but preserve team and platform references
           existingPlayer.ping = playerData.Ping;
@@ -597,7 +610,7 @@ export default class RCEManager extends EventEmitter {
           // team and platform are preserved from existing player
         } else {
           // Create new player with default values
-          const newPlayer: Player = {
+          const newPlayer: IPlayer = {
             ign: playerName,
             ping: playerData.Ping,
             timeConnected: playerData.ConnectedSeconds,
@@ -611,7 +624,7 @@ export default class RCEManager extends EventEmitter {
       });
 
       // Remove players that are no longer connected
-      left.forEach(player => {
+      left.forEach((player) => {
         const index = existingPlayers.indexOf(player);
         if (index > -1) {
           existingPlayers.splice(index, 1);
@@ -619,7 +632,7 @@ export default class RCEManager extends EventEmitter {
       });
 
       // Emit events for joined players
-      joined.forEach(player => {
+      joined.forEach((player) => {
         this.emit(RCEEvent.PlayerJoined, {
           server,
           player,
@@ -627,7 +640,7 @@ export default class RCEManager extends EventEmitter {
       });
 
       // Emit events for left players
-      left.forEach(player => {
+      left.forEach((player) => {
         this.emit(RCEEvent.PlayerLeft, {
           server,
           player,

@@ -44,9 +44,9 @@ export interface IServer {
   flags: string[];
   intervals: IServerIntervals;
   state: any[];
-  players: Player[];
+  players: IPlayer[];
   frequencies: number[];
-  teams: Team[];
+  teams: ITeam[];
 }
 
 export interface IRustServerInformation {
@@ -86,23 +86,23 @@ export interface IExecutingCommandEventPayload extends EventPayload {
 }
 
 export interface IVendingMachineNameEventPayload extends EventPayload {
-  player: Player;
+  player: IPlayer;
   oldName: string;
   newName: string;
 }
 
 export interface IQuickChatEventPayload extends EventPayload {
   type: QuickChatChannel;
-  player: Player;
+  player: IPlayer;
   message: QuickChat;
 }
 
 export interface IPlayerSuicideEventPayload extends EventPayload {
-  player: Player;
+  player: IPlayer;
 }
 
 export interface IPlayerRespawnedEventPayload extends EventPayload {
-  player: Player;
+  player: IPlayer;
   platform: GamePlatform;
 }
 
@@ -115,81 +115,80 @@ export interface ICustomZoneRemovedEventPayload extends EventPayload {
 }
 
 export interface IPlayerRoleAddEventPayload extends EventPayload {
-  admin?: string;
-  ign: string;
+  admin?: IPlayer;
+  player: IPlayer;
   role: string;
 }
 
 export interface IPlayerRoleRemoveEventPayload extends EventPayload {
-  admin?: string;
-  ign: string;
+  admin?: IPlayer;
+  player: IPlayer;
   role: string;
 }
 
 export interface IPlayerBannedEventPayload extends EventPayload {
-  admin?: string;
-  ign: string;
+  admin?: IPlayer;
+  player: IPlayer;
 }
 export interface IPlayerUnbannedEventPayload extends EventPayload {
-  admin?: string;
-  ign: string;
+  admin?: IPlayer;
+  player: IPlayer;
 }
 
 export interface IIitemSpawnEventPayload extends EventPayload {
-  player: Player;
+  player: IPlayer;
   item: string;
   quantity: number;
 }
 
 export interface INoteEditEventPayload extends EventPayload {
-  player: Player;
+  player: IPlayer;
   oldContent: string;
   newContent: string;
 }
 
 export interface ITeamCreatedEventPayload extends EventPayload {
-  team: Team;
+  team: ITeam;
 }
 
 export interface ITeamJoinEventPayload extends EventPayload {
-  team: Team;
-  player: Player;
+  team: ITeam;
+  player: IPlayer;
 }
 
 export interface ITeamLeaveEventPayload extends EventPayload {
-  team: Team;
-  player: Player;
+  team: ITeam;
+  player: IPlayer;
 }
 
 export interface ITeamInviteEventPayload extends EventPayload {
-  team: Team;
-  player: Player;
+  team: ITeam;
+  player: IPlayer;
 }
 
 export interface ITeamInviteCancelEventPayload extends EventPayload {
-  id: number;
-  owner: Player;
-  ign: string;
+  team: ITeam;
+  player: IPlayer;
 }
 
 export interface ITeamPromotedEventPayload extends EventPayload {
-  team: Team;
-  oldOwner: Player;
-  newOwner: Player;
+  team: ITeam;
+  oldOwner: IPlayer;
+  newOwner: IPlayer;
 }
 
 export interface IKitSpawnEventPayload extends EventPayload {
-  ign: string;
-  admin?: string;
+  player: IPlayer;
+  admin?: IPlayer;
   kit: string;
 }
 
 export interface IPlayerJoinedEventPayload extends EventPayload {
-  player: Player;
+  player: IPlayer;
 }
 
 export interface IPlayerLeftEventPayload extends EventPayload {
-  player: Player;
+  player: IPlayer;
 }
 
 export interface IEventStartEventPayload extends EventPayload {
@@ -213,9 +212,9 @@ export interface IPlayerKillEVentPayload extends EventPayload {
 }
 
 export interface IPlayerListUpdatedEventPayload extends EventPayload {
-  players: Player[];
-  joined: Player[];
-  left: Player[];
+  players: IPlayer[];
+  joined: IPlayer[];
+  left: IPlayer[];
 }
 
 export interface IFrequencyGainedEventPayload extends EventPayload {
@@ -241,6 +240,7 @@ export interface IKillPlayer {
   id: string;
   name: string;
   type: PlayerKillType;
+  player?: IPlayer;
 }
 
 export enum RCEEvent {
@@ -277,19 +277,19 @@ export enum RCEEvent {
   Error = "error",
 }
 
-export interface Player {
+export interface IPlayer {
   ign: string;
   ping: number;
   timeConnected: number;
   health: number;
-  team?: Team | null;
+  team?: ITeam | null;
   platform?: GamePlatform;
 }
 
-export interface Team {
+export interface ITeam {
   id: number;
-  leader: Player;
-  members: Player[];
+  leader: IPlayer;
+  members: IPlayer[];
 }
 
 export interface IEvent {

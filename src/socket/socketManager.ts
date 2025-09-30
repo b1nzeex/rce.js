@@ -9,13 +9,11 @@ export default class SocketManager {
   private _manager: RCEManager;
   private _socket: WebSocket | null = null;
   private connectionAttempts: number = 0;
-  private _options: IServerOptions;
   private _reconnectionTimer: NodeJS.Timeout | null = null;
   private _isDestroyed: boolean = false;
 
   public constructor(manager: RCEManager, options: IServerOptions) {
     this._manager = manager;
-    this._options = options;
     this.connect(options);
   }
 
@@ -38,7 +36,7 @@ export default class SocketManager {
 
     this._socket.on("open", () => {
       this.connectionAttempts = 0; // Reset connection attempts on successful connection
-      
+
       const server = this._manager.getServer(opts.identifier);
       if (server) {
         server.socket = this._socket;
@@ -144,7 +142,9 @@ export default class SocketManager {
 
     this.connectionAttempts++;
     this._manager.logger.warn(
-      `[${opts.identifier}] Attempting to reconnect WebSocket... (Attempt ${this.connectionAttempts}${maxAttempts !== -1 ? `/${maxAttempts}` : ''})`
+      `[${opts.identifier}] Attempting to reconnect WebSocket... (Attempt ${
+        this.connectionAttempts
+      }${maxAttempts !== -1 ? `/${maxAttempts}` : ""})`
     );
 
     this._reconnectionTimer = setTimeout(() => {
@@ -156,7 +156,7 @@ export default class SocketManager {
 
   public destroy(): void {
     this._isDestroyed = true;
-    
+
     if (this._reconnectionTimer) {
       clearTimeout(this._reconnectionTimer);
       this._reconnectionTimer = null;
