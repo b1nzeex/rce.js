@@ -585,7 +585,6 @@ export default class RCEManager extends EventEmitter {
 
       // Update existing players with new data, preserve team and platform references
       const existingPlayers = server.players;
-      const existingPlayerNames = new Set(existingPlayers.map((p) => p.ign));
       const newPlayerNames = new Set(
         parsedPlayers.map((p: any) => p.DisplayName)
       );
@@ -618,6 +617,7 @@ export default class RCEManager extends EventEmitter {
             team: null, // Will be set by team events or connection
             platform: undefined, // Will be set from respawn events
           };
+
           joined.push(newPlayer);
           existingPlayers.push(newPlayer);
         }
