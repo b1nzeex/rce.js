@@ -229,6 +229,7 @@ export interface IPlayer {
     health: number;
     team?: ITeam | null;
     platform?: GamePlatform;
+    role?: GameRole;
 }
 export interface ITeam {
     id: number;
@@ -271,6 +272,13 @@ export interface IEvent {
 export declare enum GamePlatform {
     Playstation = "PS",
     XBOX = "XBL"
+}
+export declare enum GameRole {
+    None = "None",
+    VIP = "VIP",
+    Moderator = "Moderator",
+    Admin = "Admin",
+    Owner = "Owner"
 }
 export interface ICommandRequest {
     identifier: string;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LogLevel = exports.GamePlatform = exports.RCEEvent = void 0;
+exports.LogLevel = exports.GameRole = exports.GamePlatform = exports.RCEEvent = void 0;
 var RCEEvent;
 (function (RCEEvent) {
     RCEEvent["Ready"] = "ready";
@@ -40,6 +40,14 @@ var GamePlatform;
     GamePlatform["Playstation"] = "PS";
     GamePlatform["XBOX"] = "XBL";
 })(GamePlatform || (exports.GamePlatform = GamePlatform = {}));
+var GameRole;
+(function (GameRole) {
+    GameRole["None"] = "None";
+    GameRole["VIP"] = "VIP";
+    GameRole["Moderator"] = "Moderator";
+    GameRole["Admin"] = "Admin";
+    GameRole["Owner"] = "Owner";
+})(GameRole || (exports.GameRole = GameRole = {}));
 var LogLevel;
 (function (LogLevel) {
     LogLevel[LogLevel["None"] = 0] = "None";

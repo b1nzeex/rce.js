@@ -284,6 +284,7 @@ export interface IPlayer {
   health: number;
   team?: ITeam | null;
   platform?: GamePlatform;
+  role?: GameRole;
 }
 
 export interface ITeam {
@@ -329,6 +330,14 @@ export interface IEvent {
 export enum GamePlatform {
   Playstation = "PS",
   XBOX = "XBL",
+}
+
+export enum GameRole {
+  None = "None",
+  VIP = "VIP",
+  Moderator = "Moderator",
+  Admin = "Admin",
+  Owner = "Owner",
 }
 
 /*

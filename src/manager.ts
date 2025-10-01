@@ -8,12 +8,14 @@ import {
   type ILogger,
   type IPlayer,
   type ITeam,
+  GameRole,
 } from "./types";
 import SocketManager from "./socket/socketManager";
 import { EventEmitter } from "events";
 import CommandManager from "./commands/commandManager";
 import Logger from "./logger";
 import { parseTeamInfo } from "./data/teamInfo";
+import { parseRoleInfo } from "./data/roleInfo";
 
 export default class RCEManager extends EventEmitter {
   private servers: Map<string, IServer> = new Map();
@@ -39,6 +41,34 @@ export default class RCEManager extends EventEmitter {
         this.logger.error(payload.error);
       }
     });
+
+    this.on(RCEEvent.PlayerRoleAdd, (payload) => {
+      const server = this.getServer(payload.server.identifier);
+      if (!server) return;
+
+      const player = server.players.find((p) => p.ign === payload.player.ign);
+      if (player) {
+        if (payload.role === "Banned") {
+          player.role = null;
+        } else {
+          player.role = payload.role as GameRole;
+        }
+
+        this.updateServer(server);
+      }
+    });
+
+    this.on(RCEEvent.PlayerRoleRemove, (payload) => {
+      const server = this.getServer(payload.server.identifier);
+      if (!server) return;
+
+      const player = server.players.find((p) => p.ign === payload.player.ign);
+      if (player) {
+        player.role = null;
+        this.updateServer(server);
+      }
+    });
+
     this.on(RCEEvent.Ready, (payload) => {
       this.updatePlayers(payload.server.identifier);
       this.updateBroadcasters(payload.server.identifier);
@@ -48,6 +78,12 @@ export default class RCEManager extends EventEmitter {
       this.fetchTeamInfo(payload.server.identifier).catch((error) => {
         this.logger.debug(
           `[${payload.server.identifier}] Failed to fetch team info: ${error.message}`
+        );
+      });
+
+      this.fetchRoleInfo(payload.server.identifier).catch((error) => {
+        this.logger.debug(
+          `[${payload.server.identifier}] Failed to fetch role info: ${error.message}`
         );
       });
 
@@ -504,6 +540,23 @@ export default class RCEManager extends EventEmitter {
     return player;
   }
 
+  public async fetchRoleInfo(identifier: string): Promise<void> {
+    const server = this.getServer(identifier);
+    if (!server) return;
+
+    const rawRoleInfo = await this.sendCommand(identifier, "getauthlevels");
+    if (!rawRoleInfo) return;
+
+    server.players.forEach((player) => {
+      player.role = undefined; // Reset roles before updating
+    });
+
+    const { players } = parseRoleInfo(rawRoleInfo, server.players);
+    server.players = players;
+
+    this.updateServer(server);
+  }
+
   /**
    * Fetches team information and updates team references for all players
    * @param identifier Server identifier
@@ -616,6 +669,7 @@ export default class RCEManager extends EventEmitter {
             health: Math.round(playerData.Health),
             team: null, // Will be set by team events or connection
             platform: undefined, // Will be set from respawn events
+            role: undefined, // Role information not available from playerlist
           };
 
           joined.push(newPlayer);

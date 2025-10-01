@@ -79,6 +79,7 @@ export default class RCEManager extends EventEmitter {
      * @returns Player object (existing or newly created placeholder)
      */
     getOrCreatePlayer(identifier: string, playerName: string, playerData?: Partial<IPlayer>): IPlayer;
+    fetchRoleInfo(identifier: string): Promise<void>;
     /**
      * Fetches team information and updates team references for all players
      * @param identifier Server identifier

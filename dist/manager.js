@@ -9,6 +9,7 @@ const events_1 = require("events");
 const commandManager_1 = __importDefault(require("./commands/commandManager"));
 const logger_1 = __importDefault(require("./logger"));
 const teamInfo_1 = require("./data/teamInfo");
+const roleInfo_1 = require("./data/roleInfo");
 class RCEManager extends events_1.EventEmitter {
     servers = new Map();
     logger;
@@ -31,6 +32,31 @@ class RCEManager extends events_1.EventEmitter {
                 this.logger.error(payload.error);
             }
         });
+        this.on(types_1.RCEEvent.PlayerRoleAdd, (payload) => {
+            const server = this.getServer(payload.server.identifier);
+            if (!server)
+                return;
+            const player = server.players.find((p) => p.ign === payload.player.ign);
+            if (player) {
+                if (payload.role === "Banned") {
+                    player.role = null;
+                }
+                else {
+                    player.role = payload.role;
+                }
+                this.updateServer(server);
+            }
+        });
+        this.on(types_1.RCEEvent.PlayerRoleRemove, (payload) => {
+            const server = this.getServer(payload.server.identifier);
+            if (!server)
+                return;
+            const player = server.players.find((p) => p.ign === payload.player.ign);
+            if (player) {
+                player.role = null;
+                this.updateServer(server);
+            }
+        });
         this.on(types_1.RCEEvent.Ready, (payload) => {
             this.updatePlayers(payload.server.identifier);
             this.updateBroadcasters(payload.server.identifier);
@@ -38,6 +64,9 @@ class RCEManager extends events_1.EventEmitter {
             // Fetch team information on ready
             this.fetchTeamInfo(payload.server.identifier).catch((error) => {
                 this.logger.debug(`[${payload.server.identifier}] Failed to fetch team info: ${error.message}`);
+            });
+            this.fetchRoleInfo(payload.server.identifier).catch((error) => {
+                this.logger.debug(`[${payload.server.identifier}] Failed to fetch role info: ${error.message}`);
             });
             this.logger.info(`[${payload.server.identifier}] Server Successfully Added!`);
         });
@@ -401,6 +430,20 @@ class RCEManager extends events_1.EventEmitter {
         }
         return player;
     }
+    async fetchRoleInfo(identifier) {
+        const server = this.getServer(identifier);
+        if (!server)
+            return;
+        const rawRoleInfo = await this.sendCommand(identifier, "getauthlevels");
+        if (!rawRoleInfo)
+            return;
+        server.players.forEach((player) => {
+            player.role = undefined; // Reset roles before updating
+        });
+        const { players } = (0, roleInfo_1.parseRoleInfo)(rawRoleInfo, server.players);
+        server.players = players;
+        this.updateServer(server);
+    }
     /**
      * Fetches team information and updates team references for all players
      * @param identifier Server identifier
@@ -489,6 +532,7 @@ class RCEManager extends events_1.EventEmitter {
                         health: Math.round(playerData.Health),
                         team: null, // Will be set by team events or connection
                         platform: undefined, // Will be set from respawn events
+                        role: undefined, // Role information not available from playerlist
                     };
                     joined.push(newPlayer);
                     existingPlayers.push(newPlayer);
