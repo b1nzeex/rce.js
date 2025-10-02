@@ -29,12 +29,17 @@ export interface IServerOptions {
     interval?: number; // in milliseconds, default 5000
     maxAttempts?: number; // -1 for infinite, default -1
   };
+  serverInfoFetching?: {
+    enabled?: boolean;
+    interval?: number; // in milliseconds, default 60000
+  };
 }
 
 interface IServerIntervals {
   playerRefreshing: NodeJS.Timeout;
   frequencyRefreshing: NodeJS.Timeout;
   gibRefreshing: NodeJS.Timeout;
+  infoRefreshing?: NodeJS.Timeout;
 }
 
 export interface IServer {
@@ -47,6 +52,7 @@ export interface IServer {
   players: IPlayer[];
   frequencies: number[];
   teams: ITeam[];
+  info?: IRustServerInformation;
 }
 
 export interface IRustServerInformation {
@@ -285,6 +291,7 @@ export interface IPlayer {
   team?: ITeam | null;
   platform?: GamePlatform;
   role?: GameRole;
+  state: any[];
 }
 
 export interface ITeam {

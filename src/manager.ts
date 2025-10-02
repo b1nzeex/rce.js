@@ -87,6 +87,12 @@ export default class RCEManager extends EventEmitter {
         );
       });
 
+      this.fetchInfo(payload.server.identifier).catch((error) => {
+        this.logger.debug(
+          `[${payload.server.identifier}] Failed to fetch server info: ${error.message}`
+        );
+      });
+
       this.logger.info(
         `[${payload.server.identifier}] Server Successfully Added!`
       );
@@ -134,11 +140,21 @@ export default class RCEManager extends EventEmitter {
         gibRefreshing: setInterval(() => {
           this.fetchGibs(options.identifier);
         }, 60_000),
+        infoRefreshing: options.serverInfoFetching?.enabled
+          ? setInterval(() => {
+              this.fetchInfo(options.identifier).catch((error) => {
+                this.logger.debug(
+                  `[${options.identifier}] Failed to fetch server info: ${error.message}`
+                );
+              });
+            }, options.serverInfoFetching?.interval || 60_000)
+          : undefined,
       },
       state: options.state || [],
       players: [],
       frequencies: [],
       teams: [],
+      info: undefined,
     };
 
     this.servers.set(options.identifier, server);
@@ -230,6 +246,8 @@ export default class RCEManager extends EventEmitter {
     let cleanOutput = info.replace(/\\n/g, "").trim();
     try {
       const json = JSON.parse(cleanOutput);
+      server.info = json as IRustServerInformation;
+      this.updateServer(server);
       return json as IRustServerInformation;
     } catch (error) {
       return info;
@@ -522,6 +540,7 @@ export default class RCEManager extends EventEmitter {
         health: 0,
         team: null,
         platform: undefined,
+        state: [],
       };
       server.players.push(player);
       isNewPlayer = true;
@@ -670,6 +689,7 @@ export default class RCEManager extends EventEmitter {
             team: null, // Will be set by team events or connection
             platform: undefined, // Will be set from respawn events
             role: undefined, // Role information not available from playerlist
+            state: [],
           };
 
           joined.push(newPlayer);

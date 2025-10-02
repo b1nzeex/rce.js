@@ -23,11 +23,16 @@ export interface IServerOptions {
         interval?: number;
         maxAttempts?: number;
     };
+    serverInfoFetching?: {
+        enabled?: boolean;
+        interval?: number;
+    };
 }
 interface IServerIntervals {
     playerRefreshing: NodeJS.Timeout;
     frequencyRefreshing: NodeJS.Timeout;
     gibRefreshing: NodeJS.Timeout;
+    infoRefreshing?: NodeJS.Timeout;
 }
 export interface IServer {
     identifier: string;
@@ -39,6 +44,7 @@ export interface IServer {
     players: IPlayer[];
     frequencies: number[];
     teams: ITeam[];
+    info?: IRustServerInformation;
 }
 export interface IRustServerInformation {
     Hostname: string;
@@ -230,6 +236,7 @@ export interface IPlayer {
     team?: ITeam | null;
     platform?: GamePlatform;
     role?: GameRole;
+    state: any[];
 }
 export interface ITeam {
     id: number;
