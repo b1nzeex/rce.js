@@ -53,6 +53,8 @@ export interface IServer {
   frequencies: number[];
   teams: ITeam[];
   info?: IRustServerInformation;
+  getOnlinePlayers(): IPlayer[];
+  getOfflinePlayers(): IPlayer[];
 }
 
 export interface IRustServerInformation {
@@ -292,6 +294,8 @@ export interface IPlayer {
   platform?: GamePlatform;
   role?: GameRole;
   state: any[];
+  isOnline: boolean;
+  lastSeen?: Date;
 }
 
 export interface ITeam {
