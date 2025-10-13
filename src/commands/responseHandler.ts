@@ -20,7 +20,9 @@ export default class ResponseHandler {
     if (vendingMachineNameMatch) {
       const player = manager.getOrCreatePlayer(
         server.identifier,
-        vendingMachineNameMatch[1]
+        vendingMachineNameMatch[1],
+        undefined,
+        false // markAsOnline: false - owner might be offline
       );
       manager.emit(RCEEvent.VendingMachineName, {
         server,
@@ -35,7 +37,9 @@ export default class ResponseHandler {
     if (quickChatMatch) {
       const player = manager.getOrCreatePlayer(
         server.identifier,
-        quickChatMatch[3]
+        quickChatMatch[3],
+        undefined,
+        true // markAsOnline: true - player must be online to chat
       );
       manager.emit(RCEEvent.QuickChat, {
         server,
@@ -48,7 +52,7 @@ export default class ResponseHandler {
     // Event: Player Suicide
     if (message.includes("was suicide by Suicide")) {
       const ign = message.split(" was suicide by Suicide")[0];
-      const player = manager.getOrCreatePlayer(server.identifier, ign);
+      const player = manager.getOrCreatePlayer(server.identifier, ign, undefined, true); // markAsOnline: true - player must be online to suicide
 
       manager.emit(RCEEvent.PlayerSuicide, {
         server,
@@ -66,7 +70,7 @@ export default class ResponseHandler {
       // Create or get player and update platform
       const player = manager.getOrCreatePlayer(server.identifier, ign, {
         platform,
-      });
+      }, true); // markAsOnline: true - player is actively respawning
 
       manager.emit(RCEEvent.PlayerRespawned, {
         server,
@@ -106,11 +110,15 @@ export default class ResponseHandler {
       if (playerRoleAddMatch) {
         const admin = manager.getOrCreatePlayer(
           server.identifier,
-          playerRoleAddMatch[1]
+          playerRoleAddMatch[1],
+          undefined,
+          false // markAsOnline: false - admin might be offline
         );
         const player = manager.getOrCreatePlayer(
           server.identifier,
-          playerRoleAddMatch[2]
+          playerRoleAddMatch[2],
+          undefined,
+          false // markAsOnline: false - player might be offline
         );
 
         manager.emit(RCEEvent.PlayerRoleAdd, {
@@ -125,11 +133,15 @@ export default class ResponseHandler {
       if (playerBannedMatch) {
         const admin = manager.getOrCreatePlayer(
           server.identifier,
-          playerBannedMatch[1]
+          playerBannedMatch[1],
+          undefined,
+          false // markAsOnline: false - admin might be offline
         );
         const player = manager.getOrCreatePlayer(
           server.identifier,
-          playerBannedMatch[2]
+          playerBannedMatch[2],
+          undefined,
+          false // markAsOnline: false - player might be offline
         );
 
         manager.emit(RCEEvent.PlayerBanned, {
@@ -148,11 +160,15 @@ export default class ResponseHandler {
       if (playerRoleRemoveMatch) {
         const admin = manager.getOrCreatePlayer(
           server.identifier,
-          playerRoleRemoveMatch[1]
+          playerRoleRemoveMatch[1],
+          undefined,
+          false // markAsOnline: false - admin might be offline
         );
         const player = manager.getOrCreatePlayer(
           server.identifier,
-          playerRoleRemoveMatch[2]
+          playerRoleRemoveMatch[2],
+          undefined,
+          false // markAsOnline: false - player might be offline
         );
 
         manager.emit(RCEEvent.PlayerRoleRemove, {
@@ -169,11 +185,15 @@ export default class ResponseHandler {
       if (playerUnbannedMatch) {
         const admin = manager.getOrCreatePlayer(
           server.identifier,
-          playerUnbannedMatch[1]
+          playerUnbannedMatch[1],
+          undefined,
+          false // markAsOnline: false - admin might be offline
         );
         const player = manager.getOrCreatePlayer(
           server.identifier,
-          playerUnbannedMatch[2]
+          playerUnbannedMatch[2],
+          undefined,
+          false // markAsOnline: false - player might be offline
         );
 
         manager.emit(RCEEvent.PlayerUnbanned, {
@@ -189,7 +209,9 @@ export default class ResponseHandler {
     if (itemSpawnMatch) {
       const player = manager.getOrCreatePlayer(
         server.identifier,
-        itemSpawnMatch[1]
+        itemSpawnMatch[1],
+        undefined,
+        true // markAsOnline: true - player must be online to spawn items
       );
       manager.emit(RCEEvent.ItemSpawn, {
         server,
@@ -208,7 +230,9 @@ export default class ResponseHandler {
       if (newContent.length > 0 && newContent !== oldContent) {
         const player = manager.getOrCreatePlayer(
           server.identifier,
-          noteEditMatch[1]
+          noteEditMatch[1],
+          undefined,
+          true // markAsOnline: true - player must be online to edit notes
         );
         manager.emit(RCEEvent.NoteEdit, {
           server,
@@ -237,14 +261,14 @@ export default class ResponseHandler {
 
         leaderPlayer = manager.getOrCreatePlayer(server.identifier, owner, {
           team,
-        });
+        }, true); // markAsOnline: true - player must be online to create team
         team.leader = leaderPlayer;
         team.members = [leaderPlayer];
 
         serverData.teams.push(team);
         manager.updateServer(serverData);
       } else {
-        leaderPlayer = manager.getOrCreatePlayer(server.identifier, owner);
+        leaderPlayer = manager.getOrCreatePlayer(server.identifier, owner, undefined, true); // markAsOnline: true
       }
 
       manager.emit(RCEEvent.TeamCreated, {
@@ -272,15 +296,15 @@ export default class ResponseHandler {
         if (team && !team.members.some((member) => member.ign === ign)) {
           joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign, {
             team,
-          });
+          }, false); // markAsOnline: false - player might be offline when joining
 
           team.members.push(joiningPlayer);
           manager.updateServer(serverData);
         } else {
-          joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign);
+          joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign, undefined, false); // markAsOnline: false
         }
       } else {
-        joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign);
+        joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign, undefined, false); // markAsOnline: false
       }
 
       const team = serverData?.teams.find((t) => t.id === teamId);
@@ -307,7 +331,7 @@ export default class ResponseHandler {
         const team = serverData.teams.find((t) => t.id === teamId);
         if (team) {
           team.members = team.members.filter((member) => member.ign !== ign);
-          manager.getOrCreatePlayer(server.identifier, ign, { team: null });
+          manager.getOrCreatePlayer(server.identifier, ign, { team: null }, false); // markAsOnline: false
 
           // If team is empty, remove it
           if (team.members.length === 0) {
@@ -320,7 +344,7 @@ export default class ResponseHandler {
 
       const leavingPlayer = manager.getOrCreatePlayer(server.identifier, ign, {
         team: null,
-      });
+      }, false); // markAsOnline: false
 
       const team = serverData?.teams.find((t) => t.id === teamId);
       manager.emit(RCEEvent.TeamLeave, {
@@ -340,7 +364,9 @@ export default class ResponseHandler {
       const teamId = parseInt(teamInviteMatch[3]);
       const player = manager.getOrCreatePlayer(
         server.identifier,
-        teamInviteMatch[2]
+        teamInviteMatch[2],
+        undefined,
+        false // markAsOnline: false - invited player might be offline
       );
 
       const serverData = manager.getServer(server.identifier);
@@ -365,7 +391,9 @@ export default class ResponseHandler {
       const teamId = parseInt(teamInviteMatch[3]);
       const player = manager.getOrCreatePlayer(
         server.identifier,
-        teamInviteCancelMatch[1]
+        teamInviteCancelMatch[1],
+        undefined,
+        false // markAsOnline: false - owner might be offline
       );
 
       const serverData = manager.getServer(server.identifier);
@@ -397,18 +425,22 @@ export default class ResponseHandler {
           // Update the team's leader
           team.leader = manager.getOrCreatePlayer(server.identifier, newOwner, {
             team,
-          });
+          }, false); // markAsOnline: false - player might be offline
           manager.updateServer(serverData);
         }
       }
 
       const oldOwnerPlayer = manager.getOrCreatePlayer(
         server.identifier,
-        oldOwner
+        oldOwner,
+        undefined,
+        false // markAsOnline: false
       );
       const newOwnerPlayer = manager.getOrCreatePlayer(
         server.identifier,
-        newOwner
+        newOwner,
+        undefined,
+        false // markAsOnline: false
       );
 
       const team = serverData?.teams.find((t) => t.id === teamId);
@@ -429,7 +461,9 @@ export default class ResponseHandler {
     if (kitSpawnMatch) {
       const player = manager.getOrCreatePlayer(
         server.identifier,
-        kitSpawnMatch[1]
+        kitSpawnMatch[1],
+        undefined,
+        true // markAsOnline: true - player must be online to spawn kit
       );
 
       manager.emit(RCEEvent.KitSpawn, {
@@ -445,11 +479,15 @@ export default class ResponseHandler {
     if (kitGiveMatch) {
       const player = manager.getOrCreatePlayer(
         server.identifier,
-        kitGiveMatch[2]
+        kitGiveMatch[2],
+        undefined,
+        true // markAsOnline: true - player must be online to receive kit
       );
       const admin = manager.getOrCreatePlayer(
         server.identifier,
-        kitGiveMatch[1]
+        kitGiveMatch[1],
+        undefined,
+        false // markAsOnline: false - admin might be offline
       );
 
       manager.emit(RCEEvent.KitSpawn, {
@@ -485,14 +523,18 @@ export default class ResponseHandler {
       if (victimData.type === PlayerKillType.Player) {
         victimData.player = manager.getOrCreatePlayer(
           server.identifier,
-          victimData.name
+          victimData.name,
+          undefined,
+          true // markAsOnline: true - player must be online to be killed
         );
       }
 
       if (killerData.type === PlayerKillType.Player) {
         killerData.player = manager.getOrCreatePlayer(
           server.identifier,
-          killerData.name
+          killerData.name,
+          undefined,
+          true // markAsOnline: true - player must be online to kill
         );
       }
 
