@@ -44,7 +44,7 @@ export interface IServer {
   flags: string[];
   intervals: IServerIntervals;
   state: any[];
-  players: Player[];
+  players: Player[]; // All players with isOnline flag
   frequencies: number[];
   teams: Team[];
 }
@@ -284,6 +284,8 @@ export interface Player {
   health: number;
   team?: Team | null;
   platform?: GamePlatform;
+  isOnline: boolean;
+  lastSeen?: Date;
 }
 
 export interface Team {

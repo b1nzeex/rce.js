@@ -466,27 +466,46 @@ export default class RCEManager extends EventEmitter {
    * @param playerData Optional data to set on the player
    * @returns Player object (existing or newly created placeholder)
    */
-  public getOrCreatePlayer(identifier: string, playerName: string, playerData?: Partial<Player>): Player {
+  public getOrCreatePlayer(identifier: string, playerName: string, playerData?: Partial<Player>, markAsOnline: boolean = false): Player {
     const server = this.getServer(identifier);
     if (!server) {
       throw new Error(`Server with identifier "${identifier}" not found`);
     }
 
+    // First check if player exists in players list
     let player = server.players.find(p => p.ign === playerName);
     let isNewPlayer = false;
+    let wasOffline = false;
     
     if (!player) {
-      // Create placeholder player
+      // Create new player
       player = {
         ign: playerName,
         ping: 0,
         timeConnected: 0,
         health: 0,
         team: null,
-        platform: undefined
+        platform: undefined,
+        isOnline: markAsOnline,
+        lastSeen: new Date()
       };
       server.players.push(player);
       isNewPlayer = true;
+    } else {
+      // Player exists, check if they were offline
+      wasOffline = !player.isOnline;
+      if (markAsOnline) {
+        player.isOnline = true;
+        player.lastSeen = new Date();
+      }
+    }
+    
+    // Emit join event if player is newly created or was offline and now online
+    if (markAsOnline && (isNewPlayer || wasOffline)) {
+      this.emit(RCEEvent.PlayerJoined, {
+        server,
+        player,
+      });
     }
 
     // Apply any provided data
@@ -562,7 +581,32 @@ export default class RCEManager extends EventEmitter {
     return player?.team || undefined;
   }
 
+  /**
+   * Gets all online players for a server
+   * @param identifier Server identifier
+   * @returns Array of online players
+   */
+  public getOnlinePlayers(identifier: string): Player[] {
+    const server = this.getServer(identifier);
+    if (!server) return [];
+
+    return server.players.filter(p => p.isOnline);
+  }
+
+  /**
+   * Gets all offline players for a server
+   * @param identifier Server identifier
+   * @returns Array of offline players
+   */
+  public getOfflinePlayers(identifier: string): Player[] {
+    const server = this.getServer(identifier);
+    if (!server) return [];
+
+    return server.players.filter(p => !p.isOnline);
+  }
+
   private async updatePlayers(identifier: string): Promise<void> {
+    this.logger.debug(`[${identifier}] updatePlayers called`);
     const server = this.getServer(identifier);
     if (!server) {
       this.emit(RCEEvent.Error, {
@@ -578,11 +622,14 @@ export default class RCEManager extends EventEmitter {
       
       // Update existing players with new data, preserve team and platform references
       const existingPlayers = server.players;
-      const existingPlayerNames = new Set(existingPlayers.map(p => p.ign));
+      const existingOnlinePlayerNames = new Set(existingPlayers.filter(p => p.isOnline).map(p => p.ign));
       const newPlayerNames = new Set(parsedPlayers.map((p: any) => p.DisplayName));
       
+      this.logger.debug(`[${identifier}] updatePlayers - Existing online players: [${Array.from(existingOnlinePlayerNames).join(', ')}]`);
+      this.logger.debug(`[${identifier}] updatePlayers - New players: [${Array.from(newPlayerNames).join(', ')}]`);
+      
       const joined: Player[] = [];
-      const left = existingPlayers.filter(player => !newPlayerNames.has(player.ign));
+      const left = existingPlayers.filter(player => player.isOnline && !newPlayerNames.has(player.ign));
 
       // Update existing players and identify new ones
       parsedPlayers.forEach((playerData: any) => {
@@ -594,6 +641,8 @@ export default class RCEManager extends EventEmitter {
           existingPlayer.ping = playerData.Ping;
           existingPlayer.timeConnected = playerData.ConnectedSeconds;
           existingPlayer.health = Math.round(playerData.Health);
+          existingPlayer.isOnline = true;
+          existingPlayer.lastSeen = new Date();
           // team and platform are preserved from existing player
         } else {
           // Create new player with default values
@@ -604,22 +653,24 @@ export default class RCEManager extends EventEmitter {
             health: Math.round(playerData.Health),
             team: null, // Will be set by team events or connection
             platform: undefined, // Will be set from respawn events
+            isOnline: true,
+            lastSeen: new Date(),
           };
           joined.push(newPlayer);
           existingPlayers.push(newPlayer);
         }
       });
 
-      // Remove players that are no longer connected
+      // Mark players as offline who are no longer connected
       left.forEach(player => {
-        const index = existingPlayers.indexOf(player);
-        if (index > -1) {
-          existingPlayers.splice(index, 1);
-        }
+        player.isOnline = false;
+        player.lastSeen = new Date();
       });
 
       // Emit events for joined players
+      this.logger.debug(`[${identifier}] updatePlayers - Found ${joined.length} joined players: [${joined.map(p => p.ign).join(', ')}]`);
       joined.forEach(player => {
+        this.logger.info(`[${identifier}] ${player.ign} connected`);
         this.emit(RCEEvent.PlayerJoined, {
           server,
           player,
