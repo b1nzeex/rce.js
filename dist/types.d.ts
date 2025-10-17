@@ -45,8 +45,6 @@ export interface IServer {
     frequencies: number[];
     teams: ITeam[];
     info?: IRustServerInformation;
-    getOnlinePlayers(): IPlayer[];
-    getOfflinePlayers(): IPlayer[];
 }
 export interface IRustServerInformation {
     Hostname: string;

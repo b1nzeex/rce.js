@@ -124,12 +124,6 @@ class RCEManager extends events_1.EventEmitter {
             frequencies: [],
             teams: [],
             info: undefined,
-            getOnlinePlayers() {
-                return this.players.filter(p => p.isOnline);
-            },
-            getOfflinePlayers() {
-                return this.players.filter(p => !p.isOnline);
-            },
         };
         this.servers.set(options.identifier, server);
     }
@@ -547,7 +541,7 @@ class RCEManager extends events_1.EventEmitter {
             const parsedPlayers = JSON.parse(rawPlayerList);
             // Update existing players with new data, preserve team and platform references
             const existingPlayers = server.players;
-            const existingOnlinePlayerNames = new Set(existingPlayers.filter(p => p.isOnline).map(p => p.ign));
+            const existingOnlinePlayerNames = new Set(existingPlayers.filter((p) => p.isOnline).map((p) => p.ign));
             const newPlayerNames = new Set(parsedPlayers.map((p) => p.DisplayName));
             const joined = [];
             const left = existingPlayers.filter((player) => player.isOnline && !newPlayerNames.has(player.ign));
