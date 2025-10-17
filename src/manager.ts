@@ -155,12 +155,6 @@ export default class RCEManager extends EventEmitter {
       frequencies: [],
       teams: [],
       info: undefined,
-      getOnlinePlayers(): IPlayer[] {
-        return this.players.filter(p => p.isOnline);
-      },
-      getOfflinePlayers(): IPlayer[] {
-        return this.players.filter(p => !p.isOnline);
-      },
     };
 
     this.servers.set(options.identifier, server);
@@ -666,7 +660,6 @@ export default class RCEManager extends EventEmitter {
     return player?.team || undefined;
   }
 
-
   private async updatePlayers(identifier: string): Promise<void> {
     const server = this.getServer(identifier);
     if (!server) {
@@ -684,7 +677,7 @@ export default class RCEManager extends EventEmitter {
       // Update existing players with new data, preserve team and platform references
       const existingPlayers = server.players;
       const existingOnlinePlayerNames = new Set(
-        existingPlayers.filter(p => p.isOnline).map(p => p.ign)
+        existingPlayers.filter((p) => p.isOnline).map((p) => p.ign)
       );
       const newPlayerNames = new Set(
         parsedPlayers.map((p: any) => p.DisplayName)

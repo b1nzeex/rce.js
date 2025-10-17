@@ -45,7 +45,7 @@ interface IServerIntervals {
 export interface IServer {
   identifier: string;
   socket: WebSocket;
-  socketManager?: SocketManager; // Reference to SocketManager for proper cleanup
+  socketManager?: SocketManager;
   flags: string[];
   intervals: IServerIntervals;
   state: any[];
@@ -53,8 +53,6 @@ export interface IServer {
   frequencies: number[];
   teams: ITeam[];
   info?: IRustServerInformation;
-  getOnlinePlayers(): IPlayer[];
-  getOfflinePlayers(): IPlayer[];
 }
 
 export interface IRustServerInformation {
