@@ -46,6 +46,11 @@ export default class RCEManager extends EventEmitter {
      */
     getServer(identifier: string): IServer | null;
     /**
+     * Retrieves all server instances managed by the RCEManager.
+     * @returns IServer[]
+     */
+    getServers(): IServer[];
+    /**
      *
      * @param identifier Unique identifier for the server to fetch information from.
      * Fetches server information using the RCON command "serverinfo".
