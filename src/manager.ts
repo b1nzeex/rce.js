@@ -221,6 +221,14 @@ export default class RCEManager extends EventEmitter {
   }
 
   /**
+   * Retrieves all server instances managed by the RCEManager.
+   * @returns IServer[]
+   */
+  public getServers(): IServer[] {
+    return Array.from(this.servers.values());
+  }
+
+  /**
    *
    * @param identifier Unique identifier for the server to fetch information from.
    * Fetches server information using the RCON command "serverinfo".
