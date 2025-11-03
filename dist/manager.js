@@ -354,7 +354,6 @@ class RCEManager extends events_1.EventEmitter {
                 }
             }
         }
-        console.log(zones);
         return zones;
     }
     /*
