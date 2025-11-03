@@ -58,22 +58,28 @@ class RCEManager extends events_1.EventEmitter {
             }
         });
         this.on(types_1.RCEEvent.Ready, (payload) => {
-            this.updatePlayers(payload.server.identifier);
-            this.updateBroadcasters(payload.server.identifier);
-            this.fetchGibs(payload.server.identifier);
-            this.fetchKits(payload.server.identifier);
-            this.fetchCustomZones(payload.server.identifier);
+            const server = payload.server;
+            if (!server) {
+                this.logger.warn("[Unknown] Received Ready event with no server data.");
+                return;
+            }
+            const id = server.identifier;
+            this.updatePlayers(id);
+            this.updateBroadcasters(id);
+            this.fetchGibs(id);
+            this.fetchKits(id);
+            this.fetchCustomZones(id);
             // Fetch team information on ready
-            this.fetchTeamInfo(payload.server.identifier).catch((error) => {
-                this.logger.debug(`[${payload.server.identifier}] Failed to fetch team info: ${error.message}`);
+            this.fetchTeamInfo(id).catch((error) => {
+                this.logger.debug(`[${id}] Failed to fetch team info: ${error.message}`);
             });
-            this.fetchRoleInfo(payload.server.identifier).catch((error) => {
-                this.logger.debug(`[${payload.server.identifier}] Failed to fetch role info: ${error.message}`);
+            this.fetchRoleInfo(id).catch((error) => {
+                this.logger.debug(`[${id}] Failed to fetch role info: ${error.message}`);
             });
-            this.fetchInfo(payload.server.identifier).catch((error) => {
-                this.logger.debug(`[${payload.server.identifier}] Failed to fetch server info: ${error.message}`);
+            this.fetchInfo(id).catch((error) => {
+                this.logger.debug(`[${id}] Failed to fetch server info: ${error.message}`);
             });
-            this.logger.info(`[${payload.server.identifier}] Server Successfully Added!`);
+            this.logger.info(`[${id}] Server Successfully Added!`);
         });
     }
     /**
@@ -86,41 +92,24 @@ class RCEManager extends events_1.EventEmitter {
      * @param options.rcon.password RCON password for the server.
      * @param options.rcon.host RCON host for the server.
      * Creates a new server instance and adds it to the manager.
-     * @returns void
+     * @returns Promise<boolean> Whether the server was added successfully.
      */
-    addServer(options) {
+    async addServer(options) {
         this.logger.debug(`[${options.identifier}] Attempting To Add Server...`);
         if (this.servers.has(options.identifier)) {
             this.emit(types_1.RCEEvent.Error, {
                 error: `Server With Identifier "${options.identifier}" Already Exists!`,
             });
-            return;
+            return false;
         }
-        const socketManager = new socketManager_1.default(this, options);
-        const socket = socketManager.getSocket();
+        // 1. Create SocketManager but don't connect yet
+        const socketManager = new socketManager_1.default(this);
         const server = {
             identifier: options.identifier,
-            socket,
+            socket: null,
             socketManager,
             flags: [],
-            intervals: {
-                playerRefreshing: setInterval(() => {
-                    this.updatePlayers(options.identifier);
-                }, 60_000),
-                frequencyRefreshing: setInterval(() => {
-                    this.updateBroadcasters(options.identifier);
-                }, 60_000),
-                gibRefreshing: setInterval(() => {
-                    this.fetchGibs(options.identifier);
-                }, 60_000),
-                infoRefreshing: options.serverInfoFetching?.enabled
-                    ? setInterval(() => {
-                        this.fetchInfo(options.identifier).catch((error) => {
-                            this.logger.debug(`[${options.identifier}] Failed to fetch server info: ${error.message}`);
-                        });
-                    }, options.serverInfoFetching?.interval || 60_000)
-                    : undefined,
-            },
+            intervals: {},
             state: options.state || [],
             players: [],
             kits: [],
@@ -128,7 +117,26 @@ class RCEManager extends events_1.EventEmitter {
             teams: [],
             info: undefined,
         };
+        // 2. Register server before connecting
         this.servers.set(options.identifier, server);
+        // 3. Now connect
+        const connected = await socketManager.connect(options);
+        if (!connected) {
+            this.logger.warn(`[${options.identifier}] Failed to connect to WebSocket.`);
+            this.servers.delete(options.identifier);
+            return false;
+        }
+        server.intervals = {
+            playerRefreshing: setInterval(() => this.updatePlayers(options.identifier), 60_000),
+            frequencyRefreshing: setInterval(() => this.updateBroadcasters(options.identifier), 60_000),
+            gibRefreshing: setInterval(() => this.fetchGibs(options.identifier), 60_000),
+            infoRefreshing: options.serverInfoFetching?.enabled
+                ? setInterval(() => {
+                    this.fetchInfo(options.identifier);
+                }, options.serverInfoFetching?.interval || 60_000)
+                : undefined,
+        };
+        return true;
     }
     /**
      *
@@ -646,7 +654,6 @@ class RCEManager extends events_1.EventEmitter {
             const parsedPlayers = JSON.parse(rawPlayerList);
             // Update existing players with new data, preserve team and platform references
             const existingPlayers = server.players;
-            const existingOnlinePlayerNames = new Set(existingPlayers.filter((p) => p.isOnline).map((p) => p.ign));
             const newPlayerNames = new Set(parsedPlayers.map((p) => p.DisplayName));
             const joined = [];
             const left = existingPlayers.filter((player) => player.isOnline && !newPlayerNames.has(player.ign));

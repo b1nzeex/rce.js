@@ -7,8 +7,9 @@ export default class SocketManager {
     private connectionAttempts;
     private _reconnectionTimer;
     private _isDestroyed;
-    constructor(manager: RCEManager, options: IServerOptions);
-    connect(opts: IServerOptions): void;
+    private _hasEverConnected;
+    constructor(manager: RCEManager);
+    connect(opts: IServerOptions): Promise<boolean>;
     private attemptReconnection;
     destroy(): void;
     getSocket(): WebSocket | null;

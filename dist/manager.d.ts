@@ -20,9 +20,9 @@ export default class RCEManager extends EventEmitter {
      * @param options.rcon.password RCON password for the server.
      * @param options.rcon.host RCON host for the server.
      * Creates a new server instance and adds it to the manager.
-     * @returns void
+     * @returns Promise<boolean> Whether the server was added successfully.
      */
-    addServer(options: IServerOptions): void;
+    addServer(options: IServerOptions): Promise<boolean>;
     /**
      *
      * @param server The server object to update.
