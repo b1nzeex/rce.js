@@ -74,6 +74,8 @@ export default class RCEManager extends EventEmitter {
     on<K extends keyof IEvent>(event: K, listener: (payload: IEvent[K]) => void): this;
     once<K extends keyof IEvent>(event: K, listener: (payload: IEvent[K]) => void): this;
     off<K extends keyof IEvent>(event: K, listener: (payload: IEvent[K]) => void): this;
+    private fetchCustomZones;
+    private fetchKits;
     private updateBroadcasters;
     private fetchGibs;
     /**

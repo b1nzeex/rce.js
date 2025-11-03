@@ -52,6 +52,7 @@ export interface IServer {
   players: IPlayer[];
   frequencies: number[];
   teams: ITeam[];
+  kits: IServerKit[];
   info?: IRustServerInformation;
 }
 
@@ -383,4 +384,41 @@ export enum LogLevel {
   Warn = 2,
   Info = 3,
   Debug = 4,
+}
+
+/*
+  4.6.0 - Kit & Zone Caching
+*/
+interface IServerKitItem {
+  shortName: string;
+  quantity: number;
+  condition: number;
+  container: "Main" | "Belt" | "Wear";
+}
+
+export interface IServerKit {
+  name: string;
+  items: IServerKitItem[];
+}
+
+interface IServerZoneConfig {
+  position: [number, number, number];
+  size: number;
+  type: "Sphere" | "Box";
+  playerDamage: boolean;
+  npcDamage: boolean;
+  radiationDamage: number;
+  playerBuildingDamage: boolean;
+  allowBuilding: boolean;
+  showArea: boolean;
+  color: [number, number, number];
+  showChatMessage: boolean;
+  enterMessage: string;
+  leaveMessage: string;
+}
+
+export interface IServerZone {
+  name: string;
+  enabled: boolean;
+  config: IServerZoneConfig;
 }

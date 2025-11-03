@@ -61,6 +61,8 @@ class RCEManager extends events_1.EventEmitter {
             this.updatePlayers(payload.server.identifier);
             this.updateBroadcasters(payload.server.identifier);
             this.fetchGibs(payload.server.identifier);
+            this.fetchKits(payload.server.identifier);
+            this.fetchCustomZones(payload.server.identifier);
             // Fetch team information on ready
             this.fetchTeamInfo(payload.server.identifier).catch((error) => {
                 this.logger.debug(`[${payload.server.identifier}] Failed to fetch team info: ${error.message}`);
@@ -121,6 +123,7 @@ class RCEManager extends events_1.EventEmitter {
             },
             state: options.state || [],
             players: [],
+            kits: [],
             frequencies: [],
             teams: [],
             info: undefined,
@@ -299,6 +302,102 @@ class RCEManager extends events_1.EventEmitter {
     }
     off(event, listener) {
         return super.off(event, listener);
+    }
+    /*
+      Zone Caching
+    */
+    async fetchCustomZones(identifier) {
+        const server = this.getServer(identifier);
+        if (!server) {
+            this.emit(types_1.RCEEvent.Error, {
+                error: `Server With Identifier "${identifier}" Does Not Exist!`,
+            });
+            return;
+        }
+        const zoneList = await this.sendCommand(identifier, "zones.listcustomzones");
+        const zones = [];
+        if (zoneList) {
+            const zoneRegex = /Name\s*\[(.*?)\]\s*Enabled\s*\[(True|False)\]/gi;
+            let match;
+            while ((match = zoneRegex.exec(zoneList)) !== null) {
+                const zoneInfo = await this.sendCommand(identifier, `zones.customzoneinfo "${match[1]}"`);
+                if (zoneInfo) {
+                    const text = zoneInfo.replaceAll("\\n", "\n").trim();
+                    const parseVector = (str) => str
+                        .replace(/[()]/g, "")
+                        .split(",")
+                        .map((n) => parseFloat(n.trim()));
+                    const get = (key) => {
+                        const match = text.match(new RegExp(`${key}\\s*\\[(.*?)\\]`));
+                        return match ? match[1] : undefined;
+                    };
+                    const zone = {
+                        name: match[1],
+                        enabled: match[2].toLowerCase() === "true",
+                        config: {
+                            position: parseVector(get("Position") ?? "(0,0,0)"),
+                            size: parseFloat(get("Size") ?? "0"),
+                            type: get("Type") ?? "Sphere",
+                            playerDamage: get("Player Damage") === "True",
+                            npcDamage: get("NPC Damage") === "True",
+                            radiationDamage: parseFloat(get("Radiation Damage") ?? "0"),
+                            playerBuildingDamage: get("Player Building Damage") === "True",
+                            allowBuilding: get("Allow Building") === "True",
+                            showArea: get("Show Area") === "True",
+                            color: parseVector(get("Color") ?? "(255,255,255)"),
+                            showChatMessage: get("Show Chat Message") === "True",
+                            enterMessage: (get("Enter Message") ?? "").replace(/^"|"$/g, ""),
+                            leaveMessage: (get("Leave Message") ?? "").replace(/^"|"$/g, ""),
+                        },
+                    };
+                    zones.push(zone);
+                }
+            }
+        }
+        console.log(zones);
+        return zones;
+    }
+    /*
+      Kit Caching
+    */
+    async fetchKits(identifier) {
+        const server = this.getServer(identifier);
+        if (!server) {
+            this.emit(types_1.RCEEvent.Error, {
+                error: `Server With Identifier "${identifier}" Does Not Exist!`,
+            });
+            return;
+        }
+        const kitList = await this.sendCommand(identifier, "kit list");
+        if (kitList) {
+            const lines = kitList
+                .split("\n")
+                .map((line) => line.trim())
+                .filter((line) => line && !line.startsWith("[KITMANAGER]"));
+            const kits = lines.map((line) => ({
+                name: line,
+                items: [],
+            }));
+            for (const kit of kits) {
+                const kitInfo = await this.sendCommand(identifier, `kit info "${kit.name}"`);
+                if (kitInfo) {
+                    const cleaned = kitInfo.replaceAll("\\n", "\n");
+                    const itemRegex = /Shortname:\s*(\S+)\s+Amount:\s*\[(\d+)\]\s+Condition:\s*\[(\d+)\]\s+Container:\s*\[(Main|Belt|Wear)\]/g;
+                    let match;
+                    while ((match = itemRegex.exec(cleaned)) !== null) {
+                        kit.items.push({
+                            shortName: match[1],
+                            quantity: Number(match[2]),
+                            condition: Number(match[3]),
+                            container: match[4],
+                        });
+                    }
+                }
+            }
+            server.kits = kits;
+            this.updateServer(server);
+            return kits;
+        }
     }
     /*
       Scheduled Tasks
