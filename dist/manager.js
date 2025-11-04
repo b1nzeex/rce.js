@@ -246,8 +246,6 @@ class RCEManager extends events_1.EventEmitter {
             });
             return;
         }
-        console.log(`[${identifier}] Fetching Server Information...`);
-        console.log(server.intervals);
         const info = await this.sendCommand(identifier, "serverinfo");
         if (!info) {
             this.emit(types_1.RCEEvent.Error, {
