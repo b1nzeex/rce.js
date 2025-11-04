@@ -13,6 +13,7 @@ var RCEIntent;
     RCEIntent["Kits"] = "Kits";
     RCEIntent["CustomZones"] = "CustomZones";
     RCEIntent["Teams"] = "Teams";
+    RCEIntent["RoleInfo"] = "RoleInfo";
 })(RCEIntent || (exports.RCEIntent = RCEIntent = {}));
 var RCEEvent;
 (function (RCEEvent) {

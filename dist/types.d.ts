@@ -16,7 +16,8 @@ export declare enum RCEIntent {
     Gibs = "Gibs",
     Kits = "Kits",
     CustomZones = "CustomZones",
-    Teams = "Teams"
+    Teams = "Teams",
+    RoleInfo = "RoleInfo"
 }
 interface IServerRCON {
     host: string;
@@ -51,6 +52,10 @@ export interface IServer {
     socket: WebSocket;
     socketManager?: SocketManager;
     flags: string[];
+    intents: RCEIntent[];
+    intentTimers: {
+        [key in RCEIntent]?: number;
+    };
     intervals: IServerIntervals;
     state: any[];
     players?: IPlayer[];

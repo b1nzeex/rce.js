@@ -22,6 +22,7 @@ export enum RCEIntent {
   Kits = "Kits",
   CustomZones = "CustomZones",
   Teams = "Teams",
+  RoleInfo = "RoleInfo",
 }
 
 /*
@@ -63,6 +64,10 @@ export interface IServer {
   socket: WebSocket;
   socketManager?: SocketManager;
   flags: string[];
+  intents: RCEIntent[];
+  intentTimers: {
+    [key in RCEIntent]?: number;
+  };
   intervals: IServerIntervals;
   state: any[];
   players?: IPlayer[];

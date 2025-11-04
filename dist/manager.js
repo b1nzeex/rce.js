@@ -59,27 +59,62 @@ class RCEManager extends events_1.EventEmitter {
             }
         });
         this.on(types_1.RCEEvent.Ready, (payload) => {
+            console.log("Ready event received");
             const server = payload.server;
             if (!server) {
                 this.logger.warn("[Unknown] Received Ready event with no server data.");
                 return;
             }
             const id = server.identifier;
-            this.updatePlayers(id);
-            this.updateBroadcasters(id);
-            this.fetchGibs(id);
-            this.fetchKits(id);
-            this.fetchCustomZones(id);
-            // Fetch team information on ready
-            this.fetchTeamInfo(id).catch((error) => {
-                this.logger.debug(`[${id}] Failed to fetch team info: ${error.message}`);
-            });
-            this.fetchRoleInfo(id).catch((error) => {
-                this.logger.debug(`[${id}] Failed to fetch role info: ${error.message}`);
-            });
-            this.fetchInfo(id).catch((error) => {
-                this.logger.debug(`[${id}] Failed to fetch server info: ${error.message}`);
-            });
+            // Check intents and set up intervals accordingly
+            if (server.intents.includes(types_2.RCEIntent.ServerInfo)) {
+                this.fetchInfo(id);
+                const timer = server.intentTimers?.[types_2.RCEIntent.ServerInfo] || 60_000;
+                server.intervals.serverInfoInterval = setInterval(() => {
+                    this.fetchInfo(id);
+                }, timer);
+            }
+            if (server.intents.includes(types_2.RCEIntent.PlayerList)) {
+                this.updatePlayers(id);
+                const timer = server.intentTimers?.[types_2.RCEIntent.PlayerList] || 15_000;
+                server.intervals.playerListInterval = setInterval(() => {
+                    this.updatePlayers(id);
+                }, timer);
+            }
+            if (server.intents.includes(types_2.RCEIntent.Frequencies)) {
+                this.updateBroadcasters(id);
+                const timer = server.intentTimers?.[types_2.RCEIntent.Frequencies] || 30_000;
+                server.intervals.frequenciesInterval = setInterval(() => {
+                    this.updateBroadcasters(id);
+                }, timer);
+            }
+            if (server.intents.includes(types_2.RCEIntent.Gibs)) {
+                this.fetchGibs(id);
+                const timer = server.intentTimers?.[types_2.RCEIntent.Gibs] || 30_000;
+                server.intervals.gibsInterval = setInterval(() => {
+                    this.fetchGibs(id);
+                }, timer);
+            }
+            if (server.intents.includes(types_2.RCEIntent.Kits)) {
+                this.fetchKits(id);
+                const timer = server.intentTimers?.[types_2.RCEIntent.Kits] || 300_000;
+                server.intervals.kitsInterval = setInterval(() => {
+                    this.fetchKits(id);
+                }, timer);
+            }
+            if (server.intents.includes(types_2.RCEIntent.CustomZones)) {
+                this.fetchCustomZones(id);
+                const timer = server.intentTimers?.[types_2.RCEIntent.CustomZones] || 300_000;
+                server.intervals.customZonesInterval = setInterval(() => {
+                    this.fetchCustomZones(id);
+                }, timer);
+            }
+            if (server.intents.includes(types_2.RCEIntent.Teams)) {
+                this.fetchTeamInfo(id);
+            }
+            if (server.intents.includes(types_2.RCEIntent.RoleInfo)) {
+                this.fetchRoleInfo(id);
+            }
             this.logger.info(`[${id}] Server Successfully Added!`);
         });
     }
@@ -110,6 +145,8 @@ class RCEManager extends events_1.EventEmitter {
             socket: null,
             socketManager,
             flags: [],
+            intents: options.intents || [],
+            intentTimers: options.intentTimers || {},
             intervals: {},
             state: options.state || [],
             players: [],
@@ -126,50 +163,6 @@ class RCEManager extends events_1.EventEmitter {
             this.logger.warn(`[${options.identifier}] Failed to connect to WebSocket.`);
             this.servers.delete(options.identifier);
             return false;
-        }
-        // 4. Check intents and set up intervals accordingly
-        options.intents = options.intents || [];
-        if (options.intents.includes(types_2.RCEIntent.ServerInfo)) {
-            this.fetchInfo(options.identifier);
-            const timer = options.intentTimers?.[types_2.RCEIntent.ServerInfo] || 5_000;
-            server.intervals.serverInfoInterval = setInterval(() => {
-                this.fetchInfo(options.identifier);
-            }, timer);
-        }
-        if (options.intents.includes(types_2.RCEIntent.PlayerList)) {
-            this.updatePlayers(options.identifier);
-            const timer = options.intentTimers?.[types_2.RCEIntent.PlayerList] || 60_000;
-            server.intervals.playerListInterval = setInterval(() => {
-                this.updatePlayers(options.identifier);
-            }, timer);
-        }
-        if (options.intents.includes(types_2.RCEIntent.Frequencies)) {
-            this.updateBroadcasters(options.identifier);
-            const timer = options.intentTimers?.[types_2.RCEIntent.Frequencies] || 60_000;
-            server.intervals.frequenciesInterval = setInterval(() => {
-                this.updateBroadcasters(options.identifier);
-            }, timer);
-        }
-        if (options.intents.includes(types_2.RCEIntent.Gibs)) {
-            this.fetchGibs(options.identifier);
-            const timer = options.intentTimers?.[types_2.RCEIntent.Gibs] || 60_000;
-            server.intervals.gibsInterval = setInterval(() => {
-                this.fetchGibs(options.identifier);
-            }, timer);
-        }
-        if (options.intents.includes(types_2.RCEIntent.Kits)) {
-            this.fetchKits(options.identifier);
-            const timer = options.intentTimers?.[types_2.RCEIntent.Kits] || 600_000;
-            server.intervals.kitsInterval = setInterval(() => {
-                this.fetchKits(options.identifier);
-            }, timer);
-        }
-        if (options.intents.includes(types_2.RCEIntent.CustomZones)) {
-            this.fetchCustomZones(options.identifier);
-            const timer = options.intentTimers?.[types_2.RCEIntent.CustomZones] || 600_000;
-            server.intervals.customZonesInterval = setInterval(() => {
-                this.fetchCustomZones(options.identifier);
-            }, timer);
         }
         return true;
     }
@@ -246,8 +239,6 @@ class RCEManager extends events_1.EventEmitter {
             });
             return;
         }
-        console.log(`[${identifier}] Fetching Server Information...`);
-        console.log(server.intervals);
         const info = await this.sendCommand(identifier, "serverinfo");
         if (!info) {
             this.emit(types_1.RCEEvent.Error, {
