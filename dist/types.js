@@ -1,6 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LogLevel = exports.GameRole = exports.GamePlatform = exports.RCEEvent = void 0;
+exports.LogLevel = exports.GameRole = exports.GamePlatform = exports.RCEEvent = exports.RCEIntent = void 0;
+/*
+  Intents - v4.6.0
+*/
+var RCEIntent;
+(function (RCEIntent) {
+    RCEIntent["ServerInfo"] = "ServerInfo";
+    RCEIntent["PlayerList"] = "PlayerList";
+    RCEIntent["Frequencies"] = "Frequencies";
+    RCEIntent["Gibs"] = "Gibs";
+    RCEIntent["Kits"] = "Kits";
+    RCEIntent["CustomZones"] = "CustomZones";
+    RCEIntent["Teams"] = "Teams";
+})(RCEIntent || (exports.RCEIntent = RCEIntent = {}));
 var RCEEvent;
 (function (RCEEvent) {
     RCEEvent["Ready"] = "ready";

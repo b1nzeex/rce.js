@@ -12,6 +12,19 @@ export interface IOptions {
 }
 
 /*
+  Intents - v4.6.0
+*/
+export enum RCEIntent {
+  ServerInfo = "ServerInfo",
+  PlayerList = "PlayerList",
+  Frequencies = "Frequencies",
+  Gibs = "Gibs",
+  Kits = "Kits",
+  CustomZones = "CustomZones",
+  Teams = "Teams",
+}
+
+/*
   Servers
 */
 interface IServerRCON {
@@ -29,17 +42,20 @@ export interface IServerOptions {
     interval?: number; // in milliseconds, default 5000
     maxAttempts?: number; // -1 for infinite, default -1
   };
-  serverInfoFetching?: {
-    enabled?: boolean;
-    interval?: number; // in milliseconds, default 60000
+  intents: RCEIntent[];
+  intentTimers?: {
+    [key in RCEIntent]?: number; // in milliseconds
   };
 }
 
 interface IServerIntervals {
-  playerRefreshing: NodeJS.Timeout;
-  frequencyRefreshing: NodeJS.Timeout;
-  gibRefreshing: NodeJS.Timeout;
-  infoRefreshing?: NodeJS.Timeout;
+  serverInfoInterval?: NodeJS.Timeout;
+  playerListInterval?: NodeJS.Timeout;
+  frequenciesInterval?: NodeJS.Timeout;
+  gibsInterval?: NodeJS.Timeout;
+  kitsInterval?: NodeJS.Timeout;
+  customZonesInterval?: NodeJS.Timeout;
+  teamsInterval?: NodeJS.Timeout;
 }
 
 export interface IServer {
@@ -49,10 +65,10 @@ export interface IServer {
   flags: string[];
   intervals: IServerIntervals;
   state: any[];
-  players: IPlayer[];
-  frequencies: number[];
-  teams: ITeam[];
-  kits: IServerKit[];
+  players?: IPlayer[];
+  frequencies?: number[];
+  teams?: ITeam[];
+  kits?: IServerKit[];
   info?: IRustServerInformation;
 }
 

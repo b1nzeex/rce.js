@@ -9,6 +9,15 @@ export interface IOptions {
         file?: string;
     };
 }
+export declare enum RCEIntent {
+    ServerInfo = "ServerInfo",
+    PlayerList = "PlayerList",
+    Frequencies = "Frequencies",
+    Gibs = "Gibs",
+    Kits = "Kits",
+    CustomZones = "CustomZones",
+    Teams = "Teams"
+}
 interface IServerRCON {
     host: string;
     port: number;
@@ -23,16 +32,19 @@ export interface IServerOptions {
         interval?: number;
         maxAttempts?: number;
     };
-    serverInfoFetching?: {
-        enabled?: boolean;
-        interval?: number;
+    intents: RCEIntent[];
+    intentTimers?: {
+        [key in RCEIntent]?: number;
     };
 }
 interface IServerIntervals {
-    playerRefreshing: NodeJS.Timeout;
-    frequencyRefreshing: NodeJS.Timeout;
-    gibRefreshing: NodeJS.Timeout;
-    infoRefreshing?: NodeJS.Timeout;
+    serverInfoInterval?: NodeJS.Timeout;
+    playerListInterval?: NodeJS.Timeout;
+    frequenciesInterval?: NodeJS.Timeout;
+    gibsInterval?: NodeJS.Timeout;
+    kitsInterval?: NodeJS.Timeout;
+    customZonesInterval?: NodeJS.Timeout;
+    teamsInterval?: NodeJS.Timeout;
 }
 export interface IServer {
     identifier: string;
@@ -41,10 +53,10 @@ export interface IServer {
     flags: string[];
     intervals: IServerIntervals;
     state: any[];
-    players: IPlayer[];
-    frequencies: number[];
-    teams: ITeam[];
-    kits: IServerKit[];
+    players?: IPlayer[];
+    frequencies?: number[];
+    teams?: ITeam[];
+    kits?: IServerKit[];
     info?: IRustServerInformation;
 }
 export interface IRustServerInformation {

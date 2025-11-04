@@ -18,6 +18,7 @@ import CommandManager from "./commands/commandManager";
 import Logger from "./logger";
 import { parseTeamInfo } from "./data/teamInfo";
 import { parseRoleInfo } from "./data/roleInfo";
+import { RCEIntent } from "./types";
 
 export default class RCEManager extends EventEmitter {
   private servers: Map<string, IServer> = new Map();
@@ -160,25 +161,61 @@ export default class RCEManager extends EventEmitter {
       return false;
     }
 
-    server.intervals = {
-      playerRefreshing: setInterval(
-        () => this.updatePlayers(options.identifier),
-        60_000
-      ),
-      frequencyRefreshing: setInterval(
-        () => this.updateBroadcasters(options.identifier),
-        60_000
-      ),
-      gibRefreshing: setInterval(
-        () => this.fetchGibs(options.identifier),
-        60_000
-      ),
-      infoRefreshing: options.serverInfoFetching?.enabled
-        ? setInterval(() => {
-            this.fetchInfo(options.identifier);
-          }, options.serverInfoFetching?.interval || 60_000)
-        : undefined,
-    };
+    // 4. Check intents and set up intervals accordingly
+    options.intents = options.intents || [];
+    if (options.intents.includes(RCEIntent.ServerInfo)) {
+      this.fetchInfo(options.identifier);
+
+      const timer = options.intentTimers?.[RCEIntent.ServerInfo] || 5_000;
+      server.intervals.serverInfoInterval = setInterval(() => {
+        this.fetchInfo(options.identifier);
+      }, timer);
+    }
+
+    if (options.intents.includes(RCEIntent.PlayerList)) {
+      this.updatePlayers(options.identifier);
+
+      const timer = options.intentTimers?.[RCEIntent.PlayerList] || 60_000;
+      server.intervals.playerListInterval = setInterval(() => {
+        this.updatePlayers(options.identifier);
+      }, timer);
+    }
+
+    if (options.intents.includes(RCEIntent.Frequencies)) {
+      this.updateBroadcasters(options.identifier);
+
+      const timer = options.intentTimers?.[RCEIntent.Frequencies] || 60_000;
+      server.intervals.frequenciesInterval = setInterval(() => {
+        this.updateBroadcasters(options.identifier);
+      }, timer);
+    }
+
+    if (options.intents.includes(RCEIntent.Gibs)) {
+      this.fetchGibs(options.identifier);
+
+      const timer = options.intentTimers?.[RCEIntent.Gibs] || 60_000;
+      server.intervals.gibsInterval = setInterval(() => {
+        this.fetchGibs(options.identifier);
+      }, timer);
+    }
+
+    if (options.intents.includes(RCEIntent.Kits)) {
+      this.fetchKits(options.identifier);
+
+      const timer = options.intentTimers?.[RCEIntent.Kits] || 600_000;
+      server.intervals.kitsInterval = setInterval(() => {
+        this.fetchKits(options.identifier);
+      }, timer);
+    }
+
+    if (options.intents.includes(RCEIntent.CustomZones)) {
+      this.fetchCustomZones(options.identifier);
+
+      const timer = options.intentTimers?.[RCEIntent.CustomZones] || 600_000;
+      server.intervals.customZonesInterval = setInterval(() => {
+        this.fetchCustomZones(options.identifier);
+      }, timer);
+    }
 
     return true;
   }

@@ -10,6 +10,7 @@ const commandManager_1 = __importDefault(require("./commands/commandManager"));
 const logger_1 = __importDefault(require("./logger"));
 const teamInfo_1 = require("./data/teamInfo");
 const roleInfo_1 = require("./data/roleInfo");
+const types_2 = require("./types");
 class RCEManager extends events_1.EventEmitter {
     servers = new Map();
     logger;
@@ -126,16 +127,50 @@ class RCEManager extends events_1.EventEmitter {
             this.servers.delete(options.identifier);
             return false;
         }
-        server.intervals = {
-            playerRefreshing: setInterval(() => this.updatePlayers(options.identifier), 60_000),
-            frequencyRefreshing: setInterval(() => this.updateBroadcasters(options.identifier), 60_000),
-            gibRefreshing: setInterval(() => this.fetchGibs(options.identifier), 60_000),
-            infoRefreshing: options.serverInfoFetching?.enabled
-                ? setInterval(() => {
-                    this.fetchInfo(options.identifier);
-                }, options.serverInfoFetching?.interval || 60_000)
-                : undefined,
-        };
+        // 4. Check intents and set up intervals accordingly
+        options.intents = options.intents || [];
+        if (options.intents.includes(types_2.RCEIntent.ServerInfo)) {
+            this.fetchInfo(options.identifier);
+            const timer = options.intentTimers?.[types_2.RCEIntent.ServerInfo] || 5_000;
+            server.intervals.serverInfoInterval = setInterval(() => {
+                this.fetchInfo(options.identifier);
+            }, timer);
+        }
+        if (options.intents.includes(types_2.RCEIntent.PlayerList)) {
+            this.updatePlayers(options.identifier);
+            const timer = options.intentTimers?.[types_2.RCEIntent.PlayerList] || 60_000;
+            server.intervals.playerListInterval = setInterval(() => {
+                this.updatePlayers(options.identifier);
+            }, timer);
+        }
+        if (options.intents.includes(types_2.RCEIntent.Frequencies)) {
+            this.updateBroadcasters(options.identifier);
+            const timer = options.intentTimers?.[types_2.RCEIntent.Frequencies] || 60_000;
+            server.intervals.frequenciesInterval = setInterval(() => {
+                this.updateBroadcasters(options.identifier);
+            }, timer);
+        }
+        if (options.intents.includes(types_2.RCEIntent.Gibs)) {
+            this.fetchGibs(options.identifier);
+            const timer = options.intentTimers?.[types_2.RCEIntent.Gibs] || 60_000;
+            server.intervals.gibsInterval = setInterval(() => {
+                this.fetchGibs(options.identifier);
+            }, timer);
+        }
+        if (options.intents.includes(types_2.RCEIntent.Kits)) {
+            this.fetchKits(options.identifier);
+            const timer = options.intentTimers?.[types_2.RCEIntent.Kits] || 600_000;
+            server.intervals.kitsInterval = setInterval(() => {
+                this.fetchKits(options.identifier);
+            }, timer);
+        }
+        if (options.intents.includes(types_2.RCEIntent.CustomZones)) {
+            this.fetchCustomZones(options.identifier);
+            const timer = options.intentTimers?.[types_2.RCEIntent.CustomZones] || 600_000;
+            server.intervals.customZonesInterval = setInterval(() => {
+                this.fetchCustomZones(options.identifier);
+            }, timer);
+        }
         return true;
     }
     /**
@@ -211,6 +246,8 @@ class RCEManager extends events_1.EventEmitter {
             });
             return;
         }
+        console.log(`[${identifier}] Fetching Server Information...`);
+        console.log(server.intervals);
         const info = await this.sendCommand(identifier, "serverinfo");
         if (!info) {
             this.emit(types_1.RCEEvent.Error, {
