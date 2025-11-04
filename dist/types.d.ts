@@ -248,9 +248,9 @@ export declare enum RCEEvent {
 }
 export interface IPlayer {
     ign: string;
-    ping: number;
-    timeConnected: number;
-    health: number;
+    ping?: number;
+    timeConnected?: number;
+    health?: number;
     team?: ITeam | null;
     platform?: GamePlatform;
     role?: GameRole;

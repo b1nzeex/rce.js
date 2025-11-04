@@ -14,7 +14,7 @@ class ResponseHandler {
         // Event: Vending Machine Name
         const vendingMachineNameMatch = message.match(regularExpressions_1.RegularExpressions.VendingMachineName);
         if (vendingMachineNameMatch) {
-            const player = manager.getOrCreatePlayer(server.identifier, vendingMachineNameMatch[1], undefined, false);
+            const player = manager.upsertPlayer(server.identifier, vendingMachineNameMatch[1], undefined, false);
             manager.emit(types_1.RCEEvent.VendingMachineName, {
                 server,
                 player,
@@ -25,7 +25,7 @@ class ResponseHandler {
         // Event: Quick Chat
         const quickChatMatch = message.match(regularExpressions_1.RegularExpressions.QuickChat);
         if (quickChatMatch) {
-            const player = manager.getOrCreatePlayer(server.identifier, quickChatMatch[3], undefined, true);
+            const player = manager.upsertPlayer(server.identifier, quickChatMatch[3], undefined, true);
             manager.emit(types_1.RCEEvent.QuickChat, {
                 server,
                 type: quickChatMatch[2],
@@ -36,7 +36,7 @@ class ResponseHandler {
         // Event: Player Suicide
         if (message.includes("was suicide by Suicide")) {
             const ign = message.split(" was suicide by Suicide")[0];
-            const player = manager.getOrCreatePlayer(server.identifier, ign, undefined, true);
+            const player = manager.upsertPlayer(server.identifier, ign, undefined, true);
             manager.emit(types_1.RCEEvent.PlayerSuicide, {
                 server,
                 player,
@@ -49,7 +49,7 @@ class ResponseHandler {
                 ? types_1.GamePlatform.XBOX
                 : types_1.GamePlatform.Playstation;
             // Create or get player and update platform
-            const player = manager.getOrCreatePlayer(server.identifier, ign, {
+            const player = manager.upsertPlayer(server.identifier, ign, {
                 platform,
             }, true);
             manager.emit(types_1.RCEEvent.PlayerRespawned, {
@@ -78,8 +78,8 @@ class ResponseHandler {
         if (message.includes("Added")) {
             const playerRoleAddMatch = message.match(regularExpressions_1.RegularExpressions.PlayerRoleAdd);
             if (playerRoleAddMatch) {
-                const admin = manager.getOrCreatePlayer(server.identifier, playerRoleAddMatch[1], undefined, false);
-                const player = manager.getOrCreatePlayer(server.identifier, playerRoleAddMatch[2], undefined, false);
+                const admin = manager.upsertPlayer(server.identifier, playerRoleAddMatch[1], undefined, false);
+                const player = manager.upsertPlayer(server.identifier, playerRoleAddMatch[2], undefined, false);
                 manager.emit(types_1.RCEEvent.PlayerRoleAdd, {
                     server,
                     admin: playerRoleAddMatch[1] === "SERVER" ? undefined : admin,
@@ -89,8 +89,8 @@ class ResponseHandler {
             }
             const playerBannedMatch = message.match(regularExpressions_1.RegularExpressions.PlayerBanned);
             if (playerBannedMatch) {
-                const admin = manager.getOrCreatePlayer(server.identifier, playerBannedMatch[1], undefined, false);
-                const player = manager.getOrCreatePlayer(server.identifier, playerBannedMatch[2], undefined, false);
+                const admin = manager.upsertPlayer(server.identifier, playerBannedMatch[1], undefined, false);
+                const player = manager.upsertPlayer(server.identifier, playerBannedMatch[2], undefined, false);
                 manager.emit(types_1.RCEEvent.PlayerBanned, {
                     server,
                     admin: playerBannedMatch[1] === "SERVER" ? undefined : admin,
@@ -102,8 +102,8 @@ class ResponseHandler {
         if (message.includes("Removed")) {
             const playerRoleRemoveMatch = message.match(regularExpressions_1.RegularExpressions.PlayerRoleRemove);
             if (playerRoleRemoveMatch) {
-                const admin = manager.getOrCreatePlayer(server.identifier, playerRoleRemoveMatch[1], undefined, false);
-                const player = manager.getOrCreatePlayer(server.identifier, playerRoleRemoveMatch[2], undefined, false);
+                const admin = manager.upsertPlayer(server.identifier, playerRoleRemoveMatch[1], undefined, false);
+                const player = manager.upsertPlayer(server.identifier, playerRoleRemoveMatch[2], undefined, false);
                 manager.emit(types_1.RCEEvent.PlayerRoleRemove, {
                     server,
                     admin: playerRoleRemoveMatch[1] === "SERVER" ? undefined : admin,
@@ -113,8 +113,8 @@ class ResponseHandler {
             }
             const playerUnbannedMatch = message.match(regularExpressions_1.RegularExpressions.PlayerUnbanned);
             if (playerUnbannedMatch) {
-                const admin = manager.getOrCreatePlayer(server.identifier, playerUnbannedMatch[1], undefined, false);
-                const player = manager.getOrCreatePlayer(server.identifier, playerUnbannedMatch[2], undefined, false);
+                const admin = manager.upsertPlayer(server.identifier, playerUnbannedMatch[1], undefined, false);
+                const player = manager.upsertPlayer(server.identifier, playerUnbannedMatch[2], undefined, false);
                 manager.emit(types_1.RCEEvent.PlayerUnbanned, {
                     server,
                     admin: playerUnbannedMatch[1] === "SERVER" ? undefined : admin,
@@ -125,7 +125,7 @@ class ResponseHandler {
         // Event: Item Spawn
         const itemSpawnMatch = message.match(regularExpressions_1.RegularExpressions.ItemSpawn);
         if (itemSpawnMatch) {
-            const player = manager.getOrCreatePlayer(server.identifier, itemSpawnMatch[1], undefined, true);
+            const player = manager.upsertPlayer(server.identifier, itemSpawnMatch[1], undefined, true);
             manager.emit(types_1.RCEEvent.ItemSpawn, {
                 server,
                 player,
@@ -139,7 +139,7 @@ class ResponseHandler {
             const oldContent = noteEditMatch[2].trim().split("\\n")[0];
             const newContent = noteEditMatch[3].trim().split("\\n")[0];
             if (newContent.length > 0 && newContent !== oldContent) {
-                const player = manager.getOrCreatePlayer(server.identifier, noteEditMatch[1], undefined, true);
+                const player = manager.upsertPlayer(server.identifier, noteEditMatch[1], undefined, true);
                 manager.emit(types_1.RCEEvent.NoteEdit, {
                     server,
                     player,
@@ -162,7 +162,7 @@ class ResponseHandler {
                     leader: null,
                     members: [],
                 };
-                leaderPlayer = manager.getOrCreatePlayer(server.identifier, owner, {
+                leaderPlayer = manager.upsertPlayer(server.identifier, owner, {
                     team,
                 }, true);
                 team.leader = leaderPlayer;
@@ -171,7 +171,7 @@ class ResponseHandler {
                 manager.updateServer(serverData);
             }
             else {
-                leaderPlayer = manager.getOrCreatePlayer(server.identifier, owner, undefined, true);
+                leaderPlayer = manager.upsertPlayer(server.identifier, owner, undefined, true);
             }
             manager.emit(types_1.RCEEvent.TeamCreated, {
                 server,
@@ -192,18 +192,18 @@ class ResponseHandler {
             if (serverData) {
                 const team = serverData.teams.find((t) => t.id === teamId);
                 if (team && !team.members.some((member) => member.ign === ign)) {
-                    joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign, {
+                    joiningPlayer = manager.upsertPlayer(server.identifier, ign, {
                         team,
                     }, true);
                     team.members.push(joiningPlayer);
                     manager.updateServer(serverData);
                 }
                 else {
-                    joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign, undefined, true);
+                    joiningPlayer = manager.upsertPlayer(server.identifier, ign, undefined, true);
                 }
             }
             else {
-                joiningPlayer = manager.getOrCreatePlayer(server.identifier, ign, undefined, true);
+                joiningPlayer = manager.upsertPlayer(server.identifier, ign, undefined, true);
             }
             const team = serverData?.teams.find((t) => t.id === teamId);
             manager.emit(types_1.RCEEvent.TeamJoin, {
@@ -226,14 +226,14 @@ class ResponseHandler {
                 const team = serverData.teams.find((t) => t.id === teamId);
                 if (team) {
                     team.members = team.members.filter((member) => member.ign !== ign);
-                    manager.getOrCreatePlayer(server.identifier, ign, { team: null }, true);
+                    manager.upsertPlayer(server.identifier, ign, { team: null }, true);
                     if (team.members.length === 0) {
                         serverData.teams = serverData.teams.filter((t) => t.id !== teamId);
                     }
                     manager.updateServer(serverData);
                 }
             }
-            const leavingPlayer = manager.getOrCreatePlayer(server.identifier, ign, {
+            const leavingPlayer = manager.upsertPlayer(server.identifier, ign, {
                 team: null,
             }, true);
             const team = serverData?.teams.find((t) => t.id === teamId);
@@ -251,7 +251,7 @@ class ResponseHandler {
         const teamInviteMatch = message.match(regularExpressions_1.RegularExpressions.TeamInvite);
         if (teamInviteMatch) {
             const teamId = parseInt(teamInviteMatch[3]);
-            const player = manager.getOrCreatePlayer(server.identifier, teamInviteMatch[2], undefined, true);
+            const player = manager.upsertPlayer(server.identifier, teamInviteMatch[2], undefined, true);
             const serverData = manager.getServer(server.identifier);
             const team = serverData?.teams.find((t) => t.id === teamId);
             manager.emit(types_1.RCEEvent.TeamInvite, {
@@ -268,7 +268,7 @@ class ResponseHandler {
         const teamInviteCancelMatch = message.match(regularExpressions_1.RegularExpressions.TeamInviteCancel);
         if (teamInviteCancelMatch) {
             const teamId = parseInt(teamInviteMatch[3]);
-            const player = manager.getOrCreatePlayer(server.identifier, teamInviteCancelMatch[1], undefined, false);
+            const player = manager.upsertPlayer(server.identifier, teamInviteCancelMatch[1], undefined, false);
             const serverData = manager.getServer(server.identifier);
             const team = serverData?.teams.find((t) => t.id === teamId);
             manager.emit(types_1.RCEEvent.TeamInviteCancel, {
@@ -291,14 +291,14 @@ class ResponseHandler {
             if (serverData) {
                 const team = serverData.teams.find((t) => t.id === teamId);
                 if (team) {
-                    team.leader = manager.getOrCreatePlayer(server.identifier, newOwner, {
+                    team.leader = manager.upsertPlayer(server.identifier, newOwner, {
                         team,
                     }, false);
                     manager.updateServer(serverData);
                 }
             }
-            const oldOwnerPlayer = manager.getOrCreatePlayer(server.identifier, oldOwner, undefined, true);
-            const newOwnerPlayer = manager.getOrCreatePlayer(server.identifier, newOwner, undefined, false);
+            const oldOwnerPlayer = manager.upsertPlayer(server.identifier, oldOwner, undefined, true);
+            const newOwnerPlayer = manager.upsertPlayer(server.identifier, newOwner, undefined, false);
             const team = serverData?.teams.find((t) => t.id === teamId);
             manager.emit(types_1.RCEEvent.TeamPromoted, {
                 server,
@@ -314,7 +314,7 @@ class ResponseHandler {
         // Event: Kit Spawn
         const kitSpawnMatch = message.match(regularExpressions_1.RegularExpressions.KitSpawn);
         if (kitSpawnMatch) {
-            const player = manager.getOrCreatePlayer(server.identifier, kitSpawnMatch[1], undefined, true);
+            const player = manager.upsertPlayer(server.identifier, kitSpawnMatch[1], undefined, true);
             manager.emit(types_1.RCEEvent.KitSpawn, {
                 server,
                 admin: undefined,
@@ -325,8 +325,8 @@ class ResponseHandler {
         // Event: Kit Give
         const kitGiveMatch = message.match(regularExpressions_1.RegularExpressions.KitGive);
         if (kitGiveMatch) {
-            const player = manager.getOrCreatePlayer(server.identifier, kitGiveMatch[2], undefined, true);
-            const admin = manager.getOrCreatePlayer(server.identifier, kitGiveMatch[1], undefined, false);
+            const player = manager.upsertPlayer(server.identifier, kitGiveMatch[2], undefined, true);
+            const admin = manager.upsertPlayer(server.identifier, kitGiveMatch[1], undefined, false);
             manager.emit(types_1.RCEEvent.KitSpawn, {
                 server,
                 admin,
@@ -354,10 +354,10 @@ class ResponseHandler {
             const victimData = (0, playerKill_1.getKill)(victim);
             const killerData = (0, playerKill_1.getKill)(killer);
             if (victimData.type === playerKill_1.PlayerKillType.Player) {
-                victimData.player = manager.getOrCreatePlayer(server.identifier, victimData.name, undefined, false);
+                victimData.player = manager.upsertPlayer(server.identifier, victimData.name, undefined, false);
             }
             if (killerData.type === playerKill_1.PlayerKillType.Player) {
-                killerData.player = manager.getOrCreatePlayer(server.identifier, killerData.name, undefined, true);
+                killerData.player = manager.upsertPlayer(server.identifier, killerData.name, undefined, true);
             }
             manager.emit(types_1.RCEEvent.PlayerKill, {
                 server,

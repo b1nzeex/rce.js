@@ -37,6 +37,10 @@ class RCEManager extends events_1.EventEmitter {
             const server = this.getServer(payload.server.identifier);
             if (!server)
                 return;
+            if (!server.intents.includes(types_2.RCEIntent.PlayerList) ||
+                !server.intents.includes(types_2.RCEIntent.RoleInfo)) {
+                return;
+            }
             const player = server.players.find((p) => p.ign === payload.player.ign);
             if (player) {
                 if (payload.role === "Banned") {
@@ -52,6 +56,10 @@ class RCEManager extends events_1.EventEmitter {
             const server = this.getServer(payload.server.identifier);
             if (!server)
                 return;
+            if (!server.intents.includes(types_2.RCEIntent.PlayerList) ||
+                !server.intents.includes(types_2.RCEIntent.RoleInfo)) {
+                return;
+            }
             const player = server.players.find((p) => p.ign === payload.player.ign);
             if (player) {
                 player.role = null;
@@ -59,7 +67,6 @@ class RCEManager extends events_1.EventEmitter {
             }
         });
         this.on(types_1.RCEEvent.Ready, (payload) => {
-            console.log("Ready event received");
             const server = payload.server;
             if (!server) {
                 this.logger.warn("[Unknown] Received Ready event with no server data.");
@@ -110,10 +117,14 @@ class RCEManager extends events_1.EventEmitter {
                 }, timer);
             }
             if (server.intents.includes(types_2.RCEIntent.Teams)) {
-                this.fetchTeamInfo(id);
+                if (server.intents.includes(types_2.RCEIntent.PlayerList)) {
+                    this.fetchTeamInfo(id);
+                }
             }
             if (server.intents.includes(types_2.RCEIntent.RoleInfo)) {
-                this.fetchRoleInfo(id);
+                if (server.intents.includes(types_2.RCEIntent.PlayerList)) {
+                    this.fetchRoleInfo(id);
+                }
             }
             this.logger.info(`[${id}] Server Successfully Added!`);
         });
@@ -554,10 +565,10 @@ class RCEManager extends events_1.EventEmitter {
      * @param playerData Optional data to set on the player
      * @returns Player object (existing or newly created placeholder)
      */
-    getOrCreatePlayer(identifier, playerName, playerData, markAsOnline = false) {
+    upsertPlayer(identifier, playerName, playerData, markAsOnline = false) {
         const server = this.getServer(identifier);
         if (!server) {
-            throw new Error(`Server with identifier "${identifier}" not found`);
+            throw new Error(`Server With Identifier "${identifier}" Does Not Exist!`);
         }
         let player = server.players.find((p) => p.ign === playerName);
         let isNewPlayer = false;
