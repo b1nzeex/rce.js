@@ -262,6 +262,10 @@ class RCEManager extends events_1.EventEmitter {
             const json = JSON.parse(cleanOutput);
             server.info = json;
             this.updateServer(server);
+            this.emit(types_1.RCEEvent.ServerInfoUpdated, {
+                info: server.info,
+                server,
+            });
             return json;
         }
         catch (error) {
@@ -401,6 +405,8 @@ class RCEManager extends events_1.EventEmitter {
                 }
             }
         }
+        server.customZones = zones;
+        this.updateServer(server);
         return zones;
     }
     /*

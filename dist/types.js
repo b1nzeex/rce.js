@@ -48,6 +48,7 @@ var RCEEvent;
     RCEEvent["FrequencyLost"] = "frequencyLost";
     RCEEvent["ServerSaving"] = "serverSaving";
     RCEEvent["Error"] = "error";
+    RCEEvent["ServerInfoUpdated"] = "serverInfoUpdate";
 })(RCEEvent || (exports.RCEEvent = RCEEvent = {}));
 var GamePlatform;
 (function (GamePlatform) {
