@@ -49,6 +49,13 @@ export default class RCEManager extends EventEmitter {
       const server = this.getServer(payload.server.identifier);
       if (!server) return;
 
+      if (
+        !server.intents.includes(RCEIntent.PlayerList) ||
+        !server.intents.includes(RCEIntent.RoleInfo)
+      ) {
+        return;
+      }
+
       const player = server.players.find((p) => p.ign === payload.player.ign);
       if (player) {
         if (payload.role === "Banned") {
@@ -65,6 +72,13 @@ export default class RCEManager extends EventEmitter {
       const server = this.getServer(payload.server.identifier);
       if (!server) return;
 
+      if (
+        !server.intents.includes(RCEIntent.PlayerList) ||
+        !server.intents.includes(RCEIntent.RoleInfo)
+      ) {
+        return;
+      }
+
       const player = server.players.find((p) => p.ign === payload.player.ign);
       if (player) {
         player.role = null;
@@ -73,7 +87,6 @@ export default class RCEManager extends EventEmitter {
     });
 
     this.on(RCEEvent.Ready, (payload) => {
-      console.log("Ready event received");
       const server = payload.server;
       if (!server) {
         this.logger.warn("[Unknown] Received Ready event with no server data.");
@@ -138,11 +151,15 @@ export default class RCEManager extends EventEmitter {
       }
 
       if (server.intents.includes(RCEIntent.Teams)) {
-        this.fetchTeamInfo(id);
+        if (server.intents.includes(RCEIntent.PlayerList)) {
+          this.fetchTeamInfo(id);
+        }
       }
 
       if (server.intents.includes(RCEIntent.RoleInfo)) {
-        this.fetchRoleInfo(id);
+        if (server.intents.includes(RCEIntent.PlayerList)) {
+          this.fetchRoleInfo(id);
+        }
       }
 
       this.logger.info(`[${id}] Server Successfully Added!`);
@@ -699,7 +716,7 @@ export default class RCEManager extends EventEmitter {
    * @param playerData Optional data to set on the player
    * @returns Player object (existing or newly created placeholder)
    */
-  public getOrCreatePlayer(
+  public upsertPlayer(
     identifier: string,
     playerName: string,
     playerData?: Partial<IPlayer>,
@@ -707,7 +724,7 @@ export default class RCEManager extends EventEmitter {
   ): IPlayer {
     const server = this.getServer(identifier);
     if (!server) {
-      throw new Error(`Server with identifier "${identifier}" not found`);
+      throw new Error(`Server With Identifier "${identifier}" Does Not Exist!`);
     }
 
     let player = server.players.find((p) => p.ign === playerName);
