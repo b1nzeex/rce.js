@@ -74,6 +74,7 @@ export interface IServer {
   frequencies?: number[];
   teams?: ITeam[];
   kits?: IServerKit[];
+  customZones?: IServerZone[];
   info?: IRustServerInformation;
 }
 
@@ -259,6 +260,10 @@ export interface IServerSavingEventPayload extends EventPayload {
   entities: number;
 }
 
+export interface IServerInfoUpdateEventPayload extends EventPayload {
+  info: IRustServerInformation;
+}
+
 export interface IErrorEventPayload {
   server?: IServer;
   error: string;
@@ -303,6 +308,7 @@ export enum RCEEvent {
   FrequencyLost = "frequencyLost",
   ServerSaving = "serverSaving",
   Error = "error",
+  ServerInfoUpdated = "serverInfoUpdate",
 }
 
 export interface IPlayer {
@@ -356,6 +362,7 @@ export interface IEvent {
   [RCEEvent.FrequencyLost]: IFrequencyLostEventPayload;
   [RCEEvent.ServerSaving]: IServerSavingEventPayload;
   [RCEEvent.Error]: IErrorEventPayload;
+  [RCEEvent.ServerInfoUpdated]: IServerInfoUpdateEventPayload;
 }
 
 export enum GamePlatform {

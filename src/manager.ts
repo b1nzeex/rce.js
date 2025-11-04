@@ -319,6 +319,11 @@ export default class RCEManager extends EventEmitter {
       const json = JSON.parse(cleanOutput);
       server.info = json as IRustServerInformation;
       this.updateServer(server);
+
+      this.emit(RCEEvent.ServerInfoUpdated, {
+        info: server.info,
+        server,
+      });
       return json as IRustServerInformation;
     } catch (error) {
       return info;
@@ -505,6 +510,9 @@ export default class RCEManager extends EventEmitter {
         }
       }
     }
+
+    server.customZones = zones;
+    this.updateServer(server);
 
     return zones;
   }
