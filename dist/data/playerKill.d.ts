@@ -1,4 +1,4 @@
-import type { IKillPlayer } from "../types";
+import type { IKillPlayer } from '../types';
 export declare enum PlayerKillType {
     Natural = "Natural",
     Entity = "Entity",
