@@ -418,6 +418,11 @@ export const playerKillData = [
     name: 'Vehicle Shredder',
     type: PlayerKillType.Entity,
   },
+  {
+    id: 'elevator_lift (entity)',
+    name: 'Elevator',
+    type: PlayerKillType.Entity,
+  },
 ];
 
 export function getKill(ign: string): IKillPlayer {
